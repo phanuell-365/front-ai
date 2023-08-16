@@ -6,7 +6,13 @@ export default {
     "./node_modules/tw-elements/dist/js/**/*.js"
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'poppins': ['Poppins', 'Ubuntu', 'sans-serif'],
+        'poppins-light': ['Poppins Light', 'Ubuntu', 'san-serif', 'serif'],
+        'poppins-extra-bold': ['Poppins Extrabold', 'Ubuntu', 'san-serif', 'serif']
+      },
+    },
   },
   plugins: [require("tw-elements/dist/plugin.cjs")],
   darkMode: 'class'
