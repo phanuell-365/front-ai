@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import TopBar from "@/components/Admin/TopBar.vue";
 
 </script>
 
 <template>
-  <h1>
-    Home Admin Page
-  </h1>
-
-  <RouterView />
+  <div class="flex flex-col">
+    <TopBar/>
+    <RouterView/>
+  </div>
 </template>
 
 <style scoped>

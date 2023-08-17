@@ -6,6 +6,7 @@ import {
 } from "tw-elements";
 import {onMounted} from "vue";
 import {useRouter} from "vue-router";
+import {useTabsStore} from "@/router/admin/tabs.ts";
 
 interface PageItem {
   name: string;
@@ -22,8 +23,18 @@ const props = defineProps<{
 
 const router = useRouter();
 
+const tabsStore = useTabsStore();
+
 const onClick = () => {
   setTimeout(() => {
+    // activate the tab
+    tabsStore.setActiveTab(props.page.name);
+
+    if (props.page.name === "Home") {
+      router.push({name: "AdminHome"});
+      return;
+    }
+
     router.push({name: "DynamicPage", params: {page: props.page.path}});
   }, 300);
 };
@@ -45,10 +56,10 @@ const dropdownItems = [
   <div
       class="overflow-hidden flex flex-col rounded-lg bg-white border shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 h-48 md:h-52">
     <div data-te-ripple-init
-         data-te-ripple-color="dark"
+         data-te-ripple-color="#38bdf8"
          data-te-ripple-unbound="true"
          @click="onClick"
-         class="h-40 flex items-center justify-center bg-neutral-200">
+         class="h-40 flex items-center justify-center bg-sky-100">
       <img
           class="rounded-t-lg w-14 md:w-20 drop-shadow-lg"
           src="@/assets/imgs/template.png"
