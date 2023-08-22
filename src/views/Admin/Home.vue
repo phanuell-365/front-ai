@@ -6,18 +6,22 @@ import {
 import {onMounted} from "vue";
 import {useAdminHomeStore} from "@/router/admin/home.ts";
 import PageItem from "@/components/Admin/PageItem.vue";
+import {useTabsStore} from "@/router/admin/tabs.ts";
 
 onMounted(() => {
   initTE({Ripple});
+
+  tabsStore.setActiveTabByPageName('home');
 });
 
+const tabsStore = useTabsStore();
 const adminHome = useAdminHomeStore();
 
 
 </script>
 
 <template>
-  <section class="px-5 md:px-8">
+  <section class="px-5 md:px-8 bg-white">
     <header class="py-3 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700">
       <div class="flex items-center space-x-2">
         <span class="material-icons-round">home</span>

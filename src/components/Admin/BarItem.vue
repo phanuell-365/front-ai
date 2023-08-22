@@ -24,11 +24,13 @@ const onClick = () => {
     tabsStore.setActiveTab(props.name);
 
     if (props.name === "Home") {
-      router.push({name: "AdminHome"});
+      router.replace({name: "AdminHome"});
+      // router.go(0);
       return;
     }
 
-    router.push({name: "DynamicPage", params: {page: props.to}});
+    router.replace({name: "DynamicPage", params: {page: props.to}});
+    // router.go(0);
   }, 300);
 };
 

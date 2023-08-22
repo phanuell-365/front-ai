@@ -1,5 +1,13 @@
 import {defineStore} from "pinia";
 
+interface Tab {
+    name: string;
+    title: string;
+    icon: string;
+    to: string;
+    active: boolean;
+}
+
 export const useTabsStore = defineStore({
     id: 'tabs',
     state: () => ({
@@ -44,30 +52,31 @@ export const useTabsStore = defineStore({
                 active: false,
             }
         ],
-        activeTab: null,
-        openTabs: [],
+        activeTab: null as Tab | null,
+        openTabs: [] as Tab[],
     }),
     getters: {
         getTabs: (state) => state.tabs,
         getActiveTab: (state) => state.activeTab,
         getOpenTabs: (state) => state.openTabs,
+        getTabByTo: (state) => (to: string) => state.tabs.find((tab) => tab.to === to),
     },
     actions: {
-        addTab(tab) {
+        addTab(tab: Tab) {
             this.tabs.push(tab);
         },
-        removeTab(tab_name) {
+        removeTab(tab_name: string) {
             // get the tab by id
             const tab = this.tabs.find((tab) => tab.name === tab_name);
 
-            // remove the tab from the tabs
-            this.tabs.splice(this.tabs.indexOf(tab), 1);
+            if (tab) {
+                // remove the tab from the open tabs
+                this.openTabs.splice(this.openTabs.indexOf(tab), 1);
+            }
         },
-        setActiveTab(tab_name) {
+        setActiveTab(tab_name: string) {
             // let's check if there are tabs in local storage
-            const tabs = JSON.parse(localStorage.getItem('tabs'));
-
-            console.log('tabs', tabs)
+            const tabs = JSON.parse(localStorage.getItem('tabs') as string);
 
             // check if there are tabs in local storage
             if (tabs) {
@@ -79,12 +88,12 @@ export const useTabsStore = defineStore({
             }
 
             // get the tab by id
-            const tab = this.tabs.find((tab) => tab.name === tab_name);
+            const tab: Tab | undefined = this.tabs.find((tab) => tab.name === tab_name);
 
             // set the active tab by first deactivating all tabs
             this.tabs.forEach((tab) => tab.active = false);
 
-            const openTabs = JSON.parse(localStorage.getItem('openTabs'));
+            const openTabs = JSON.parse(localStorage.getItem('openTabs') as string);
 
             // check if there are open tabs in local storage
             if (openTabs) {
@@ -94,20 +103,24 @@ export const useTabsStore = defineStore({
             // also deactivate all open tabs
             this.openTabs.forEach((tab) => tab.active = false);
 
-            // set the active tab
-            tab.active = true;
+            if (tab) {
+                // set the active tab
+                tab.active = true;
 
-            // set the active tab
-            this.activeTab = tab;
+                // set the active tab
+                this.activeTab = tab as Tab | null;
 
-            // add the tab to the open tabs if it is not already there
-            if (!this.openTabs.some((openTab) => openTab.name === tab.name)) {
-                this.openTabs.push(tab);
-            } else {
-                // set the tab to active
-                this.openTabs.find((openTab) => openTab.name === tab.name).active = true;
+                // add the tab to the open tabs if it is not already there
+                if (!this.openTabs.some((openTab: Tab) => openTab.name === tab.name)) {
+                    this.openTabs.push(tab);
+                } else {
+                    const openTab = this.openTabs.find((openTab: Tab) => openTab.name === tab.name);
+
+                    if (openTab) {
+                        openTab.active = true;
+                    }
+                }
             }
-
             // set the open tabs to local storage
             // let's check if the open tabs are already in local storage
 
@@ -117,22 +130,29 @@ export const useTabsStore = defineStore({
 
             // }
         },
-        setActiveTabByPageName(page_name) {
+        setActiveTabByPageName(page_name: string) {
             // we need to get the tab by page name
             const tab = this.tabs.find((tab) => tab.to === page_name);
 
-            // then call the setActiveTab action
-            this.setActiveTab(tab.name);
+            if (tab) {
+                // set the active tab
+                this.setActiveTab(tab.name);
+            }
         },
-        closeTab(tab_name) {
+        closeTab(tab_name: string) {
             // get the tab by id
             const tab = this.tabs.find((tab) => tab.name === tab_name);
 
-            // remove the tab from the open tabs
-            this.openTabs.splice(this.openTabs.indexOf(tab), 1);
+            // deactivate the tab
+            if (tab) {
+                tab.active = false;
 
-            // remove the tab from the tabs
-            this.tabs.splice(this.tabs.indexOf(tab), 1);
+                // remove the tab from the open tabs
+                this.openTabs.splice(this.openTabs.indexOf(tab), 1);
+
+                // remove the tab from the tabs
+                this.tabs.splice(this.tabs.indexOf(tab), 1);
+            }
 
             // set the active tab
             this.activeTab = this.openTabs[this.openTabs.length - 1];

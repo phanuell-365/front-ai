@@ -7,7 +7,7 @@ const tabsStore = useTabsStore();
 </script>
 
 <template>
-  <div class="bg-neutral-100 flex flex-row w-full">
+  <div class="z-30 bg-neutral-100 flex flex-row w-full">
     <div class="px-3 py-2 flex flex-row items-center justify-start bg-neutral-100 border-y">
       Company Name
     </div>
