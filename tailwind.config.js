@@ -3,7 +3,6 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
-    "./node_modules/tw-elements/dist/js/**/*.js"
   ],
   theme: {
     extend: {
@@ -14,7 +13,10 @@ export default {
       },
     },
   },
-  plugins: [require("tw-elements/dist/plugin.cjs")],
-  darkMode: 'class'
+  plugins: [require('daisyui')],
+  daisyui: {
+    themes: ["bumblebee", "dark", "emerald", "forest", "lofi", "synthwave", "retro", "cyberpunk", "halloween", "valentine", "garden", "forest", "dracula", "corporate", "winter"],
+  },
+  darkMode: 'class',
 }
 

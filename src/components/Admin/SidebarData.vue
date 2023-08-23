@@ -1,12 +1,4 @@
 <script setup lang="ts">
-import {
-  Tab,
-  Input,
-  Select,
-  Ripple,
-  Sidenav,
-  initTE,
-} from "tw-elements";
 import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {usePageDataStore} from "@/router/admin/page-data.ts";
 
@@ -78,8 +70,6 @@ watch(() => pageDataStore.activePageDataItem, (newVal) => {
 const isInitialized = ref(false);
 
 onMounted(() => {
-  initTE({Sidenav, Tab, Input, Select, Ripple}, true);
-
   isInitialized.value = true;
 });
 

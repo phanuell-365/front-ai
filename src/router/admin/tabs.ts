@@ -148,17 +148,21 @@ export const useTabsStore = defineStore({
                 tab.active = false;
 
                 // remove the tab from the open tabs
-                this.openTabs.splice(this.openTabs.indexOf(tab), 1);
+                this.openTabs = this.openTabs.filter((openTab) => openTab.name !== tab.name);
 
                 // remove the tab from the tabs
-                this.tabs.splice(this.tabs.indexOf(tab), 1);
+                this.tabs = this.tabs.filter((tab) => tab.name !== tab.name);
+
+                // set the active tab
+                this.activeTab = this.openTabs[this.openTabs.length - 1];
+
+                // set the open tabs to local storage
+                localStorage.setItem('openTabs', JSON.stringify(this.openTabs));
+
+                // call setActiveTab
+                this.setActiveTab(this.activeTab?.name as string);
+
             }
-
-            // set the active tab
-            this.activeTab = this.openTabs[this.openTabs.length - 1];
-
-            // set the open tabs to local storage
-            localStorage.setItem('openTabs', JSON.stringify(this.openTabs));
         }
     },
 });

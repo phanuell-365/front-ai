@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import {useTabsStore} from "@/router/admin/tabs.ts";
-import {onMounted, ref} from "vue";
+import {onMounted, ref, watch} from "vue";
 import LinkBar from "@/components/Admin/LinkBar.vue";
-import {onBeforeRouteUpdate, useRoute} from "vue-router";
+import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
 import SidebarData from "@/components/Admin/SidebarData.vue";
 import {usePageDataStore} from "@/router/admin/page-data.ts";
 
