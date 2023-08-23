@@ -7,8 +7,13 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'poppins': ['Poppins', 'Ubuntu', 'sans-serif'],
+        'poppins': ['Poppins Regular', 'Ubuntu', 'sans-serif'],
         'poppins-light': ['Poppins Light', 'Ubuntu', 'san-serif', 'serif'],
+        'poppins-medium': ['Poppins Medium', 'Ubuntu', 'san-serif', 'serif'],
+        'poppins-bold': ['Poppins Bold', 'Ubuntu', 'san-serif', 'serif'],
+        'poppins-extra-light': ['Poppins Extralight', 'Ubuntu', 'san-serif', 'serif'],
+        'poppins-thin': ['Poppins Thin', 'Ubuntu', 'san-serif', 'serif'],
+        'poppins-semi-bold': ['Poppins Semibold', 'Ubuntu', 'san-serif', 'serif'],
         'poppins-extra-bold': ['Poppins Extrabold', 'Ubuntu', 'san-serif', 'serif']
       },
     },
