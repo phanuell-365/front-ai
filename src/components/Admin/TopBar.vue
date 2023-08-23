@@ -9,7 +9,9 @@ const tabsStore = useTabsStore();
 <template>
   <div class="z-30 bg-neutral-100 flex flex-row w-full">
     <div class="px-3 py-2 flex flex-row items-center justify-start bg-neutral-100 border-y">
-      Company Name
+      <h6 class="text-base font-semibold">
+        M-Zawadi
+      </h6>
     </div>
     <!-- Let's have the first default tab -->
     <!--    <BarItem title="Home" icon="home" to="home" name="Home" active/>-->

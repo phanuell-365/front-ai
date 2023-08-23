@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {usePageDataStore} from "@/router/admin/page-data.ts";
+import anime from "animejs";
+import MyListBox from "@/components/form/MyListBox.vue";
 
 interface PageData {
   chatbotName: string;
@@ -18,6 +20,12 @@ interface PageData {
 
 interface SidebarDataProps {
   pageData: PageData;
+  isOpen: boolean;
+}
+
+interface Option {
+  name: string;
+  value: string;
 }
 
 const props = defineProps<SidebarDataProps>();
@@ -25,6 +33,17 @@ const props = defineProps<SidebarDataProps>();
 const pageDataStore = usePageDataStore();
 
 const activePageDataItem = ref(props.pageData);
+
+const greetingTypes = [
+  {
+    name: 'Generated',
+    value: 'generated',
+  },
+  {
+    name: 'Static',
+    value: 'static',
+  },
+] as Option[];
 
 const thisPageDataItem = reactive<PageData>({
   chatbotName: activePageDataItem.value.chatbotName,
@@ -40,7 +59,35 @@ const thisPageDataItem = reactive<PageData>({
   displayClosureMessage: activePageDataItem.value.displayClosureMessage,
 });
 
+onMounted(() => {
+  thisPageDataItem.chatbotName = activePageDataItem.value.chatbotName;
+  thisPageDataItem.chatbotId = activePageDataItem.value.chatbotId;
+  thisPageDataItem.greetingType = activePageDataItem.value.greetingType;
+  thisPageDataItem.staticGreeting = activePageDataItem.value.staticGreeting;
+  thisPageDataItem.generatedGreeting = activePageDataItem.value.generatedGreeting;
+  thisPageDataItem.promptPlaceholder = activePageDataItem.value.promptPlaceholder;
+  thisPageDataItem.directive = activePageDataItem.value.directive;
+  thisPageDataItem.model = activePageDataItem.value.model;
+  thisPageDataItem.maxResponseLength = activePageDataItem.value.maxResponseLength;
+  thisPageDataItem.creativity = activePageDataItem.value.creativity;
+  thisPageDataItem.displayClosureMessage = activePageDataItem.value.displayClosureMessage;
+
+  if (activePageDataItem.value.greetingType === 'static') {
+    newGreetingTextAreaText.value = activePageDataItem.value.staticGreeting;
+  } else {
+    const newName = activePageDataItem.value.chatbotName[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
+    newGreetingTextAreaText.value = `Say I am ${newName}, how can I help you today?`;
+  }
+
+  const foundType = greetingTypes.find((item) => item.value === activePageDataItem.value.greetingType);
+
+  if (foundType) {
+    newGreetingType.value = foundType;
+  }
+});
+
 const newGreetingTextAreaText = ref("");
+const newGreetingType = ref<Option | null>(greetingTypes[0]);
 
 // let's also subscribe to page data store changes
 watch(() => pageDataStore.activePageDataItem, (newVal) => {
@@ -49,7 +96,6 @@ watch(() => pageDataStore.activePageDataItem, (newVal) => {
   thisPageDataItem.chatbotName = activePageDataItem.value.chatbotName;
   thisPageDataItem.chatbotId = activePageDataItem.value.chatbotId;
   thisPageDataItem.greetingType = activePageDataItem.value.greetingType;
-  console.log(activePageDataItem.value.greetingType)
   thisPageDataItem.staticGreeting = activePageDataItem.value.staticGreeting;
   thisPageDataItem.generatedGreeting = activePageDataItem.value.generatedGreeting;
   thisPageDataItem.promptPlaceholder = activePageDataItem.value.promptPlaceholder;
@@ -73,119 +119,174 @@ onMounted(() => {
   isInitialized.value = true;
 });
 
-const onGreetingSelectChange = (event: Event) => {
-  const value = (event.target as HTMLSelectElement).value;
+const emit = defineEmits<{
+  (event: 'close-sidebar-data'): void;
+}>();
 
-  if (value === 'static') {
+const activeSidebarDataTab = ref('content');
+
+function toggleTab(tab: string) {
+  if (activeSidebarDataTab.value !== tab) {
+    const tabIn = `#${tab}-tab`
+    const tabOut = `#${activeSidebarDataTab.value}-tab`
+
+    console.log('tabIn', tabIn)
+
+    anime({
+      targets: tabOut,
+      opacity: 0,
+      duration: 300,
+      easing: 'easeInOutQuad',
+      complete: () => {
+        activeSidebarDataTab.value = tab;
+
+        anime({
+          targets: tabIn,
+          opacity: 1,
+          duration: 300,
+          easing: 'easeInOutQuad',
+        });
+      },
+    });
+  }
+}
+
+const onGreetingTypeChange = (option: Option) => {
+  // newGreetingType.value = greetingTypes.find((item) => item.value === option);
+  thisPageDataItem.greetingType = option.value as 'static' | 'generated';
+
+  if (option.value === 'static') {
     newGreetingTextAreaText.value = activePageDataItem.value.staticGreeting;
   }
 
-  if (value === 'generated') {
+  if (option.value === 'generated') {
     const newName = activePageDataItem.value.chatbotName[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
     newGreetingTextAreaText.value = `Say I am ${newName}, how can I help you today?`;
   }
-};
+}
+
+watch(() => newGreetingTextAreaText.value, (newVal) => {
+  if (thisPageDataItem.greetingType === 'static') {
+    thisPageDataItem.staticGreeting = newVal;
+  }
+});
 </script>
 
 <template>
   <!-- Sidenav -->
+  <!-- Let's create an overlay that will cover the entire screen when the sidebar is open -->
+  <div
+      v-if="props.isOpen"
+      class="absolute inset-0 z-30 bg-black bg-opacity-10 cursor-pointer"
+      aria-hidden="true"
+      @click="emit('close-sidebar-data')"
+      @keyup.esc="emit('close-sidebar-data')"
+  ></div>
   <nav
       id="sidebar-data"
-      class="absolute right-0 top-0 z-[1035] h-full !w-4/12 translate-x-full overflow-hidden bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.07),_0_2px_4px_rgba(0,0,0,0.05)] data-[te-sidenav-hidden='false']:-translate-x-0 dark:bg-zinc-800"
-      data-te-sidenav-init
-      data-te-sidenav-position="absolute"
-      data-te-sidenav-hidden="true"
-      data-te-sidenav-right="true">
-    <div class="flex flex-col">
+      :class="props.isOpen ? 'translate-x-0' : 'translate-x-full'"
+      class="absolute right-0 top-0 z-40 h-full w-10/12 sm:w-8/12 md:w-6/12 lg:w-5/12 overflow-hidden bg-white dark:bg-neutral-900 shadow-lg transition duration-300 ease-in-out transform-gpu">
+    <div class="flex flex-col overflow-auto flex-1 sidebar-con">
 
       <!--Tabs navigation-->
       <ul
-          class="flex list-none flex-row flex-wrap border-b-0 pl-0"
+          class="tabs flex flex-row font-semibold sticky top-0 z-10 bg-white"
           role="tablist"
-          data-te-nav-ref>
-        <li role="presentation" class="flex-grow basis-0 text-center">
-          <a
-              href="#tabs-home02"
-              class="my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs md:text-sm font-bold leading-tight text-neutral-500 hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent data-[te-nav-active]:border-primary data-[te-nav-active]:text-primary dark:text-neutral-400 dark:hover:bg-transparent dark:data-[te-nav-active]:border-primary-400 dark:data-[te-nav-active]:text-primary-400"
-              data-te-toggle="pill"
-              data-te-target="#tabs-home02"
-              data-te-nav-active
-              role="tab"
-              aria-controls="tabs-home02"
-              aria-selected="true"
-          >Content</a
-          >
+      >
+        <li role="presentation" class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14" @click="toggleTab('content')"
+            :class="activeSidebarDataTab === 'content' ? 'tab-active border-primary' : ''">
+          <p>Content</p>
         </li>
-        <li role="presentation" class="flex-grow basis-0 text-center">
-          <a
-              href="#tabs-profile02"
-              class="my-2 block border-x-0 border-b-2 border-t-0 border-transparent px-7 pb-3.5 pt-4 text-xs md:text-sm font-bold leading-tight text-neutral-500 hover:isolate hover:border-transparent hover:bg-neutral-100 focus:isolate focus:border-transparent data-[te-nav-active]:border-primary data-[te-nav-active]:text-primary dark:text-neutral-400 dark:hover:bg-transparent dark:data-[te-nav-active]:border-primary-400 dark:data-[te-nav-active]:text-primary-400"
-              data-te-toggle="pill"
-              data-te-target="#tabs-profile02"
-              role="tab"
-              aria-controls="tabs-profile02"
-              aria-selected="false"
-          >Data</a
-          >
+        <li role="presentation" class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14" @click="toggleTab('data')"
+            :class="activeSidebarDataTab === 'data' ? 'tab-active border-primary' : ''">
+          <p>Data</p>
         </li>
       </ul>
 
       <!--Tabs content-->
-      <div class="overflow-auto flex-1">
-        <div
-            class="hidden opacity-100 transition-opacity duration-150 ease-linear data-[te-tab-active]:block h-screen"
-            id="tabs-home02"
-            role="tabpanel"
-            aria-labelledby="tabs-home-tab02"
-            data-te-tab-active>
-          <div class="grid grid-cols-1 gap-4 p-5">
-            <div>
-              <div class="relative mb-3" data-te-input-wrapper-init>
-                <input
-                    v-model="thisPageDataItem.chatbotName"
-                    type="text"
-                    class="peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[2.15] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
-                    id="chatbot-name"
-                    placeholder="Chatbot name"/>
-                <label
-                    for="chatbot-name"
-                    class="pointer-events-none absolute left-3 top-0 mb-0 max-w-[90%] origin-[0_0] truncate pt-[0.37rem] leading-[2.15] text-neutral-500 transition-all duration-200 ease-out peer-focus:-translate-y-[1.15rem] peer-focus:scale-[0.8] peer-focus:text-primary peer-data-[te-input-state-active]:-translate-y-[1.15rem] peer-data-[te-input-state-active]:scale-[0.8] motion-reduce:transition-none dark:text-neutral-200 dark:peer-focus:text-primary"
-                >
+      <div class="pt-5 pb-10">
+        <Transition name="slide" mode="out-in">
+          <div
+              v-if="activeSidebarDataTab === 'content'"
+              class="tab-content px-5 grow h-full"
+              role="tabpanel"
+              ref="contentRef" id="content-tab"
+          >
+            <div class="grid grid-cols-1 gap-3 py-3">
+              <div>
+                <label class="label text-xs font-semibold" for="chatbot-name">
                   Chatbot name
                 </label>
+                <input
+                    id="chatbot-name"
+                    v-model="thisPageDataItem.chatbotName"
+                    type="text" placeholder="Chatbot Name" class="input input-bordered input-primary w-full text-sm"/>
+                <div>
+                </div>
+              </div>
+              <div>
+                <label class="label text-xs font-semibold">
+                  Greeting
+                </label>
+                <MyListBox :options="greetingTypes" @change="onGreetingTypeChange"
+                           :selected-value="thisPageDataItem.greetingType"/>
+              </div>
+              <div class="">
+                <textarea
+                    v-model="newGreetingTextAreaText"
+                    class="textarea textarea-primary w-full resize-y" placeholder="Bio"></textarea>
+              </div>
+              <div>
+                <label class="label text-xs font-semibold" for="prompt-placeholder">
+                  Prompt placeholder
+                </label>
+                <input
+                    id="chatbot-name"
+                    v-model="thisPageDataItem.promptPlaceholder"
+                    type="text" placeholder="Chatbot Name" class="input input-bordered input-primary w-full text-sm"/>
+              </div>
+              <hr class="my-3"/>
+              <div>
+                <label class="label text-xs font-semibold" for="directive">
+                  Directive
+                </label>
+                <textarea
+                    v-model="thisPageDataItem.directive"
+                    class="textarea textarea-primary w-full resize-y" placeholder="Add new directive..."></textarea>
+              </div>
+              <div>
+                <label class="label text-xs font-semibold" for="creativity">
+                  Creativity
+                </label>
+                <input type="range" id="creativity" min="1" max="10" v-model="thisPageDataItem.creativity"
+                       class="range range-xs" step="1"/>
+                <div class="w-full flex justify-between text-xs px-2">
+                  <span>0</span>
+                  <span class="text-sm font-semibold">
+                    {{ thisPageDataItem.creativity / 10 }}
+                  </span>
+                  <span>1</span>
+                </div>
+                <div class="w-full flex justify-between text-xs px-2">
+                  <span>
+                    Predictable
+                  </span>
+                  <span>
+                    Creative
+                  </span>
+                </div>
               </div>
             </div>
-            <div>
-              <select @change="onGreetingSelectChange" class="w-full"
-                      data-te-select-init data-te-select-size="lg" v-model="thisPageDataItem.greetingType">
-                <option value="generated">
-                  Generated
-                </option>
-                <option value="static">
-                  Static
-                </option>
-              </select>
-              <label data-te-select-label-ref>
-                Greeting
-              </label>
-            </div>
-            <div class="relative mb-3" data-te-input-wrapper-init>
-              <textarea
-                  class="peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
-                  id="exampleFormControlTextarea1"
-                  rows="3"
-                  v-model="newGreetingTextAreaText"
-                  placeholder="Your message"></textarea>
-            </div>
           </div>
-        </div>
-        <div
-            class="hidden opacity-0 transition-opacity duration-150 ease-linear data-[te-tab-active]:block"
-            id="tabs-profile02"
-            role="tabpanel"
-            aria-labelledby="tabs-profile-tab02">
-          Tab 2 content
-        </div>
+          <div
+              v-else
+              class="tab-content"
+              ref="dataRef" id="data-tab"
+              role="tabpanel"
+              aria-labelledby="tabs-profile-tab02">
+            Tab 2 content
+          </div>
+        </Transition>
       </div>
     </div>
   </nav>
@@ -193,5 +294,17 @@ const onGreetingSelectChange = (event: Event) => {
 </template>
 
 <style scoped>
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.2s;
+}
 
+.slide-enter, .slide-leave-to /* .slide-leave-active in <2.1.8 */
+{
+  transform: translateX(0);
+}
+
+.sidebar-con {
+  height: calc(100% - 3.5rem);
+}
 </style>

@@ -41,7 +41,7 @@ export const usePageDataStore = defineStore({
                 directive: 'You are now chatting with Habahaba. Type your message here...',
                 model: 'gpt2',
                 maxResponseLength: 100,
-                creativity: 0.5,
+                creativity: 1,
                 displayClosureMessage: false,
             } as PageData,
             {
@@ -54,7 +54,7 @@ export const usePageDataStore = defineStore({
                 directive: 'You are now chatting with Salesforce. You are to ask me anything related to Salesforce. Type your message here...',
                 model: 'gpt2',
                 maxResponseLength: 100,
-                creativity: 0.5,
+                creativity: 8,
                 displayClosureMessage: false,
             } as PageData,
             {
@@ -67,7 +67,7 @@ export const usePageDataStore = defineStore({
                 directive: 'Hello! You are now chatting with Google. Type your message here...',
                 model: 'gpt3',
                 maxResponseLength: 100,
-                creativity: 0.5,
+                creativity: 4,
                 displayClosureMessage: true,
             } as PageData,
             {
@@ -80,7 +80,7 @@ export const usePageDataStore = defineStore({
                 directive: 'You are now chatting with Facebook. Type your message here...',
                 model: 'gpt2',
                 maxResponseLength: 100,
-                creativity: 0.5,
+                creativity: 6,
                 displayClosureMessage: false,
             } as PageData,
         ],
