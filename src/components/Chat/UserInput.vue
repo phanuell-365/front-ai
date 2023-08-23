@@ -25,7 +25,7 @@ const maxHeight = ref(200);
 
 watch(userInput, () => {
   nextTick(() => {
-    adjustTextareaHeight(textareaRef.value);
+    adjustTextareaHeight(textareaRef.value as HTMLTextAreaElement);
   });
 });
 

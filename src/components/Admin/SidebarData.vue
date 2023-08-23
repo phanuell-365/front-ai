@@ -3,6 +3,7 @@ import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {usePageDataStore} from "@/router/admin/page-data.ts";
 import anime from "animejs";
 import MyListBox from "@/components/form/MyListBox.vue";
+import {useHomeStore} from "@/stores/home";
 
 interface PageData {
   chatbotName: string;
@@ -18,8 +19,16 @@ interface PageData {
   displayClosureMessage: boolean;
 }
 
+interface Page {
+  id: string;
+  name: string;
+  path: string;
+  title: string;
+}
+
 interface SidebarDataProps {
   pageData: PageData;
+  currentPage: Page;
   isOpen: boolean;
 }
 
@@ -44,6 +53,13 @@ const greetingTypes = [
     value: 'static',
   },
 ] as Option[];
+
+const thisPage = reactive<Page>({
+  id: props.currentPage.id,
+  name: props.currentPage.name,
+  path: props.currentPage.path,
+  title: props.currentPage.title,
+});
 
 const thisPageDataItem = reactive<PageData>({
   chatbotName: activePageDataItem.value.chatbotName,
@@ -123,7 +139,22 @@ const emit = defineEmits<{
   (event: 'close-sidebar-data'): void;
 }>();
 
-const activeSidebarDataTab = ref('content');
+const sidebarTabs = ref([
+  {
+    name: 'Options',
+    value: 'options',
+  },
+  {
+    name: 'Content',
+    value: 'content',
+  },
+  {
+    name: 'Data',
+    value: 'data',
+  },
+] as Option[]);
+
+const activeSidebarDataTab = ref('options');
 
 function toggleTab(tab: string) {
   if (activeSidebarDataTab.value !== tab) {
@@ -170,6 +201,9 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
     thisPageDataItem.staticGreeting = newVal;
   }
 });
+
+const pageUrlInputHasFocus = ref(false);
+
 </script>
 
 <template>
@@ -193,13 +227,11 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
           class="tabs flex flex-row font-semibold sticky top-0 z-10 bg-white"
           role="tablist"
       >
-        <li role="presentation" class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14" @click="toggleTab('content')"
-            :class="activeSidebarDataTab === 'content' ? 'tab-active border-primary' : ''">
-          <p>Content</p>
-        </li>
-        <li role="presentation" class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14" @click="toggleTab('data')"
-            :class="activeSidebarDataTab === 'data' ? 'tab-active border-primary' : ''">
-          <p>Data</p>
+        <li v-for="(tab) in sidebarTabs" :key="tab.name" role="presentation"
+            class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14"
+            :class="activeSidebarDataTab === tab.value ? 'tab-active border-primary' : ''"
+            @click="toggleTab(tab.value)">
+          <p>{{ tab.name }}</p>
         </li>
       </ul>
 
@@ -207,7 +239,74 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
       <div class="pt-5 pb-10">
         <Transition name="slide" mode="out-in">
           <div
-              v-if="activeSidebarDataTab === 'content'"
+              v-if="activeSidebarDataTab === 'options'"
+              class="tab-options px-5 grow h-full"
+              ref="dataRef" id="data-tab"
+              role="tabpanel"
+              aria-labelledby="tabs-profile-tab02">
+            <div class="grid grid-cols-1 gap-3 py-3">
+              <div>
+                <label class="label text-xs font-semibold" for="page-name">
+                  Page Name
+                </label>
+                <input
+                    id="page-name"
+                    v-model="thisPage.name"
+                    type="text" placeholder="Page Name" class="input input-bordered input-primary w-full text-sm"/>
+                <small class="text-xs text-gray-500">This is the name that will appear on the sidebar, and on the
+                  navigation bar. It should be short and descriptive. </small>
+              </div>
+              <div>
+                <label class="label text-xs font-semibold" for="meta-title">
+                  Meta Title
+                </label>
+                <input
+                    id="meta-title"
+                    v-model="thisPage.title"
+                    type="text" placeholder="Meta Title" class="input input-bordered input-primary w-full text-sm"/>
+                <small class="text-xs text-gray-500">This is the title that will appear on the browser tab.</small>
+              </div>
+              <div>
+                <label class="label text-xs font-semibold" for="page-url">
+                  Page Url
+                </label>
+                <div :class="[pageUrlInputHasFocus ? 'ring-2 ring-primary ring-offset-2' : '']"
+                     class="rounded-md border border-primary flex flex-col">
+                  <div class="bg-stone-200 text-black px-2 py-1 rounded-t-md">
+                  <span class="text-xs">
+                    https://mydomain.com/
+                  </span>
+                  </div>
+                  <input
+                      id="page-url"
+                      @focus="pageUrlInputHasFocus = true" @blur="pageUrlInputHasFocus = false"
+                      v-model="thisPage.path"
+                      type="text" placeholder="page-url"
+                      class="bg-transparent focus:outline-none input w-full text-sm"/>
+                </div>
+                <small class="text-xs text-gray-500">
+                  This is the url that will be used to access the chatbot page. For example, if you enter "about" here,
+                  the chatbot page will be accessible at https://mydomain.com/about
+                </small>
+              </div>
+              <div
+                  class="sticky bottom-0 z-30 h-24 flex flex-col justify-between items-center w-full">
+                <div class="py-3 bg-gradient-to-t from-white block basis-2/12 w-full"></div>
+                <div
+                    class="bg-white w-full px-4 md:px-6 basis-10/12 flex flex-row justify-between items-center space-x-4">
+                  <button class="btn btn-primary btn-sm md:btn-md normal-case text-xs md:text-sm basis-1/2">
+                    Save Changes
+                  </button>
+
+                  <button class="btn btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm basis-1/2">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+              v-else-if="activeSidebarDataTab === 'content'"
               class="tab-content px-5 grow h-full"
               role="tabpanel"
               ref="contentRef" id="content-tab"
@@ -221,6 +320,7 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
                     id="chatbot-name"
                     v-model="thisPageDataItem.chatbotName"
                     type="text" placeholder="Chatbot Name" class="input input-bordered input-primary w-full text-sm"/>
+                <small class="text-xs text-gray-500">This is the name that will appear on the chatbot bubble.</small>
                 <div>
                 </div>
               </div>
@@ -230,6 +330,8 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
                 </label>
                 <MyListBox :options="greetingTypes" @change="onGreetingTypeChange"
                            :selected-value="thisPageDataItem.greetingType"/>
+                <small class="text-xs text-gray-500">This is the greeting that will appear on the chatbot
+                  bubble.</small>
               </div>
               <div class="">
                 <textarea
@@ -244,6 +346,7 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
                     id="chatbot-name"
                     v-model="thisPageDataItem.promptPlaceholder"
                     type="text" placeholder="Chatbot Name" class="input input-bordered input-primary w-full text-sm"/>
+                <small class="text-xs text-gray-500">This is the placeholder that will appear on the user input.</small>
               </div>
               <hr class="my-3"/>
               <div>
@@ -253,6 +356,9 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
                 <textarea
                     v-model="thisPageDataItem.directive"
                     class="textarea textarea-primary w-full resize-y" placeholder="Add new directive..."></textarea>
+                <small class="text-xs text-gray-500">
+                  This is the directive that will be used to generate the chatbot's response.
+                </small>
               </div>
               <div>
                 <label class="label text-xs font-semibold" for="creativity">
@@ -275,12 +381,24 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
                     Creative
                   </span>
                 </div>
+                <small class="text-xs text-gray-500">
+                  This is the creativity level that will be used to generate the chatbot's response.
+                </small>
+              </div>
+              <div
+                  class="sticky bottom-0 z-30 h-24 flex flex-col justify-between items-center w-full">
+                <div class="py-3 bg-gradient-to-t from-white block basis-2/12 w-full"></div>
+                <div class="bg-white w-full px-4 md:px-6 basis-10/12">
+                  <button class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full">
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </div>
           <div
-              v-else
-              class="tab-content"
+              v-else-if="activeSidebarDataTab === 'data'"
+              class="tab-data"
               ref="dataRef" id="data-tab"
               role="tabpanel"
               aria-labelledby="tabs-profile-tab02">

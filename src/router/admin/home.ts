@@ -8,26 +8,33 @@ export const useAdminHomeStore = defineStore({
                 id: 1,
                 name: 'Habahaba',
                 path: 'habahaba',
+                title: 'Habahaba'
             },
             {
                 id: 2,
                 name: 'Salesforce',
                 path: 'salesforce',
+                title: 'Salesforce'
             },
             {
                 id: 3,
                 name: 'Google',
                 path: 'google',
+                title: 'Google'
             },
             {
                 id: 4,
                 name: 'Facebook',
                 path: 'facebook',
+                title: 'Facebook'
             }
         ],
     }),
     getters: {
         getPages: (state) => state.pages,
+        getPageByPath: (state) => (path: string) => {
+            return state.pages.find(page => page.path === path);
+        }
     },
     actions: {
         addPage(page: any) {
