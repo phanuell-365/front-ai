@@ -8,7 +8,6 @@ import {usePageDataStore} from "@/router/admin/page-data.ts";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
-import {useHomeStore} from "@/stores/home";
 import {useAdminHomeStore} from "@/router/admin/home.ts";
 
 onMounted(() => {
@@ -100,11 +99,13 @@ const sidebarDataChanged = ref(false);
 const handleSidebarDataChanged = (value: boolean) => {
   sidebarDataChanged.value = value;
 }
+
+const url = ref(`${import.meta.env.VITE_APP_BASE_URL}/chat/${tab.value.to}`)
 </script>
 
 <template>
   <div class="flex-1 overflow-hidden">
-    <LinkBar :name="tab.name" :url="`mydomain.com/${tab.to}`"/>
+    <LinkBar :name="tab.name" :url="url" :text="`chat/${tab.to}`"/>
     <div class="relative flex flex-col h-full">
       <div class="flex-1 overflow-auto h-screen">
         <SidebarData :page-data="pageData" :is-open="isSidebarDataOpen" @closeSidebarData="onCloseSidebarData"
@@ -123,6 +124,7 @@ const handleSidebarDataChanged = (value: boolean) => {
             <UserBubble :user-message="`What kind of nonsense is this?`" user-name="John Doe"/>
             <ChatbotBubble :chatbot-name="chatbotName"
                            :key="2"
+                           is-copyable
                            :chatbot-message="`Sorry! I can't help you with that at the moment. Please try again later.`"/>
 
             <UserInput :prompt-placeholder="promptPlaceholder" user-input="" disabled/>

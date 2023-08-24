@@ -1,6 +1,7 @@
 <script setup lang="ts">
 interface LinkBar {
   name: string;
+  text: string;
   url: string;
 }
 
@@ -19,7 +20,7 @@ const props = defineProps<LinkBar>();
 
         <a :href="props.url" target="_blank"
            class="text-xs text-neutral-400 ml-2 hover:text-neutral-600 hover:underline">
-          {{ props.url }}
+          {{ props.text }}
         </a>
       </div>
     </div>

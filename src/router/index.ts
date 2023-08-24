@@ -25,9 +25,26 @@ const routes = [
                 path: ":page",
                 name: "DynamicPage",
                 component: () => import("../views/Admin/DynamicPage.vue"),
-                props: (route: any) => {
+                props: (route: object) => {
                     return {
                         page: route.params.page,
+                    };
+                }
+            },
+        ],
+    },
+    {
+        path: "/chat",
+        name: "Chat",
+        component: () => import("../views/ChatPage.vue"),
+        children: [
+            {
+                path: ":chatbotId",
+                name: "ChatbotPage",
+                component: () => import("../views/Chats/ChatbotPage.vue"),
+                props: (route: object) => {
+                    return {
+                        chatbotId: route.params.chatbotId,
                     };
                 }
             },

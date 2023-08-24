@@ -295,6 +295,7 @@ watch(() => thisPageDataItem.promptPlaceholder, (newVal) => {
   emit('prompt-placeholder-change', newVal);
 });
 
+const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
 </script>
 
 <template>
@@ -365,7 +366,7 @@ watch(() => thisPageDataItem.promptPlaceholder, (newVal) => {
                      class="rounded-md border border-primary flex flex-col">
                   <div class="bg-stone-200 text-black px-2 py-1 rounded-t-md">
                   <span class="text-xs">
-                    https://mydomain.com/
+                    {{ baseUrl }}/chat/
                   </span>
                   </div>
                   <input
