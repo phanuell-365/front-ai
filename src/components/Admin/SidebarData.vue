@@ -3,7 +3,6 @@ import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {usePageDataStore} from "@/router/admin/page-data.ts";
 import anime from "animejs";
 import MyListBox from "@/components/form/MyListBox.vue";
-import {useHomeStore} from "@/stores/home";
 
 interface PageData {
   chatbotName: string;
@@ -61,6 +60,32 @@ const thisPage = reactive<Page>({
   title: props.currentPage.title,
 });
 
+const pageOrgClone = reactive<Page>({
+  id: props.currentPage.id,
+  name: props.currentPage.name,
+  path: props.currentPage.path,
+  title: props.currentPage.title,
+});
+
+const savePageBtnIsActive = ref(false);
+
+// watch for changes in the page data item and activate save button
+watch(() => thisPage, (newVal) => {
+  if (JSON.stringify(newVal) !== JSON.stringify(pageOrgClone)) {
+    // activate save button
+    console.log('activate save button');
+    savePageBtnIsActive.value = true;
+
+    emit('sidebar-data-changed', true);
+  } else {
+    // deactivate save button
+    console.log('deactivate save button');
+    savePageBtnIsActive.value = false;
+
+    emit('sidebar-data-changed', false);
+  }
+}, {deep: true});
+
 const thisPageDataItem = reactive<PageData>({
   chatbotName: activePageDataItem.value.chatbotName,
   chatbotId: activePageDataItem.value.chatbotId,
@@ -74,6 +99,39 @@ const thisPageDataItem = reactive<PageData>({
   creativity: activePageDataItem.value.creativity,
   displayClosureMessage: activePageDataItem.value.displayClosureMessage,
 });
+
+const pageDataItemOrgClone = reactive<PageData>({
+  chatbotName: activePageDataItem.value.chatbotName,
+  chatbotId: activePageDataItem.value.chatbotId,
+  greetingType: activePageDataItem.value.greetingType,
+  staticGreeting: activePageDataItem.value.staticGreeting,
+  generatedGreeting: activePageDataItem.value.generatedGreeting,
+  promptPlaceholder: activePageDataItem.value.promptPlaceholder,
+  directive: activePageDataItem.value.directive,
+  model: activePageDataItem.value.model,
+  maxResponseLength: activePageDataItem.value.maxResponseLength,
+  creativity: activePageDataItem.value.creativity,
+  displayClosureMessage: activePageDataItem.value.displayClosureMessage,
+});
+
+const savePageDataBtnIsActive = ref(false);
+
+// watch for changes in the page data item and activate save button
+watch(() => thisPageDataItem, (newVal) => {
+  if (JSON.stringify(newVal) !== JSON.stringify(pageDataItemOrgClone)) {
+    // activate save button
+    console.log('activate save button');
+    savePageDataBtnIsActive.value = true;
+
+    emit('sidebar-data-changed', true);
+  } else {
+    // deactivate save button
+    console.log('deactivate save button');
+    savePageDataBtnIsActive.value = false;
+
+    emit('sidebar-data-changed', false);
+  }
+}, {deep: true});
 
 onMounted(() => {
   thisPageDataItem.chatbotName = activePageDataItem.value.chatbotName;
@@ -137,6 +195,12 @@ onMounted(() => {
 
 const emit = defineEmits<{
   (event: 'close-sidebar-data'): void;
+  (event: 'save-page-options'): void;
+  (event: 'save-page-content'): void;
+  (event: 'chatbot-name-change', value: string): void;
+  (event: 'greeting-change', value: string): void;
+  (event: 'prompt-placeholder-change', value: string): void;
+  (event: 'sidebar-data-changed', value: boolean): void;
 }>();
 
 const sidebarTabs = ref([
@@ -187,11 +251,11 @@ const onGreetingTypeChange = (option: Option) => {
   thisPageDataItem.greetingType = option.value as 'static' | 'generated';
 
   if (option.value === 'static') {
-    newGreetingTextAreaText.value = activePageDataItem.value.staticGreeting;
+    newGreetingTextAreaText.value = thisPageDataItem.staticGreeting;
   }
 
   if (option.value === 'generated') {
-    const newName = activePageDataItem.value.chatbotName[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
+    const newName = thisPageDataItem.chatbotName[0].toUpperCase() + thisPageDataItem.chatbotName.slice(1);
     newGreetingTextAreaText.value = `Say I am ${newName}, how can I help you today?`;
   }
 }
@@ -203,6 +267,33 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
 });
 
 const pageUrlInputHasFocus = ref(false);
+
+const onSavePageData = () => {
+  emit('save-page-options');
+};
+
+const onSavePageOptions = () => {
+  emit('save-page-content');
+};
+
+// emit events for the parent component
+watch(() => thisPageDataItem.chatbotName, (newVal) => {
+  emit('chatbot-name-change', newVal);
+
+
+  if (thisPageDataItem.greetingType === 'generated') {
+    // const newName = newVal[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
+    newGreetingTextAreaText.value = `Say I am ${newVal}, how can I help you today?`;
+  }
+});
+
+watch(() => newGreetingTextAreaText.value, (newVal) => {
+  emit('greeting-change', newVal);
+});
+
+watch(() => thisPageDataItem.promptPlaceholder, (newVal) => {
+  emit('prompt-placeholder-change', newVal);
+});
 
 </script>
 
@@ -294,7 +385,9 @@ const pageUrlInputHasFocus = ref(false);
                 <div class="py-3 bg-gradient-to-t from-white block basis-2/12 w-full"></div>
                 <div
                     class="bg-white w-full px-4 md:px-6 basis-10/12 flex flex-row justify-between items-center space-x-4">
-                  <button class="btn btn-primary btn-sm md:btn-md normal-case text-xs md:text-sm basis-1/2">
+                  <button :disabled="!savePageBtnIsActive"
+                      class="btn btn-primary btn-sm md:btn-md normal-case text-xs md:text-sm basis-1/2"
+                          @click="onSavePageOptions">
                     Save Changes
                   </button>
 
@@ -389,7 +482,10 @@ const pageUrlInputHasFocus = ref(false);
                   class="sticky bottom-0 z-30 h-24 flex flex-col justify-between items-center w-full">
                 <div class="py-3 bg-gradient-to-t from-white block basis-2/12 w-full"></div>
                 <div class="bg-white w-full px-4 md:px-6 basis-10/12">
-                  <button class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full">
+                  <button
+                      :disabled="!savePageDataBtnIsActive"
+                      class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full"
+                      @click="onSavePageData">
                     Save Changes
                   </button>
                 </div>
@@ -398,11 +494,22 @@ const pageUrlInputHasFocus = ref(false);
           </div>
           <div
               v-else-if="activeSidebarDataTab === 'data'"
-              class="tab-data"
+              class="tab-data px-5 grow h-full"
               ref="dataRef" id="data-tab"
               role="tabpanel"
               aria-labelledby="tabs-profile-tab02">
-            Tab 2 content
+            <div class="grid grid-cols-1 gap-3 py-3">
+              <!-- This part if for uploading data files -->
+
+              <div class="flex flex-col rounded bg-slate-200 p-3 w-full">
+                <label class="label text-sm font-semibold text-center" for="data-file">
+                  Connect a custom data source
+                </label>
+                <input type="file" class="file-input file-input-ghost w-full max-w-xs" multiple id="data-file"/>
+                <small class="text-xs text-gray-500">This is the data file that will be used to train the
+                  chatbot.</small>
+              </div>
+            </div>
           </div>
         </Transition>
       </div>
