@@ -1,9 +1,8 @@
 import {defineStore} from "pinia";
 
-interface Tab {
+export interface Tab {
     name: string;
     title: string;
-    icon: string;
     to: string;
     active: boolean;
 }
@@ -14,9 +13,17 @@ export const useTabsStore = defineStore({
         tabs: [
             {
                 name: 'Home',
-                title: 'home',
+                title: 'Home',
                 icon: 'home',
                 to: 'home',
+                active: false,
+            },
+            // Settings
+            {
+                name: 'Settings',
+                title: 'Settings',
+                icon: 'home',
+                to: 'settings',
                 active: false,
             },
             // Habahaba
@@ -153,8 +160,14 @@ export const useTabsStore = defineStore({
                 // remove the tab from the tabs
                 this.tabs = this.tabs.filter((tab) => tab.name !== tab.name);
 
-                // set the active tab
-                this.activeTab = this.openTabs[this.openTabs.length - 1];
+                // check if only the home and settings tabs are left
+                if (this.openTabs.length === 2) {
+                    // set the home tab to active
+                    this.activeTab = this.openTabs[0];
+                } else {
+                    // set the active tab
+                    this.activeTab = this.openTabs[this.openTabs.length - 1];
+                }
 
                 // set the open tabs to local storage
                 localStorage.setItem('openTabs', JSON.stringify(this.openTabs));

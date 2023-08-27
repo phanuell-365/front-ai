@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-blue-50 relative">
+  <div class="flex flex-col h-screen bg-requested-color relative">
     <RouterView #default="{ Component, route }">
       <component :is="Component" :key="route.fullPath"/>
     </RouterView>

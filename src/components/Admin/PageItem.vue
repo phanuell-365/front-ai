@@ -1,7 +1,6 @@
-<script setup lang="ts">
-import {onMounted} from "vue";
+<script lang="ts" setup>
 import {useRouter} from "vue-router";
-import {useTabsStore} from "@/router/admin/tabs.ts";
+import {useTabsStore} from "@/stores/admin/tabs.ts";
 
 interface PageItem {
   name: string;
@@ -23,6 +22,9 @@ const onClick = () => {
 
     if (props.page.name === "Home") {
       router.push({name: "AdminHome"});
+      return;
+    } else if (props.page.name === "Settings") {
+      router.push({name: "AdminSettingsTab", params: {tab: "general"}});
       return;
     }
 
@@ -47,12 +49,12 @@ const dropdownItems = [
   <div
       class="card card-compact shadow-lg rounded-lg overflow-hidden hover:shadow-2xl hover:border hover:border-1 transition duration-300 ease-in-out h-48 md:h-52">
     <div
-        @click="onClick"
-        class="flex items-center justify-center bg-sky-100 h-40">
+        class="flex items-center justify-center bg-sky-100 h-40"
+        @click="onClick">
       <img
+          alt="template-image"
           class="rounded-t-lg w-20 drop-shadow-lg"
-          src="@/assets/imgs/template.png"
-          alt="template-image"/>
+          src="@/assets/imgs/template.png"/>
     </div>
     <div class="py-3 px-4 flex flex-row w-full justify-between items-center">
       <h6
@@ -60,14 +62,14 @@ const dropdownItems = [
         {{ props.page.name }}
       </h6>
       <div class="dropdown dropdown-top dropdown-end">
-        <label tabindex="0" class="btn btn-circle btn-xs btn-ghost m-1">
+        <label class="btn btn-circle btn-xs btn-ghost m-1" tabindex="0">
         <span
             aria-expanded="false"
             class="material-icons-round text-gray-400">
             more_vert
         </span>
         </label>
-        <ul tabindex="0" class="z-30 shadow menu dropdown-content bg-base-100 rounded-box w-24">
+        <ul class="z-30 shadow menu dropdown-content bg-base-100 rounded-box w-24" tabindex="0">
           <li v-for="(item) in dropdownItems" :key="item.name">
             <a
                 class="menu-item text-xs"

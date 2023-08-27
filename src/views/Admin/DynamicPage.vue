@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import {useTabsStore} from "@/router/admin/tabs.ts";
+import {useTabsStore} from "@/stores/admin/tabs.ts";
 import {onMounted, ref, watch} from "vue";
 import LinkBar from "@/components/Admin/LinkBar.vue";
 import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
 import SidebarData from "@/components/Admin/SidebarData.vue";
-import {usePageDataStore} from "@/router/admin/page-data.ts";
+import {usePageDataStore} from "@/stores/admin/page-data.ts";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
-import {useAdminHomeStore} from "@/router/admin/home.ts";
+import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 onMounted(() => {
   pageDataStore.setActivePageDataItem(page.value);

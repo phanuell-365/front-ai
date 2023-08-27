@@ -17,9 +17,30 @@ const routes = [
         component: () => import("../views/HomeAdmin.vue"),
         children: [
             {
+                path: "settings",
+                name: "AdminSettings",
+                component: () => import("../views/Admin/SettingsPage.vue"),
+                children: [
+                    {
+                        path: "home",
+                        redirect: "admin/settings/general",
+                    },
+                    {
+                        path: ":tab",
+                        name: "AdminSettingsTab",
+                        component: () => import("../views/Admin/SettingsTab.vue"),
+                        props: (route: object) => {
+                            return {
+                                tab: route.params.tab,
+                            };
+                        }
+                    }
+                ]
+            },
+            {
                 path: "",
                 name: "AdminHome",
-                component: () => import("../views/Admin/Home.vue"),
+                component: () => import("../views/Admin/HomePage.vue"),
             },
             {
                 path: ":page",
@@ -29,7 +50,7 @@ const routes = [
                     return {
                         page: route.params.page,
                     };
-                }
+                },
             },
         ],
     },

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import {onMounted} from "vue";
-import {useAdminHomeStore} from "@/router/admin/home.ts";
+import {useAdminHomeStore} from "@/stores/admin/home.ts";
 import PageItem from "@/components/Admin/PageItem.vue";
-import {useTabsStore} from "@/router/admin/tabs.ts";
+import {useTabsStore} from "@/stores/admin/tabs.ts";
 
 onMounted(() => {
   tabsStore.setActiveTabByPageName('home');

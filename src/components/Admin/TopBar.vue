@@ -1,13 +1,22 @@
-<script setup lang="ts">
-import {useTabsStore} from "@/router/admin/tabs.ts";
+<script lang="ts" setup>
+import {Tab, useTabsStore} from "@/stores/admin/tabs.ts";
 import BarItem from "@/components/Admin/BarItem.vue";
+import {onUpdated, ref} from "vue";
 
 const tabsStore = useTabsStore();
 
+const settingsTab = ref();
+
+settingsTab.value = tabsStore.getTabs.find((tab: Tab) => tab.name === "Settings");
+
+onUpdated(() => {
+  settingsTab.value = tabsStore.getOpenTabs.find((tab: Tab) => tab.name === "Settings");
+});
 </script>
 
 <template>
   <div class="z-30 bg-neutral-100 flex flex-row w-full">
+    <div class="border-b p-2"></div>
     <div class="px-3 py-2 flex flex-row items-center justify-start bg-neutral-100 border-y">
       <h6 class="text-base font-semibold">
         M-Zawadi
@@ -16,8 +25,10 @@ const tabsStore = useTabsStore();
     <!-- Let's have the first default tab -->
     <!--    <BarItem title="Home" icon="home" to="home" name="Home" active/>-->
     <!-- Let's loop through the opened tabs -->
-    <BarItem v-for="(tab) in tabsStore.getOpenTabs" :key="tab.name" :title="tab.title" :icon="tab.icon" :to="tab.to"
-             :active="tab.active" :name="tab.name"/>
+    <template v-for="(tab) in tabsStore.getOpenTabs">
+      <BarItem v-if="tab.name !== 'Settings'" :key="tab.name" :active="tab.active" :icon="tab.icon" :name="tab.name"
+               :title="tab.title" :to="tab.to"/>
+    </template>
     <div class="flex flex-row items-center justify-start bg-neutral-100 grow border-y border-l">
       <div class="p-3 flex items-center justify-center">
         <button class="btn btn-xs btn-square btn-ghost">
@@ -25,7 +36,8 @@ const tabsStore = useTabsStore();
         </button>
       </div>
     </div>
-
+    <BarItem :active="settingsTab.active" :name="settingsTab.name" :title="settingsTab.title" :to="settingsTab.to"/>
+    <div class="border-l border-b p-2"></div>
   </div>
 </template>
 

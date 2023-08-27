@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
-import {usePageDataStore} from "@/router/admin/page-data.ts";
+import {usePageDataStore} from "@/stores/admin/page-data.ts";
 import anime from "animejs";
 import MyListBox from "@/components/form/MyListBox.vue";
 
