@@ -2,8 +2,10 @@
 import {Tab, useTabsStore} from "@/stores/admin/tabs.ts";
 import BarItem from "@/components/Admin/BarItem.vue";
 import {onUpdated, ref} from "vue";
+import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 const tabsStore = useTabsStore();
+const homeStore = useAdminHomeStore();
 
 const settingsTab = ref();
 
@@ -12,6 +14,10 @@ settingsTab.value = tabsStore.getTabs.find((tab: Tab) => tab.name === "Settings"
 onUpdated(() => {
   settingsTab.value = tabsStore.getOpenTabs.find((tab: Tab) => tab.name === "Settings");
 });
+
+const openModal = () => {
+  homeStore.openCreateDialog();
+}
 </script>
 
 <template>
@@ -31,7 +37,7 @@ onUpdated(() => {
     </template>
     <div class="flex flex-row items-center justify-start bg-neutral-100 grow border-y border-l">
       <div class="p-3 flex items-center justify-center">
-        <button class="btn btn-xs btn-square btn-ghost">
+        <button class="btn btn-xs btn-square btn-ghost" @click="openModal">
           <i class="material-icons text-neutral-400 !text-base">add</i>
         </button>
       </div>

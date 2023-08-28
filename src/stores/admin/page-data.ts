@@ -18,14 +18,14 @@ export const usePageDataStore = defineStore({
     id: 'pageData',
     state: () => ({
         newItem: {
-            chatbotName: '',
-            chatbotId: '',
+            chatbotName: 'New Page',
+            chatbotId: 'new-page',
             greetingType: 'static',
-            staticGreeting: '',
-            generatedGreeting: '',
-            promptPlaceholder: '',
-            directive: '',
-            model: '',
+            staticGreeting: 'Hello, how can I help you?',
+            generatedGreeting: 'Hello New Page! How can I help you?',
+            promptPlaceholder: 'Type your message here...',
+            directive: 'You are now chatting with New Page. Type your message here...',
+            model: 'gpt2',
             maxResponseLength: 0,
             creativity: 0,
             displayClosureMessage: false,
@@ -95,6 +95,31 @@ export const usePageDataStore = defineStore({
         getActivePageDataItem: (state) => state.activePageDataItem as PageData,
     },
     actions: {
+        createNewPageDataItem(pageName: string) {
+            // let's check first if the page name is already taken
+            const pageDataItem = this.pageDataItems.find(pageDataItem => pageDataItem.chatbotName === pageName);
+
+            if (pageDataItem) {
+                // if the page name is already taken, we'll create a new chatbot id
+                // by adding the word "copy" to the page name
+                pageName = `${pageName} copy`;
+            }
+
+            // create a new page data item
+            const newPageDataItem = {
+                ...this.newItem,
+                chatbotName: pageName,
+                chatbotId: pageName.toLowerCase().replace(' ', '-'),
+            } as PageData;
+
+            // add the new page data item to the list
+            this.addPageDataItem(newPageDataItem);
+
+            return newPageDataItem;
+
+            // set the active page data item
+            // this.setActivePageDataItem(newPageDataItem.chatbotId);
+        },
         addPageDataItem(pageDataItem: PageData) {
             this.pageDataItems.push(pageDataItem);
         },

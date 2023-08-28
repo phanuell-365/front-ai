@@ -1,4 +1,5 @@
 import {defineStore} from "pinia";
+import {PageData} from "./page-data.ts";
 
 export const useAdminHomeStore = defineStore({
     id: 'adminHome',
@@ -29,6 +30,9 @@ export const useAdminHomeStore = defineStore({
                 title: 'Facebook'
             }
         ],
+        createDialog: {
+            isOpen: false,
+        },
     }),
     getters: {
         getPages: (state) => state.pages,
@@ -37,14 +41,48 @@ export const useAdminHomeStore = defineStore({
         }
     },
     actions: {
+        createPageFromData(pageData: PageData) {
+            // let's check first if the page name is already taken
+            const pageNameExists = this.pages.some(page => page.name === pageData.chatbotName);
+
+            if (pageNameExists) {
+                // if the page name is already taken, we'll just append the word "copy" to the page name
+                pageData.chatbotName = `${pageData.chatbotName} copy`;
+            }
+            const page = {
+                id: this.pages.length + 1,
+                name: pageData.chatbotName,
+                path: pageData.chatbotId.toLowerCase().replace(' ', '-'),
+                title: pageData.chatbotName,
+            };
+            this.pages.push(page);
+
+            return page;
+        },
         addPage(page: any) {
             this.pages.push(page);
+        },
+        async fetchPages() {
+            try {
+                const response = await fetch('http://35.179.94.88/admin/test', {});
+                const pages = await response.json();
+                console.log(pages)
+                // this.pages = pages;
+            } catch (error) {
+                console.error(error)
+            }
         },
         removePage(page: any) {
             this.pages.splice(this.pages.indexOf(page), 1);
         },
         updatePage(page: any) {
             this.pages[this.pages.indexOf(page)] = page;
+        },
+        openCreateDialog() {
+            this.createDialog.isOpen = true;
+        },
+        closeCreateDialog() {
+            this.createDialog.isOpen = false;
         }
     }
 });

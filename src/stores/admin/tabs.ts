@@ -1,4 +1,5 @@
 import {defineStore} from "pinia";
+import {PageData} from "./page-data.ts";
 
 export interface Tab {
     name: string;
@@ -14,7 +15,6 @@ export const useTabsStore = defineStore({
             {
                 name: 'Home',
                 title: 'Home',
-                icon: 'home',
                 to: 'home',
                 active: false,
             },
@@ -22,7 +22,6 @@ export const useTabsStore = defineStore({
             {
                 name: 'Settings',
                 title: 'Settings',
-                icon: 'home',
                 to: 'settings',
                 active: false,
             },
@@ -30,7 +29,6 @@ export const useTabsStore = defineStore({
             {
                 name: 'Habahaba',
                 title: 'Habahaba',
-                icon: 'home',
                 to: 'habahaba',
                 active: false,
             },
@@ -38,7 +36,6 @@ export const useTabsStore = defineStore({
             {
                 name: 'Salesforce',
                 title: 'Salesforce',
-                icon: 'home',
                 to: 'salesforce',
                 active: false,
             },
@@ -46,7 +43,6 @@ export const useTabsStore = defineStore({
             {
                 name: 'Google',
                 title: 'Google',
-                icon: 'home',
                 to: 'google',
                 active: false,
             },
@@ -54,7 +50,6 @@ export const useTabsStore = defineStore({
             {
                 name: 'Facebook',
                 title: 'Facebook',
-                icon: 'home',
                 to: 'facebook',
                 active: false,
             }
@@ -69,8 +64,36 @@ export const useTabsStore = defineStore({
         getTabByTo: (state) => (to: string) => state.tabs.find((tab) => tab.to === to),
     },
     actions: {
+        createTabFromPageData(pageData: PageData) {
+            // let's check first if the page name is already taken
+            const tabNameExists = this.tabs.some((tab) => tab.name === pageData.chatbotId);
+
+            if (tabNameExists) {
+                // if the page name is already taken, we'll just append the word "copy" to the page name
+                pageData.chatbotId = `${pageData.chatbotId} copy`;
+            }
+            // create a new tab
+            const tab = {
+                name: pageData.chatbotId,
+                title: pageData.chatbotName,
+                to: pageData.chatbotId.toLowerCase().replace(' ', '-'),
+                active: false,
+            } as Tab;
+
+            // add the tab to the tabs
+            this.addTab(tab);
+
+            // update the local storage
+            localStorage.setItem('tabs', JSON.stringify(this.tabs));
+
+            return tab;
+            // set the active tab
+            // this.setActiveTab(tab.name);
+        },
         addTab(tab: Tab) {
             this.tabs.push(tab);
+
+            console.log('tabs', this.tabs)
         },
         removeTab(tab_name: string) {
             // get the tab by id

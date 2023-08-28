@@ -38,7 +38,7 @@ const settingsTabs = settingsTabStore.getSettingsTabs;
                     :title="item.title" :to="item.to"/>
         </div>
       </aside>
-      <div class="flex-1 overflow-none h-full px-6">
+      <div class="flex-1 overflow-hidden h-full px-6">
         <div class="bg-stone-50 rounded-xl py-5 px-6 flex-1 overflow-auto h-full">
           <RouterView #default="{ Component, route }">
             <Transition mode="out-in" name="fade-away">
