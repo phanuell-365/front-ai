@@ -16,19 +16,24 @@ const router = useRouter();
 const tabsStore = useTabsStore();
 
 const onClick = () => {
-  setTimeout(() => {
-    // activate the tab
-    tabsStore.setActiveTab(props.page.name);
+  setTimeout(async () => {
+    try {
 
-    if (props.page.name === "Home") {
-      router.push({name: "AdminHome"});
-      return;
-    } else if (props.page.name === "Settings") {
-      router.push({name: "AdminSettingsTab", params: {tab: "general"}});
-      return;
+      // activate the tab
+      await tabsStore.updateActiveTab(props.page.name);
+
+      if (props.page.name === "Home") {
+        await router.push({name: "AdminHome"});
+        return;
+      } else if (props.page.name === "Settings") {
+        await router.push({name: "AdminSettingsTab", params: {tab: "general"}});
+        return;
+      }
+
+      await router.push({name: "DynamicPage", params: {page: props.page.path}});
+    } catch (e) {
+      console.error(e);
     }
-
-    router.push({name: "DynamicPage", params: {page: props.page.path}});
   }, 300);
 };
 
@@ -47,7 +52,7 @@ const dropdownItems = [
 
 <template>
   <div
-      class="card card-compact shadow-lg rounded-lg overflow-hidden hover:shadow-2xl hover:border hover:border-1 transition duration-300 ease-in-out h-48 md:h-52">
+      class="card card-compact shadow rounded-lg overflow-hidden hover:shadow-lg hover:border-2 border-primary transition duration-300 ease-in-out h-48 md:h-52">
     <div
         class="flex items-center justify-center bg-sky-100 h-40"
         @click="onClick">

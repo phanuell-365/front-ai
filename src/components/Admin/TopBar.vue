@@ -9,7 +9,10 @@ const homeStore = useAdminHomeStore();
 
 const settingsTab = ref();
 
+const openTabs = ref<Tab[] | null>();
+
 settingsTab.value = tabsStore.getTabs.find((tab: Tab) => tab.name === "Settings");
+
 
 onUpdated(() => {
   settingsTab.value = tabsStore.getOpenTabs.find((tab: Tab) => tab.name === "Settings");

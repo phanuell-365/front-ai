@@ -27,7 +27,7 @@ const componentsArray = [
 const route = useRoute();
 const settingsTabStore = useSettingsTabStore();
 
-onMounted(() => {
+onMounted(async () => {
   settingsTabStore.setActiveTab(route.params.tab);
 });
 

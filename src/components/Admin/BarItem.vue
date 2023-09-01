@@ -18,22 +18,26 @@ const tabsStore = useTabsStore();
 const onClick = () => {
   // navigate to the tab
 
-  setTimeout(() => {
-    // activate the tab
-    tabsStore.setActiveTab(props.name);
+  setTimeout(async () => {
+    try {
+      // activate the tab
+      await tabsStore.updateActiveTab(props.name);
 
-    if (props.name === "Home") {
-      router.replace({name: "AdminHome"});
+      if (props.name === "Home") {
+        await router.replace({name: "AdminHome"});
+        // router.go(0);
+        return;
+      } else if (props.name === "Settings") {
+        await router.replace({name: "AdminSettingsTab", params: {tab: "General"}});
+        // router.go(0);
+        return;
+      }
+
+      await router.replace({name: "DynamicPage", params: {page: props.to}});
       // router.go(0);
-      return;
-    } else if (props.name === "Settings") {
-      router.replace({name: "AdminSettingsTab", params: {tab: "General"}});
-      // router.go(0);
-      return;
+    } catch (e) {
+      console.log(e);
     }
-
-    router.replace({name: "DynamicPage", params: {page: props.to}});
-    // router.go(0);
   }, 300);
 };
 

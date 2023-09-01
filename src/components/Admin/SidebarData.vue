@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
+<script lang="ts" setup>
+import {onMounted, reactive, ref, watch} from "vue";
 import {usePageDataStore} from "@/stores/admin/page-data.ts";
 import anime from "animejs";
 import MyListBox from "@/components/form/MyListBox.vue";
@@ -73,13 +73,11 @@ const savePageBtnIsActive = ref(false);
 watch(() => thisPage, (newVal) => {
   if (JSON.stringify(newVal) !== JSON.stringify(pageOrgClone)) {
     // activate save button
-    console.log('activate save button');
     savePageBtnIsActive.value = true;
 
     emit('sidebar-data-changed', true);
   } else {
     // deactivate save button
-    console.log('deactivate save button');
     savePageBtnIsActive.value = false;
 
     emit('sidebar-data-changed', false);
@@ -120,13 +118,11 @@ const savePageDataBtnIsActive = ref(false);
 watch(() => thisPageDataItem, (newVal) => {
   if (JSON.stringify(newVal) !== JSON.stringify(pageDataItemOrgClone)) {
     // activate save button
-    console.log('activate save button');
     savePageDataBtnIsActive.value = true;
 
     emit('sidebar-data-changed', true);
   } else {
     // deactivate save button
-    console.log('deactivate save button');
     savePageDataBtnIsActive.value = false;
 
     emit('sidebar-data-changed', false);
@@ -303,8 +299,8 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
   <!-- Let's create an overlay that will cover the entire screen when the sidebar is open -->
   <div
       v-if="props.isOpen"
-      class="absolute inset-0 z-30 bg-black bg-opacity-10 cursor-pointer"
       aria-hidden="true"
+      class="absolute inset-0 z-30 bg-black bg-opacity-10 cursor-pointer"
       @click="emit('close-sidebar-data')"
       @keyup.esc="emit('close-sidebar-data')"
   ></div>
@@ -319,9 +315,9 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
           class="tabs flex flex-row font-semibold sticky top-0 z-10 bg-white"
           role="tablist"
       >
-        <li v-for="(tab) in sidebarTabs" :key="tab.name" role="presentation"
+        <li v-for="(tab) in sidebarTabs" :key="tab.name" :class="activeSidebarDataTab === tab.value ? 'tab-active border-primary' : ''"
             class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14"
-            :class="activeSidebarDataTab === tab.value ? 'tab-active border-primary' : ''"
+            role="presentation"
             @click="toggleTab(tab.value)">
           <p>{{ tab.name }}</p>
         </li>
@@ -329,13 +325,13 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
 
       <!--Tabs content-->
       <div class="pt-5 pb-10">
-        <Transition name="slide" mode="out-in">
+        <Transition mode="out-in" name="slide">
           <div
               v-if="activeSidebarDataTab === 'options'"
+              id="data-tab"
+              ref="dataRef" aria-labelledby="tabs-profile-tab02"
               class="tab-options px-5 grow h-full"
-              ref="dataRef" id="data-tab"
-              role="tabpanel"
-              aria-labelledby="tabs-profile-tab02">
+              role="tabpanel">
             <div class="grid grid-cols-1 gap-3 py-3">
               <div>
                 <label class="label text-xs font-semibold" for="page-name">
@@ -344,7 +340,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <input
                     id="page-name"
                     v-model="thisPage.name"
-                    type="text" placeholder="Page Name" class="input input-bordered input-primary w-full text-sm"/>
+                    class="input input-bordered input-primary w-full text-sm" placeholder="Page Name" type="text"/>
                 <small class="text-xs text-gray-500">This is the name that will appear on the sidebar, and on the
                   navigation bar. It should be short and descriptive. </small>
               </div>
@@ -355,7 +351,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <input
                     id="meta-title"
                     v-model="thisPage.title"
-                    type="text" placeholder="Meta Title" class="input input-bordered input-primary w-full text-sm"/>
+                    class="input input-bordered input-primary w-full text-sm" placeholder="Meta Title" type="text"/>
                 <small class="text-xs text-gray-500">This is the title that will appear on the browser tab.</small>
               </div>
               <div>
@@ -371,10 +367,10 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                   </div>
                   <input
                       id="page-url"
-                      @focus="pageUrlInputHasFocus = true" @blur="pageUrlInputHasFocus = false"
-                      v-model="thisPage.path"
-                      type="text" placeholder="page-url"
-                      class="bg-transparent focus:outline-none input w-full text-sm"/>
+                      v-model="thisPage.path" class="bg-transparent focus:outline-none input w-full text-sm"
+                      placeholder="page-url"
+                      type="text" @blur="pageUrlInputHasFocus = false"
+                      @focus="pageUrlInputHasFocus = true"/>
                 </div>
                 <small class="text-xs text-gray-500">
                   This is the url that will be used to access the chatbot page. For example, if you enter "about" here,
@@ -387,7 +383,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <div
                     class="bg-white w-full px-4 md:px-6 basis-10/12 flex flex-row justify-between items-center space-x-4">
                   <button :disabled="!savePageBtnIsActive"
-                      class="btn btn-primary btn-sm md:btn-md normal-case text-xs md:text-sm basis-1/2"
+                          class="btn btn-primary btn-sm md:btn-md normal-case text-xs md:text-sm basis-1/2"
                           @click="onSavePageOptions">
                     Save Changes
                   </button>
@@ -401,9 +397,9 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
           </div>
           <div
               v-else-if="activeSidebarDataTab === 'content'"
-              class="tab-content px-5 grow h-full"
-              role="tabpanel"
-              ref="contentRef" id="content-tab"
+              id="content-tab"
+              ref="contentRef"
+              class="tab-content px-5 grow h-full" role="tabpanel"
           >
             <div class="grid grid-cols-1 gap-3 py-3">
               <div>
@@ -413,7 +409,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <input
                     id="chatbot-name"
                     v-model="thisPageDataItem.chatbotName"
-                    type="text" placeholder="Chatbot Name" class="input input-bordered input-primary w-full text-sm"/>
+                    class="input input-bordered input-primary w-full text-sm" placeholder="Chatbot Name" type="text"/>
                 <small class="text-xs text-gray-500">This is the name that will appear on the chatbot bubble.</small>
                 <div>
                 </div>
@@ -422,8 +418,8 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <label class="label text-xs font-semibold">
                   Greeting
                 </label>
-                <MyListBox :options="greetingTypes" @change="onGreetingTypeChange"
-                           :selected-value="thisPageDataItem.greetingType"/>
+                <MyListBox :options="greetingTypes" :selected-value="thisPageDataItem.greetingType"
+                           @change="onGreetingTypeChange"/>
                 <small class="text-xs text-gray-500">This is the greeting that will appear on the chatbot
                   bubble.</small>
               </div>
@@ -439,7 +435,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <input
                     id="chatbot-name"
                     v-model="thisPageDataItem.promptPlaceholder"
-                    type="text" placeholder="Chatbot Name" class="input input-bordered input-primary w-full text-sm"/>
+                    class="input input-bordered input-primary w-full text-sm" placeholder="Chatbot Name" type="text"/>
                 <small class="text-xs text-gray-500">This is the placeholder that will appear on the user input.</small>
               </div>
               <hr class="my-3"/>
@@ -458,8 +454,8 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <label class="label text-xs font-semibold" for="creativity">
                   Creativity
                 </label>
-                <input type="range" id="creativity" min="1" max="10" v-model="thisPageDataItem.creativity"
-                       class="range range-xs" step="1"/>
+                <input id="creativity" v-model="thisPageDataItem.creativity" class="range range-xs" max="10" min="1"
+                       step="1" type="range"/>
                 <div class="w-full flex justify-between text-xs px-2">
                   <span>0</span>
                   <span class="text-sm font-semibold">
@@ -495,10 +491,10 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
           </div>
           <div
               v-else-if="activeSidebarDataTab === 'data'"
+              id="data-tab"
+              ref="dataRef" aria-labelledby="tabs-profile-tab02"
               class="tab-data px-5 grow h-full"
-              ref="dataRef" id="data-tab"
-              role="tabpanel"
-              aria-labelledby="tabs-profile-tab02">
+              role="tabpanel">
             <div class="grid grid-cols-1 gap-3 py-3">
               <!-- This part if for uploading data files -->
 
@@ -506,7 +502,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <label class="label text-sm font-semibold text-center" for="data-file">
                   Connect a custom data source
                 </label>
-                <input type="file" class="file-input file-input-ghost w-full max-w-xs" multiple id="data-file"/>
+                <input id="data-file" class="file-input file-input-ghost w-full max-w-xs" multiple type="file"/>
                 <small class="text-xs text-gray-500">This is the data file that will be used to train the
                   chatbot.</small>
               </div>

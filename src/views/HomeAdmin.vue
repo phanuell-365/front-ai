@@ -3,20 +3,20 @@ import TopBar from "@/components/Admin/TopBar.vue";
 import {useAdminHomeStore} from "@/stores/admin/home.ts";
 import {onBeforeMount} from "vue";
 import DialogModal from "@/components/DialogModal.vue";
-import {useRoute, useRouter} from "vue-router";
+import {useRouter} from "vue-router";
 import {useTabsStore} from "@/stores/admin/tabs.ts";
 import {usePageDataStore} from "@/stores/admin/page-data.ts";
 import {useField} from "vee-validate";
 
 onBeforeMount(async () => {
-  await homeStore.fetchPages();
 });
 
-const route = useRoute();
 const router = useRouter();
 const tabsStore = useTabsStore();
 const pageDataStore = usePageDataStore();
 const homeStore = useAdminHomeStore();
+
+await homeStore.fetchPages();
 
 const allPageNames = homeStore.getPages.map((page) => page.name.toLowerCase());
 
@@ -56,6 +56,10 @@ const closeModal = () => {
 
 const createPage = async () => {
   if (pageNameMeta.valid) {
+
+    const page = await homeStore.createNewPage(pageName.value);
+
+    console.log(page);
     const newPage = pageDataStore.createNewPageDataItem(pageName.value);
 
     if (newPage) {
@@ -75,9 +79,8 @@ const createPage = async () => {
           // reset the page name field
           pageName.value = "";
           pageNameMeta.valid = false;
+          pageNameMeta.validated = false;
           pageNameMeta.touched = false;
-          pageNameErrorMessage.value = "";
-
 
           await router.push({name: "DynamicPage", params: {page: page.path}});
         }
@@ -92,7 +95,17 @@ const createPage = async () => {
   <div class="flex flex-col h-screen bg-blue-50">
     <TopBar/>
     <RouterView #default="{ Component, route }">
-      <component :is="Component" :key="route.fullPath"/>
+      <Suspense>
+        <component :is="Component" :key="route.fullPath"/>
+        <template #fallback>
+          <div class="flex flex-col items-center justify-center h-full">
+            <div class="flex flex-col items-center justify-center space-y-2">
+              <div class="w-16 h-16 rounded-full bg-primary-100 animate-pulse"/>
+              <div class="w-16 h-4 rounded-full bg-primary-100 animate-pulse"/>
+            </div>
+          </div>
+        </template>
+      </Suspense>
     </RouterView>
     <Teleport to="body">
       <DialogModal :is-open="homeStore.createDialog.isOpen" @closeModal="closeModal">

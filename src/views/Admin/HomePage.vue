@@ -11,6 +11,8 @@ onMounted(() => {
 const tabsStore = useTabsStore();
 const adminHome = useAdminHomeStore();
 
+await tabsStore.fetchTabs();
+
 const openModal = () => {
   adminHome.openCreateDialog();
 }
