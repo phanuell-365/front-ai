@@ -214,7 +214,7 @@ const BASE_URL = import.meta.env.VITE_API_URL as string;
 // we need to convert the adminHome store from using Options API to using Composition API
 
 export interface Page {
-    id: number
+    id: string
     name: string;
     path: string;
     title: string;
@@ -234,6 +234,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     const getPages = computed(() => pages.value);
     const getPageByPath = computed(() => (path: string) => {
         return pages.value.find(page => page.path === path);
+    });
+    const getPageById = computed(() => (id: string) => {
+        return pages.value.find(page => page.id === id);
     });
 
 // actions
@@ -310,7 +313,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             return {
                 id: page.pageId,
                 name: page.pageName,
-                path: page.pageName.toLowerCase().replace(' ', '-'),
+                path: page.pageUrl,
                 title: page.pageTitle,
             }
         });
@@ -337,6 +340,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         createDialog,
         getPages,
         getPageByPath,
+        getPageById,
         createPageFromData,
         addPage,
         fetchPages,

@@ -55,6 +55,9 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         return pageContentItems.value.find(pageContentItem => pageContentItem.pageSlug === pageSlug);
     });
     const getActivePageContentItem = computed(() => activePageContentItem.value);
+    const getPageContentByPageId = computed(() => (pageId: string) => {
+        return pageContentItems.value.find(pageContentItem => pageContentItem.pageId === pageId);
+    });
 
     // actions
 
@@ -109,7 +112,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
         try {
             const response = fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
-                method: 'POST',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -162,7 +165,6 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
     }
 
     function setActivePageContentItem(pageContentName: string) {
-        console.log('setActivePageContentItem', pageContentName)
         // find the page data item by id
         // set the active page data item
         const pageContentItem = pageContentItems.value.find(pageContentItem => pageContentItem['chatbotName'] === pageContentName);
@@ -180,6 +182,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         getPageContentItems,
         getPageContentByPageSlug,
         getActivePageContentItem,
+        getPageContentByPageId,
         fetchPageContentItems,
         savePageOptions,
         setPageContentItems,

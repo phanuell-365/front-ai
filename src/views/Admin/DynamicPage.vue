@@ -51,16 +51,16 @@ const onMainContainerMouseLeave = () => {
 };
 
 const page = ref(route.params.page);
+const pageId = ref(route.query.pageId as string);
 
 pageContentStore.setActivePageContentItem(page.value);
 
 tabsStore.setActiveTabByPageName(page.value);
 
 const tab = ref(tabsStore.getTabByTo(page.value));
-const pageContent = ref(pageContentStore.getPageContentByPageSlug(page.value));
+const pageContent = ref(pageContentStore.getPageContentByPageId(pageId.value));
 
-const currentPage = ref(adminHomeStore.getPageByPath(page.value));
-console.log(currentPage.value)
+const currentPage = ref(adminHomeStore.getPageById(pageId.value));
 
 const chatbotName = ref(pageContent.value.chatbotName);
 const promptPlaceholder = ref(pageContent.value.promptPlaceholder);
@@ -92,12 +92,12 @@ const handleSidebarDataChanged = (value: boolean) => {
   sidebarDataChanged.value = value;
 }
 
-const url = ref(`${import.meta.env.VITE_APP_BASE_URL}/chat/${tab.value.to}`)
+const url = ref(`${import.meta.env.VITE_APP_BASE_URL}/chat/${currentPage.value.path}?pageId=${currentPage.value.id}`);
 </script>
 
 <template>
   <div class="flex-1 overflow-hidden">
-    <LinkBar :name="tab.name" :text="`chat/${tab.to}`" :url="url"/>
+    <LinkBar :name="currentPage.name" :text="`chat/${currentPage.path}`" :url="url"/>
     <div class="relative flex flex-col h-full">
       <div class="flex-1 overflow-auto h-screen">
         <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-content="pageContent"

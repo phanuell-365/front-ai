@@ -7,6 +7,7 @@ interface BarItemProps {
   title: string;
   to: string;
   active: boolean;
+  pageId: string;
 }
 
 const props = defineProps<BarItemProps>();
@@ -24,16 +25,16 @@ const onClick = () => {
       await tabsStore.updateActiveTab(props.name);
 
       if (props.name === "Home") {
-        await router.replace({name: "AdminHome"});
+        await router.replace({name: "AdminHome", params: {page: props.to}, query: {pageId: props.pageId}});
         // router.go(0);
         return;
       } else if (props.name === "Settings") {
-        await router.replace({name: "AdminSettingsTab", params: {tab: "General"}});
+        await router.replace({name: "AdminSettingsTab", params: {tab: "General"}, query: {pageId: props.pageId}});
         // router.go(0);
         return;
       }
 
-      await router.replace({name: "DynamicPage", params: {page: props.to}});
+      await router.replace({name: "DynamicPage", params: {page: props.to}, query: {pageId: props.pageId}});
       // router.go(0);
     } catch (e) {
       console.log(e);

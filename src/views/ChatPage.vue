@@ -1,11 +1,13 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 
 </script>
 
 <template>
   <div class="flex flex-col h-screen bg-requested-color relative">
     <RouterView #default="{ Component, route }">
-      <component :is="Component" :key="route.fullPath"/>
+      <Suspense>
+        <component :is="Component" :key="route.fullPath"/>
+      </Suspense>
     </RouterView>
   </div>
 </template>

@@ -5,6 +5,7 @@ import {useTabsStore} from "@/stores/admin/tabs.ts";
 interface PageItem {
   name: string;
   path: string;
+  id: string;
 }
 
 const props = defineProps<{
@@ -23,14 +24,14 @@ const onClick = () => {
       await tabsStore.updateActiveTab(props.page.name);
 
       if (props.page.name === "Home") {
-        await router.push({name: "AdminHome"});
+        await router.push({name: "AdminHome", params: {page: props.page.path}, query: {pageId: props.page.id}});
         return;
       } else if (props.page.name === "Settings") {
-        await router.push({name: "AdminSettingsTab", params: {tab: "general"}});
+        await router.push({name: "AdminSettingsTab", params: {tab: "general"}, query: {pageId: props.page.id}});
         return;
       }
 
-      await router.push({name: "DynamicPage", params: {page: props.page.path}});
+      await router.push({name: "DynamicPage", params: {page: props.page.path}, query: {pageId: props.page.id}});
     } catch (e) {
       console.error(e);
     }

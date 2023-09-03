@@ -36,7 +36,7 @@ const openModal = () => {
     <!-- Let's loop through the opened tabs -->
     <template v-for="(tab) in tabsStore.getOpenTabs">
       <BarItem v-if="tab.name !== 'Settings'" :key="tab.name" :active="tab.active" :icon="tab.icon" :name="tab.name"
-               :title="tab.title" :to="tab.to"/>
+               :page-id="tab.pageId" :title="tab.title" :to="tab.to"/>
     </template>
     <div class="flex flex-row items-center justify-start bg-neutral-100 grow border-y border-l">
       <div class="p-3 flex items-center justify-center">
@@ -45,7 +45,8 @@ const openModal = () => {
         </button>
       </div>
     </div>
-    <BarItem :active="settingsTab.active" :name="settingsTab.name" :title="settingsTab.title" :to="settingsTab.to"/>
+    <BarItem :active="settingsTab.active" :icon="settingsTab.icon" :name="settingsTab.name" :page-id="settingsTab.pageId"
+             :title="settingsTab.title" :to="settingsTab.to"/>
     <div class="border-l border-b p-2"></div>
   </div>
 </template>

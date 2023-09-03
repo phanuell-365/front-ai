@@ -10,8 +10,11 @@ import {usePageContentStore} from "@/stores/admin/page-data.ts";
 const route = useRoute();
 const pageContentStore = usePageContentStore();
 
+await pageContentStore.fetchPageContentItems();
+
 const page = ref(route.params.chatbotId);
-const pageContent = ref(pageContentStore.getPageContentByTo(page.value));
+const pageId = ref(route.query.pageId as string);
+const pageContent = ref(pageContentStore.getPageContentByPageId(pageId.value));
 
 const chatbotName = ref(pageContent.value.chatbotName);
 const promptPlaceholder = ref(pageContent.value.promptPlaceholder);

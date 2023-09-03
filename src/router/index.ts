@@ -49,6 +49,7 @@ const routes = [
                 props: (route: object) => {
                     return {
                         page: route.params.page,
+                        pageId: route.query.pageId,
                     };
                 },
             },
