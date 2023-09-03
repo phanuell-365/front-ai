@@ -213,6 +213,13 @@ const BASE_URL = import.meta.env.VITE_API_URL as string;
 
 // we need to convert the adminHome store from using Options API to using Composition API
 
+export interface Page {
+    id: number
+    name: string;
+    path: string;
+    title: string;
+}
+
 export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
     // state

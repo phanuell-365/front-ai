@@ -1,8 +1,10 @@
 <script lang="ts" setup>
-import {onMounted, reactive, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import anime from "animejs";
 import MyListBox from "@/components/form/MyListBox.vue";
 import {usePageContentStore} from "@/stores/admin/page-data.ts";
+import {useField} from "vee-validate";
+import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 interface PageContent {
   chatbotName: string;
@@ -39,6 +41,7 @@ interface Option {
 const props = defineProps<SidebarDataProps>();
 
 const pageContentStore = usePageContentStore();
+const adminHomeStore = useAdminHomeStore();
 
 const activePageContentItem = ref(props.pageContent);
 
@@ -191,7 +194,7 @@ onMounted(() => {
 
 const emit = defineEmits<{
   (event: 'close-sidebar-data'): void;
-  (event: 'save-page-options'): void;
+  (event: 'save-page-options', value: Page): void;
   (event: 'save-page-content'): void;
   (event: 'chatbot-name-change', value: string): void;
   (event: 'greeting-change', value: string): void;
@@ -265,11 +268,11 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
 const pageUrlInputHasFocus = ref(false);
 
 const onSavePageContent = () => {
-  emit('save-page-options');
+  emit('save-page-content');
 };
 
 const onSavePageOptions = () => {
-  emit('save-page-content');
+  emit('save-page-options', thisPage);
 };
 
 // emit events for the parent component
@@ -292,6 +295,162 @@ watch(() => thisPageContentItem.promptPlaceholder, (newVal) => {
 });
 
 const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
+
+// validation for page name
+
+const allPageNames = adminHomeStore.getPages.map((page: Page) => page.name.toLowerCase());
+
+const pageNameValidator = (value: string) => {
+  if (!value) {
+    return "Page name is required";
+  }
+
+  if (value.length < 3) {
+    return "Page name must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Page name must not exceed 50 characters";
+  }
+
+  if (allPageNames.filter((item: string) => item !== pageOrgClone.name.toLowerCase()).includes(value.toLowerCase())) {
+    return "Page name already exists";
+  }
+
+  if (value.toLowerCase() === "home" || value.toLowerCase() === "settings") {
+    return "Page name is reserved";
+  }
+
+  return true;
+}
+
+const {
+  value: pageName,
+  errorMessage: pageNameErrorMessage,
+  meta: pageNameMeta,
+} = useField("pageName", pageNameValidator);
+
+watch(() => thisPage.name, (newVal) => {
+  pageName.value = newVal;
+
+  if (newVal !== pageOrgClone.name) {
+    // activate save button
+    savePageBtnIsActive.value = true;
+
+    emit('sidebar-data-changed', true);
+  } else {
+    // deactivate save button
+    savePageBtnIsActive.value = false;
+
+    emit('sidebar-data-changed', false);
+  }
+});
+
+// validation for page url
+
+const allPageUrls = adminHomeStore.getPages.map((page: Page) => page.path.toLowerCase());
+
+const pageUrlValidator = (value: string) => {
+  if (!value) {
+    return "Page url is required";
+  }
+
+  if (value.length < 3) {
+    return "Page url must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Page url must not exceed 50 characters";
+  }
+
+  if (allPageUrls.filter((item: string) => item !== pageOrgClone.path.toLowerCase()).includes(value.toLowerCase())) {
+    return "Page url already exists";
+  }
+
+  if (value.toLowerCase() === "home" || value.toLowerCase() === "settings") {
+    return "Page url is reserved";
+  }
+
+  return true;
+}
+
+const {
+  value: pageUrl,
+  errorMessage: pageUrlErrorMessage,
+  meta: pageUrlMeta,
+} = useField("pageUrl", pageUrlValidator);
+
+const primaryRing = 'ring-2 ring-primary ring-offset-2';
+const errorRing = 'ring-2 ring-rose-500 ring-offset-2 border-rose-500';
+
+const pageUrlInputClass = computed(() => {
+  if (pageUrlMeta.validated && !pageUrlMeta.valid) {
+    return errorRing;
+  }
+
+  if (pageUrlInputHasFocus.value) {
+    return primaryRing;
+  }
+
+  return '';
+});
+
+// validation for page title
+
+const pageTitleValidator = (value: string) => {
+  if (!value) {
+    return "Page title is required";
+  }
+
+  if (value.length < 3) {
+    return "Page title must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Page title must not exceed 50 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: pageTitle,
+  errorMessage: pageTitleErrorMessage,
+  meta: pageTitleMeta,
+} = useField("pageTitle", pageTitleValidator);
+
+watch(() => thisPage.title, (newVal) => {
+  pageTitle.value = newVal;
+
+  if (newVal !== pageOrgClone.title) {
+    // activate save button
+    savePageBtnIsActive.value = true;
+
+    emit('sidebar-data-changed', true);
+  } else {
+    // deactivate save button
+    savePageBtnIsActive.value = false;
+
+    emit('sidebar-data-changed', false);
+  }
+});
+
+watch(() => thisPage.path, (newVal) => {
+  pageUrl.value = newVal;
+
+  if (newVal !== pageOrgClone.path) {
+    // activate save button
+    savePageBtnIsActive.value = true;
+
+    emit('sidebar-data-changed', true);
+  } else {
+    // deactivate save button
+    savePageBtnIsActive.value = false;
+
+    emit('sidebar-data-changed', false);
+  }
+});
+
 </script>
 
 <template>
@@ -334,32 +493,42 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
               class="tab-options px-5 grow h-full"
               role="tabpanel">
             <div class="grid grid-cols-1 gap-3 py-3">
-              <div>
+              <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="page-name">
                   Page Name
                 </label>
                 <input
                     id="page-name"
                     v-model="thisPage.name"
-                    class="input input-bordered input-primary w-full text-sm" placeholder="Page Name" type="text"/>
+                    :class="{'input-error': pageNameMeta.validated && !pageNameMeta.valid, 'input-primary': pageNameMeta.validated && pageNameMeta.valid}"
+                    class="input input-primary input-bordered w-full text-sm" placeholder="Page Name" type="text"/>
+                <small v-if="pageNameMeta.validated && !pageNameMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ pageNameErrorMessage }}
+                </small>
                 <small class="text-xs text-gray-500">This is the name that will appear on the sidebar, and on the
                   navigation bar. It should be short and descriptive. </small>
               </div>
-              <div>
+              <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="meta-title">
                   Meta Title
                 </label>
                 <input
                     id="meta-title"
                     v-model="thisPage.title"
+                    :class="{'input-error': pageTitleMeta.validated && !pageTitleMeta.valid, 'input-primary': pageTitleMeta.validated && pageTitleMeta.valid}"
                     class="input input-bordered input-primary w-full text-sm" placeholder="Meta Title" type="text"/>
+                <small v-if="pageTitleMeta.validated && !pageTitleMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ pageTitleErrorMessage }}
+                </small>
                 <small class="text-xs text-gray-500">This is the title that will appear on the browser tab.</small>
               </div>
-              <div>
+              <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="page-url">
                   Page Url
                 </label>
-                <div :class="[pageUrlInputHasFocus ? 'ring-2 ring-primary ring-offset-2' : '']"
+                <div :class="[pageUrlInputHasFocus ? pageUrlInputClass : '']"
                      class="rounded-md border border-primary flex flex-col">
                   <div class="bg-stone-200 text-black px-2 py-1 rounded-t-md">
                   <span class="text-xs">
@@ -373,6 +542,10 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                       type="text" @blur="pageUrlInputHasFocus = false"
                       @focus="pageUrlInputHasFocus = true"/>
                 </div>
+                <small v-if="pageUrlMeta.validated && !pageUrlMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ pageUrlErrorMessage }}
+                </small>
                 <small class="text-xs text-gray-500">
                   This is the url that will be used to access the chatbot page. For example, if you enter "about" here,
                   the chatbot page will be accessible at https://mydomain.com/about

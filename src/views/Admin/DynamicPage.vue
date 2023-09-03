@@ -4,7 +4,7 @@ import {onMounted, ref} from "vue";
 import LinkBar from "@/components/Admin/LinkBar.vue";
 import {onBeforeRouteUpdate, useRoute} from "vue-router";
 import SidebarData from "@/components/Admin/SidebarData.vue";
-import {usePageContentStore} from "@/stores/admin/page-data.ts";
+import {PageOptions, usePageContentStore} from "@/stores/admin/page-data.ts";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
@@ -66,8 +66,8 @@ const chatbotName = ref(pageContent.value.chatbotName);
 const promptPlaceholder = ref(pageContent.value.promptPlaceholder);
 const staticGreeting = ref(pageContent.value.staticGreeting);
 
-const handleSavePageOptions = (pageOption) => {
-  pageContentStore.savePageContent(pageContent.value);
+const handleSavePageOptions = (pageOptions: PageOptions) => {
+  pageContentStore.savePageOptions(pageOptions);
 };
 
 const handleSavePageContent = (pageContent) => {

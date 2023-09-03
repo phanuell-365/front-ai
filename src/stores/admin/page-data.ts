@@ -1,5 +1,6 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
+import {Page} from "./home.ts";
 
 export interface PageContent {
     pageId: string;
@@ -15,6 +16,13 @@ export interface PageContent {
     creativity: number;
     displayClosureMessage: boolean;
     closureMessage: string;
+}
+
+export interface PageOptions {
+    pageId: string;
+    pageName: string;
+    pageTitle: string;
+    pageUrl: string;
 }
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
@@ -91,6 +99,30 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         });
     }
 
+    function savePageOptions(pageOptions: Page) {
+        const newPageOptions: PageOptions = {
+            pageId: pageOptions.id.toString(),
+            pageName: pageOptions.name,
+            pageTitle: pageOptions.title,
+            pageUrl: pageOptions.path,
+        }
+
+        try {
+            const response = fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newPageOptions),
+            });
+
+            console.log('savePageOptions', response);
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     function createNewPageContentItem(pageName: string) {
         // let's check first if the page name is already taken
         const pageContentItem = pageContentItems.value.find(pageContentItem => pageContentItem.chatbotName === pageName);
@@ -149,6 +181,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         getPageContentByPageSlug,
         getActivePageContentItem,
         fetchPageContentItems,
+        savePageOptions,
         setPageContentItems,
         createNewPageContentItem,
         addPageContentItem,
