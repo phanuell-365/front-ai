@@ -6,11 +6,13 @@ import {useTabsStore} from "@/stores/admin/tabs.ts";
 
 onMounted(() => {
   tabsStore.setActiveTabByPageName('home');
+  console.log(tabsStore.getActiveTab);
 });
 
 const tabsStore = useTabsStore();
 const adminHome = useAdminHomeStore();
 
+await adminHome.fetchPages();
 await tabsStore.fetchTabs();
 
 const openModal = () => {

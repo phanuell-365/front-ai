@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {PageData} from "./page-data.ts";
+import {PageContent} from "./page-data.ts";
 import {computed, ref} from "vue";
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
@@ -45,19 +45,19 @@ const BASE_URL = import.meta.env.VITE_API_URL as string;
 //         }
 //     },
 //     actions: {
-//         createPageFromData(pageData: PageData) {
+//         createPageFromData(pageContent: PageContent) {
 //             // let's check first if the page name is already taken
-//             const pageNameExists = this.pages.some(page => page.name === pageData.chatbotName);
+//             const pageNameExists = this.pages.some(page => page.name === pageContent.chatbotName);
 //
 //             if (pageNameExists) {
 //                 // if the page name is already taken, we'll just append the word "copy" to the page name
-//                 pageData.chatbotName = `${pageData.chatbotName} copy`;
+//                 pageContent.chatbotName = `${pageContent.chatbotName} copy`;
 //             }
 //             const page = {
 //                 id: this.pages.length + 1,
-//                 name: pageData.chatbotName,
-//                 path: pageData.chatbotId.toLowerCase().replace(' ', '-'),
-//                 title: pageData.chatbotName,
+//                 name: pageContent.chatbotName,
+//                 path: pageContent.chatbotId.toLowerCase().replace(' ', '-'),
+//                 title: pageContent.chatbotName,
 //             };
 //             this.pages.push(page);
 //
@@ -82,7 +82,7 @@ const BASE_URL = import.meta.env.VITE_API_URL as string;
 //                 this.setPages(pages)
 //
 //                 // set the page data items
-//                 this.setPageDataItems(pages);
+//                 this.setPageContentItems(pages);
 //
 //                 // set the tabs
 //                 this.setTabs(tabs);
@@ -130,22 +130,22 @@ const BASE_URL = import.meta.env.VITE_API_URL as string;
 //                 }
 //             });
 //         },
-//         setPageDataItems(pageDataItems: object[]) {
-//             return pageDataStore.setPageDataItems(pageDataItems.map((pageDataItem: any) => {
+//         setPageContentItems(pageContentItems: object[]) {
+//             return pageContentStore.setPageContentItems(pageContentItems.map((pageContentItem: any) => {
 //                 return {
-//                     chatbotId: pageDataItem.PageSlug as string,
-//                     chatbotName: pageDataItem.ChatbotName as string,
-//                     greetingType: pageDataItem.GreetingType === 0 ? 'static' : 'generated',
+//                     chatbotId: pageContentItem.PageSlug as string,
+//                     chatbotName: pageContentItem.ChatbotName as string,
+//                     greetingType: pageContentItem.GreetingType === 0 ? 'static' : 'generated',
 //                     staticGreeting: 'Hello, how can I help you?',
-//                     generatedGreeting: pageDataItem.Greeting as string,
-//                     promptPlaceholder: pageDataItem.PlaceholderContent as string,
-//                     directive: pageDataItem.ChatbotDirective as string,
-//                     model: pageDataItem.GptModel as string,
+//                     generatedGreeting: pageContentItem.Greeting as string,
+//                     promptPlaceholder: pageContentItem.PlaceholderContent as string,
+//                     directive: pageContentItem.ChatbotDirective as string,
+//                     model: pageContentItem.GptModel as string,
 //                     maxResponseLength: 200 as number,
-//                     creativity: pageDataItem.ChatbotCreativity as number,
-//                     displayClosureMessage: pageDataItem.DisplayClosureMessage as boolean,
-//                     closureMessage: pageDataItem.ClosureMessage as string,
-//                 } as PageData;
+//                     creativity: pageContentItem.ChatbotCreativity as number,
+//                     displayClosureMessage: pageContentItem.DisplayClosureMessage as boolean,
+//                     closureMessage: pageContentItem.ClosureMessage as string,
+//                 } as PageContent;
 //             }));
 //         },
 //         setTabs(tabs: any) {
@@ -189,7 +189,7 @@ const BASE_URL = import.meta.env.VITE_API_URL as string;
 //
 //             if (activeTab) {
 //                 // set the active page data item
-//                 pageDataStore.setActivePageDataItem(activeTab.to);
+//                 pageContentStore.setActivePageContentItem(activeTab.to);
 //             }
 //
 //             return activeTab;
@@ -231,19 +231,19 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
 // actions
 
-    function createPageFromData(pageData: PageData) {
+    function createPageFromData(pageContent: PageContent) {
         // let's check first if the page name is already taken
-        const pageNameExists = pages.value.some(page => page.name === pageData.chatbotName);
+        const pageNameExists = pages.value.some(page => page.name === pageContent.chatbotName);
 
         if (pageNameExists) {
             // if the page name is already taken, we'll just append the word "copy" to the page name
-            pageData.chatbotName = `${pageData.chatbotName} copy`;
+            pageContent.chatbotName = `${pageContent.chatbotName} copy`;
         }
         const page = {
             id: pages.value.length + 1,
-            name: pageData.chatbotName,
-            path: pageData.chatbotId.toLowerCase().replace(' ', '-'),
-            title: pageData.chatbotName,
+            name: pageContent.chatbotName,
+            path: pageContent.chatbotId.toLowerCase().replace(' ', '-'),
+            title: pageContent.chatbotName,
         };
         pages.value.push(page);
 
@@ -264,7 +264,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             });
             const res = await response.json();
 
-            const {pages} = res.data;
+            const {options: pages} = res.data;
 
             // set the pages
             setPages(pages)
@@ -301,10 +301,10 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     function setPages(pagesArr: any) {
         pages.value = pagesArr.map((page: any) => {
             return {
-                id: page.PageId,
-                name: page.PageName,
-                path: page.PageSlug,
-                title: page.PageTitle,
+                id: page.pageId,
+                name: page.pageName,
+                path: page.pageName.toLowerCase().replace(' ', '-'),
+                title: page.pageTitle,
             }
         });
     }

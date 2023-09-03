@@ -1,5 +1,5 @@
 // import {defineStore} from "pinia";
-// import {PageData} from "./page-data.ts";
+// import {PageContent} from "./page-data.ts";
 //
 // export interface Tab {
 //     name: string;
@@ -124,19 +124,19 @@
 //                 this.activeTab = activeTab;
 //             }
 //         },
-//         createTabFromPageData(pageData: PageData) {
+//         createTabFromPageContent(pageContent: PageContent) {
 //             // let's check first if the page name is already taken
-//             const tabNameExists = this.tabs.some((tab) => tab.name === pageData.chatbotId);
+//             const tabNameExists = this.tabs.some((tab) => tab.name === pageContent.chatbotId);
 //
 //             if (tabNameExists) {
 //                 // if the page name is already taken, we'll just append the word "copy" to the page name
-//                 pageData.chatbotId = `${pageData.chatbotId} copy`;
+//                 pageContent.chatbotId = `${pageContent.chatbotId} copy`;
 //             }
 //             // create a new tab
 //             const tab = {
-//                 name: pageData.chatbotId,
-//                 title: pageData.chatbotName,
-//                 to: pageData.chatbotId.toLowerCase().replace(' ', '-'),
+//                 name: pageContent.chatbotId,
+//                 title: pageContent.chatbotName,
+//                 to: pageContent.chatbotId.toLowerCase().replace(' ', '-'),
 //                 active: false,
 //             } as Tab;
 //
@@ -286,7 +286,8 @@ export interface Tab {
     title: string;
     to: string;
     active: boolean;
-    id: number;
+    id: string;
+    pageId: string;
 }
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
@@ -301,7 +302,8 @@ export const useTabsStore = defineStore('tabsStore', () => {
             title: 'Home',
             to: 'home',
             active: false,
-            id: 1,
+            id: '1-home',
+            pageId: '1',
         },
         // Settings
         {
@@ -309,7 +311,8 @@ export const useTabsStore = defineStore('tabsStore', () => {
             title: 'Settings',
             to: 'settings',
             active: false,
-            id: 2,
+            id: '2-settings',
+            pageId: '2',
         },
     ]);
 
@@ -321,7 +324,8 @@ export const useTabsStore = defineStore('tabsStore', () => {
             title: 'Home',
             to: 'home',
             active: false,
-            id: 1,
+            id: '1-home',
+            pageId: '1',
         },
         // Settings
         {
@@ -329,7 +333,8 @@ export const useTabsStore = defineStore('tabsStore', () => {
             title: 'Settings',
             to: 'settings',
             active: false,
-            id: 2,
+            id: '2-settings',
+            pageId: '2',
         },
     ]);
 
@@ -348,7 +353,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
     async function fetchTabs() {
         try {
 
-            const response = await fetch(`${BASE_URL}/pages/`, {
+            const response = await fetch(`${BASE_URL}/pages/tabs/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -370,17 +375,26 @@ export const useTabsStore = defineStore('tabsStore', () => {
     function setTabs(tabsArg: Tab[]) {
         const newTabs = tabsArg.map((tab: any) => {
             return {
-                name: tab['TabName'],
-                title: tab['TabName'],
-                to: tab['TabName'].toLowerCase().replace(' ', '-'),
+                name: tab['PageName'],
+                title: tab['PageName'],
+                to: tab['PageName'].toLowerCase().replace(' ', '-'),
                 active: false,
-                id: tab['TabId'],
+                id: tab['tabId'],
+                pageId: tab['PageId'],
             } as Tab;
         });
 
-        const newUniqueTabs = new Set([...tabs.value, ...newTabs]);
+        // const newUniqueTabs = new Set([...tabs.value, ...newTabs]);
 
-        tabs.value = [...newUniqueTabs];
+        const newUniqueTabs: Tab[] = [];
+
+        newTabs.forEach((newTab) => {
+            if (!tabs.value.some((tab) => tab.id === newTab.id)) {
+                newUniqueTabs.push(newTab);
+            }
+        });
+
+        tabs.value = [...tabs.value, ...newUniqueTabs];
     }
 
     /**
@@ -390,23 +404,26 @@ export const useTabsStore = defineStore('tabsStore', () => {
      */
     function setOpenTabs(rawTabs: any[], openTabsArg: any[]) {
         // create a new array of tabs from the tabs whose id is in the openTabs array
-        let newRawTabs = rawTabs.filter((rawTab: any) => openTabsArg.some((openTab: any) => rawTab['TabId'] === openTab['TabId']));
+        let newRawTabs = rawTabs.filter((rawTab: any) => openTabsArg.some((openTab: any) => rawTab['tabId'] === openTab['TabId']));
 
         // add the Active property to the tabs that is in the openTabs array
         newRawTabs = newRawTabs.map((tab: any) => {
             return {
                 ...tab,
-                Active: openTabsArg.find((openTab: any) => tab['TabId'] === openTab['TabId'])?.Active,
+                Active: openTabsArg.find((openTab: any) => tab['tabId'] === openTab['TabId'])?.Active,
             }
         });
 
+        console.log('newRawTabs', newRawTabs)
+
         const newTabs = newRawTabs.map((tab: any) => {
             return {
-                name: tab['TabName'],
-                title: tab['TabName'],
-                to: tab['TabName'].toLowerCase().replace(' ', '-'),
+                name: tab['PageName'],
+                title: tab['PageName'],
+                to: tab['PageName'].toLowerCase().replace(' ', '-'),
                 active: tab.Active === 1,
-                id: tab['TabId'],
+                id: tab['tabId'],
+                pageId: tab['PageId'],
             } as Tab;
         })
 
@@ -462,12 +479,10 @@ export const useTabsStore = defineStore('tabsStore', () => {
             // if it's not the 'home' or 'settings' tab
             if (tab.name !== 'Home' && tab.name !== 'Settings') {
                 try {
-                    const response = await fetch(`${BASE_URL}/pages/tabs/`, {
+                    const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}`, {
                         method: 'PATCH',
                         body: JSON.stringify({
-                            tabId: tab.id,
-                            tabName: tab.name,
-                            tabTitle: tab.title,
+                            msg: 'hello'
                         }),
                         headers: {
                             'Content-Type': 'application/json'

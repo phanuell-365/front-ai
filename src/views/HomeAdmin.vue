@@ -1,22 +1,18 @@
 <script lang="ts" setup>
 import TopBar from "@/components/Admin/TopBar.vue";
 import {useAdminHomeStore} from "@/stores/admin/home.ts";
-import {onBeforeMount} from "vue";
 import DialogModal from "@/components/DialogModal.vue";
 import {useRouter} from "vue-router";
 import {useTabsStore} from "@/stores/admin/tabs.ts";
-import {usePageDataStore} from "@/stores/admin/page-data.ts";
+import {usePageContentStore} from "@/stores/admin/page-data.ts";
 import {useField} from "vee-validate";
-
-onBeforeMount(async () => {
-});
 
 const router = useRouter();
 const tabsStore = useTabsStore();
-const pageDataStore = usePageDataStore();
+const pageContentStore = usePageContentStore();
 const homeStore = useAdminHomeStore();
 
-await homeStore.fetchPages();
+// by grace before we get here, the pages have already been fetched
 
 const allPageNames = homeStore.getPages.map((page) => page.name.toLowerCase());
 
@@ -60,10 +56,10 @@ const createPage = async () => {
     const page = await homeStore.createNewPage(pageName.value);
 
     console.log(page);
-    const newPage = pageDataStore.createNewPageDataItem(pageName.value);
+    const newPage = pageContentStore.createNewPageContentItem(pageName.value);
 
     if (newPage) {
-      const newTab = tabsStore.createTabFromPageData(newPage);
+      const newTab = tabsStore.createTabFromPageContent(newPage);
 
       if (newTab) {
 
@@ -72,7 +68,7 @@ const createPage = async () => {
         if (page) {
           tabsStore.setActiveTabByPageName(page.name);
 
-          pageDataStore.setActivePageDataItem(page.name);
+          pageContentStore.setActivePageContentItem(page.name);
 
           homeStore.closeCreateDialog();
 
@@ -93,7 +89,9 @@ const createPage = async () => {
 
 <template>
   <div class="flex flex-col h-screen bg-blue-50">
-    <TopBar/>
+    <Suspense>
+      <TopBar/>
+    </Suspense>
     <RouterView #default="{ Component, route }">
       <Suspense>
         <component :is="Component" :key="route.fullPath"/>

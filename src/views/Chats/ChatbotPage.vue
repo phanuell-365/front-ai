@@ -1,24 +1,24 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
-import {computed, nextTick, onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useRoute} from "vue-router";
-import {usePageDataStore} from "@/stores/admin/page-data.ts";
+import {usePageContentStore} from "@/stores/admin/page-data.ts";
 
 const route = useRoute();
-const pageDataStore = usePageDataStore();
+const pageContentStore = usePageContentStore();
 
 const page = ref(route.params.chatbotId);
-const pageData = ref(pageDataStore.getPageDataByTo(page.value));
+const pageContent = ref(pageContentStore.getPageContentByTo(page.value));
 
-const chatbotName = ref(pageData.value.chatbotName);
-const promptPlaceholder = ref(pageData.value.promptPlaceholder);
-const staticGreeting = ref(pageData.value.staticGreeting);
+const chatbotName = ref(pageContent.value.chatbotName);
+const promptPlaceholder = ref(pageContent.value.promptPlaceholder);
+const staticGreeting = ref(pageContent.value.staticGreeting);
 
 // set page metadata
-window.document.title = pageData.value.chatbotName;
+window.document.title = pageContent.value.chatbotName;
 
 // sample data
 
@@ -135,20 +135,20 @@ watch(conversation.value, () => {
 </script>
 
 <template>
-  <div id="main-container" class="flex-1 overflow-scroll flex flex-col" :class="!toggleSticky ? 'relative' : ''">
+  <div id="main-container" :class="!toggleSticky ? 'relative' : ''" class="flex-1 overflow-scroll flex flex-col">
     <div class="pt-10 md:pt-20">
       <!-- Simulate a conversation loop -->
-      <TransitionGroup name="fade-slide" tag="div" id="conversation-container"
-                       class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10"
+      <TransitionGroup id="conversation-container" class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10" name="fade-slide"
+                       tag="div"
                        @enter="scrollToBottom">
-        <ChatbotBubble :chatbot-name="chatbotName" :key="1"
-                       :chatbot-message="staticGreeting"/>
+        <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
+                       :chatbot-name="chatbotName"/>
 
         <div v-for="(message, index) in conversation" :key="index">
           <UserBubble v-if="message.isUser && message.message && message.message.length > 0"
-                      :user-message="message.message" user-name="John Doe" :key="index"/>
+                      :key="index" :user-message="message.message" user-name="John Doe"/>
           <ChatbotBubble v-else-if="!message.isUser && message.message && message.message.length > 0"
-                         :chatbot-name="chatbotName" :chatbot-message="message.message" :is-copyable="index !== 0"/>
+                         :chatbot-message="message.message" :chatbot-name="chatbotName" :is-copyable="index !== 0"/>
         </div>
       </TransitionGroup>
     </div>
@@ -157,19 +157,19 @@ watch(conversation.value, () => {
     <div v-if="showScrollToBottomButton" class="absolute bottom-2 right-0 mb-32 mr-8 md:mr-12 z-40">
       <button class="rounded-full bg-white shadow-lg shadow-slate-300/10 p-2"
               @click="scrollToBottom">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        <svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round"
+                stroke-width="2"/>
         </svg>
       </button>
     </div>
-    <div :class="!toggleSticky ? 'sticky' : 'absolute'"
-         class="w-full bottom-0" ref="userInputContainerHeightRef">
+    <div ref="userInputContainerHeightRef"
+         :class="!toggleSticky ? 'sticky' : 'absolute'" class="w-full bottom-0">
       <div class="py-6 bg-gradient-to-t from-requested-color block"></div>
       <div class="bg-requested-color w-full px-4 md:px-6 pb-14 flex-1">
         <div class="grid grid-cols-1 w-11/12 md:w-10/12 mx-auto">
-          <UserInput :prompt-placeholder="promptPlaceholder" user-input="" :disabled="false"
+          <UserInput :disabled="false" :prompt-placeholder="promptPlaceholder" user-input=""
                      @userInput="handleUserInput"/>
         </div>
       </div>

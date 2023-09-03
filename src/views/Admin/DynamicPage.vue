@@ -4,31 +4,24 @@ import {onMounted, ref} from "vue";
 import LinkBar from "@/components/Admin/LinkBar.vue";
 import {onBeforeRouteUpdate, useRoute} from "vue-router";
 import SidebarData from "@/components/Admin/SidebarData.vue";
-import {usePageDataStore} from "@/stores/admin/page-data.ts";
+import {usePageContentStore} from "@/stores/admin/page-data.ts";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
 import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 onMounted(() => {
-  pageDataStore.setActivePageDataItem(page.value);
 
-  tabsStore.setActiveTabByPageName(page.value);
 });
 
 const route = useRoute();
 const tabsStore = useTabsStore();
-const pageDataStore = usePageDataStore();
+const pageContentStore = usePageContentStore();
 const adminHomeStore = useAdminHomeStore();
 
-await pageDataStore.fetchPageDataItems();
+await pageContentStore.fetchPageContentItems();
+await adminHomeStore.fetchPages();
 await tabsStore.fetchTabs();
-
-const page = ref(route.params.page);
-const tab = ref(tabsStore.getTabByTo(page.value));
-const pageData = ref(pageDataStore.getPageDataByTo(page.value));
-
-const currentPage = ref(adminHomeStore.getPageByPath(page.value));
 
 onBeforeRouteUpdate(async (to, _from, next) => {
   await tabsStore.updateActiveTab(page.value);
@@ -57,16 +50,28 @@ const onMainContainerMouseLeave = () => {
   showEditButton.value = false;
 };
 
-const chatbotName = ref(pageData.value.chatbotName);
-const promptPlaceholder = ref(pageData.value.promptPlaceholder);
-const staticGreeting = ref(pageData.value.staticGreeting);
+const page = ref(route.params.page);
+
+pageContentStore.setActivePageContentItem(page.value);
+
+tabsStore.setActiveTabByPageName(page.value);
+
+const tab = ref(tabsStore.getTabByTo(page.value));
+const pageContent = ref(pageContentStore.getPageContentByPageSlug(page.value));
+
+const currentPage = ref(adminHomeStore.getPageByPath(page.value));
+console.log(currentPage.value)
+
+const chatbotName = ref(pageContent.value.chatbotName);
+const promptPlaceholder = ref(pageContent.value.promptPlaceholder);
+const staticGreeting = ref(pageContent.value.staticGreeting);
 
 const handleSavePageOptions = (pageOption) => {
-  pageDataStore.savePageData(pageData.value);
+  pageContentStore.savePageContent(pageContent.value);
 };
 
 const handleSavePageContent = (pageContent) => {
-  pageDataStore.savePageContent(pageContent.value);
+  pageContentStore.savePageContent(pageContent.value);
 };
 
 const handleChatbotNameChange = (value) => {
@@ -95,7 +100,7 @@ const url = ref(`${import.meta.env.VITE_APP_BASE_URL}/chat/${tab.value.to}`)
     <LinkBar :name="tab.name" :text="`chat/${tab.to}`" :url="url"/>
     <div class="relative flex flex-col h-full">
       <div class="flex-1 overflow-auto h-screen">
-        <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-data="pageData"
+        <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-content="pageContent"
                      @closeSidebarData="onCloseSidebarData" @chatbot-name-change="handleChatbotNameChange"
                      @prompt-placeholder-change="handlePromptPlaceholderChange"
                      @greeting-change="handleStaticGreetingChange" @save-page-options="handleSavePageOptions"

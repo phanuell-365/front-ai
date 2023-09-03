@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import {onMounted, reactive, ref, watch} from "vue";
-import {usePageDataStore} from "@/stores/admin/page-data.ts";
 import anime from "animejs";
 import MyListBox from "@/components/form/MyListBox.vue";
+import {usePageContentStore} from "@/stores/admin/page-data.ts";
 
-interface PageData {
+interface PageContent {
   chatbotName: string;
   chatbotId: string;
   greetingType: 'static' | 'generated';
@@ -26,7 +26,7 @@ interface Page {
 }
 
 interface SidebarDataProps {
-  pageData: PageData;
+  pageContent: PageContent;
   currentPage: Page;
   isOpen: boolean;
 }
@@ -38,9 +38,9 @@ interface Option {
 
 const props = defineProps<SidebarDataProps>();
 
-const pageDataStore = usePageDataStore();
+const pageContentStore = usePageContentStore();
 
-const activePageDataItem = ref(props.pageData);
+const activePageContentItem = ref(props.pageContent);
 
 const greetingTypes = [
   {
@@ -84,72 +84,72 @@ watch(() => thisPage, (newVal) => {
   }
 }, {deep: true});
 
-const thisPageDataItem = reactive<PageData>({
-  chatbotName: activePageDataItem.value.chatbotName,
-  chatbotId: activePageDataItem.value.chatbotId,
-  greetingType: activePageDataItem.value.greetingType,
-  staticGreeting: activePageDataItem.value.staticGreeting,
-  generatedGreeting: activePageDataItem.value.generatedGreeting,
-  promptPlaceholder: activePageDataItem.value.promptPlaceholder,
-  directive: activePageDataItem.value.directive,
-  model: activePageDataItem.value.model,
-  maxResponseLength: activePageDataItem.value.maxResponseLength,
-  creativity: activePageDataItem.value.creativity,
-  displayClosureMessage: activePageDataItem.value.displayClosureMessage,
+const thisPageContentItem = reactive<PageContent>({
+  chatbotName: activePageContentItem.value.chatbotName,
+  chatbotId: activePageContentItem.value.chatbotId,
+  greetingType: activePageContentItem.value.greetingType,
+  staticGreeting: activePageContentItem.value.staticGreeting,
+  generatedGreeting: activePageContentItem.value.generatedGreeting,
+  promptPlaceholder: activePageContentItem.value.promptPlaceholder,
+  directive: activePageContentItem.value.directive,
+  model: activePageContentItem.value.model,
+  maxResponseLength: activePageContentItem.value.maxResponseLength,
+  creativity: activePageContentItem.value.creativity,
+  displayClosureMessage: activePageContentItem.value.displayClosureMessage,
 });
 
-const pageDataItemOrgClone = reactive<PageData>({
-  chatbotName: activePageDataItem.value.chatbotName,
-  chatbotId: activePageDataItem.value.chatbotId,
-  greetingType: activePageDataItem.value.greetingType,
-  staticGreeting: activePageDataItem.value.staticGreeting,
-  generatedGreeting: activePageDataItem.value.generatedGreeting,
-  promptPlaceholder: activePageDataItem.value.promptPlaceholder,
-  directive: activePageDataItem.value.directive,
-  model: activePageDataItem.value.model,
-  maxResponseLength: activePageDataItem.value.maxResponseLength,
-  creativity: activePageDataItem.value.creativity,
-  displayClosureMessage: activePageDataItem.value.displayClosureMessage,
+const pageContentItemOrgClone = reactive<PageContent>({
+  chatbotName: activePageContentItem.value.chatbotName,
+  chatbotId: activePageContentItem.value.chatbotId,
+  greetingType: activePageContentItem.value.greetingType,
+  staticGreeting: activePageContentItem.value.staticGreeting,
+  generatedGreeting: activePageContentItem.value.generatedGreeting,
+  promptPlaceholder: activePageContentItem.value.promptPlaceholder,
+  directive: activePageContentItem.value.directive,
+  model: activePageContentItem.value.model,
+  maxResponseLength: activePageContentItem.value.maxResponseLength,
+  creativity: activePageContentItem.value.creativity,
+  displayClosureMessage: activePageContentItem.value.displayClosureMessage,
 });
 
-const savePageDataBtnIsActive = ref(false);
+const savePageContentBtnIsActive = ref(false);
 
 // watch for changes in the page data item and activate save button
-watch(() => thisPageDataItem, (newVal) => {
-  if (JSON.stringify(newVal) !== JSON.stringify(pageDataItemOrgClone)) {
+watch(() => thisPageContentItem, (newVal) => {
+  if (JSON.stringify(newVal) !== JSON.stringify(pageContentItemOrgClone)) {
     // activate save button
-    savePageDataBtnIsActive.value = true;
+    savePageContentBtnIsActive.value = true;
 
     emit('sidebar-data-changed', true);
   } else {
     // deactivate save button
-    savePageDataBtnIsActive.value = false;
+    savePageContentBtnIsActive.value = false;
 
     emit('sidebar-data-changed', false);
   }
 }, {deep: true});
 
 onMounted(() => {
-  thisPageDataItem.chatbotName = activePageDataItem.value.chatbotName;
-  thisPageDataItem.chatbotId = activePageDataItem.value.chatbotId;
-  thisPageDataItem.greetingType = activePageDataItem.value.greetingType;
-  thisPageDataItem.staticGreeting = activePageDataItem.value.staticGreeting;
-  thisPageDataItem.generatedGreeting = activePageDataItem.value.generatedGreeting;
-  thisPageDataItem.promptPlaceholder = activePageDataItem.value.promptPlaceholder;
-  thisPageDataItem.directive = activePageDataItem.value.directive;
-  thisPageDataItem.model = activePageDataItem.value.model;
-  thisPageDataItem.maxResponseLength = activePageDataItem.value.maxResponseLength;
-  thisPageDataItem.creativity = activePageDataItem.value.creativity;
-  thisPageDataItem.displayClosureMessage = activePageDataItem.value.displayClosureMessage;
+  thisPageContentItem.chatbotName = activePageContentItem.value.chatbotName;
+  thisPageContentItem.chatbotId = activePageContentItem.value.chatbotId;
+  thisPageContentItem.greetingType = activePageContentItem.value.greetingType;
+  thisPageContentItem.staticGreeting = activePageContentItem.value.staticGreeting;
+  thisPageContentItem.generatedGreeting = activePageContentItem.value.generatedGreeting;
+  thisPageContentItem.promptPlaceholder = activePageContentItem.value.promptPlaceholder;
+  thisPageContentItem.directive = activePageContentItem.value.directive;
+  thisPageContentItem.model = activePageContentItem.value.model;
+  thisPageContentItem.maxResponseLength = activePageContentItem.value.maxResponseLength;
+  thisPageContentItem.creativity = activePageContentItem.value.creativity;
+  thisPageContentItem.displayClosureMessage = activePageContentItem.value.displayClosureMessage;
 
-  if (activePageDataItem.value.greetingType === 'static') {
-    newGreetingTextAreaText.value = activePageDataItem.value.staticGreeting;
+  if (activePageContentItem.value.greetingType === 'static') {
+    newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
   } else {
-    const newName = activePageDataItem.value.chatbotName[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
+    const newName = activePageContentItem.value.chatbotName[0].toUpperCase() + activePageContentItem.value.chatbotName.slice(1);
     newGreetingTextAreaText.value = `Say I am ${newName}, how can I help you today?`;
   }
 
-  const foundType = greetingTypes.find((item) => item.value === activePageDataItem.value.greetingType);
+  const foundType = greetingTypes.find((item) => item.value === activePageContentItem.value.greetingType);
 
   if (foundType) {
     newGreetingType.value = foundType;
@@ -160,25 +160,25 @@ const newGreetingTextAreaText = ref("");
 const newGreetingType = ref<Option | null>(greetingTypes[0]);
 
 // let's also subscribe to page data store changes
-watch(() => pageDataStore.activePageDataItem, (newVal) => {
-  activePageDataItem.value = newVal;
+watch(() => pageContentStore.activePageContentItem, (newVal) => {
+  activePageContentItem.value = newVal;
 
-  thisPageDataItem.chatbotName = activePageDataItem.value.chatbotName;
-  thisPageDataItem.chatbotId = activePageDataItem.value.chatbotId;
-  thisPageDataItem.greetingType = activePageDataItem.value.greetingType;
-  thisPageDataItem.staticGreeting = activePageDataItem.value.staticGreeting;
-  thisPageDataItem.generatedGreeting = activePageDataItem.value.generatedGreeting;
-  thisPageDataItem.promptPlaceholder = activePageDataItem.value.promptPlaceholder;
-  thisPageDataItem.directive = activePageDataItem.value.directive;
-  thisPageDataItem.model = activePageDataItem.value.model;
-  thisPageDataItem.maxResponseLength = activePageDataItem.value.maxResponseLength;
-  thisPageDataItem.creativity = activePageDataItem.value.creativity;
-  thisPageDataItem.displayClosureMessage = activePageDataItem.value.displayClosureMessage;
+  thisPageContentItem.chatbotName = activePageContentItem.value.chatbotName;
+  thisPageContentItem.chatbotId = activePageContentItem.value.chatbotId;
+  thisPageContentItem.greetingType = activePageContentItem.value.greetingType;
+  thisPageContentItem.staticGreeting = activePageContentItem.value.staticGreeting;
+  thisPageContentItem.generatedGreeting = activePageContentItem.value.generatedGreeting;
+  thisPageContentItem.promptPlaceholder = activePageContentItem.value.promptPlaceholder;
+  thisPageContentItem.directive = activePageContentItem.value.directive;
+  thisPageContentItem.model = activePageContentItem.value.model;
+  thisPageContentItem.maxResponseLength = activePageContentItem.value.maxResponseLength;
+  thisPageContentItem.creativity = activePageContentItem.value.creativity;
+  thisPageContentItem.displayClosureMessage = activePageContentItem.value.displayClosureMessage;
 
-  if (activePageDataItem.value.greetingType === 'static') {
-    newGreetingTextAreaText.value = activePageDataItem.value.staticGreeting;
+  if (activePageContentItem.value.greetingType === 'static') {
+    newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
   } else {
-    const newName = activePageDataItem.value.chatbotName[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
+    const newName = activePageContentItem.value.chatbotName[0].toUpperCase() + activePageContentItem.value.chatbotName.slice(1);
     newGreetingTextAreaText.value = `Say I am ${newName}, how can I help you today?`;
   }
 });
@@ -244,27 +244,27 @@ function toggleTab(tab: string) {
 
 const onGreetingTypeChange = (option: Option) => {
   // newGreetingType.value = greetingTypes.find((item) => item.value === option);
-  thisPageDataItem.greetingType = option.value as 'static' | 'generated';
+  thisPageContentItem.greetingType = option.value as 'static' | 'generated';
 
   if (option.value === 'static') {
-    newGreetingTextAreaText.value = thisPageDataItem.staticGreeting;
+    newGreetingTextAreaText.value = thisPageContentItem.staticGreeting;
   }
 
   if (option.value === 'generated') {
-    const newName = thisPageDataItem.chatbotName[0].toUpperCase() + thisPageDataItem.chatbotName.slice(1);
+    const newName = thisPageContentItem.chatbotName[0].toUpperCase() + thisPageContentItem.chatbotName.slice(1);
     newGreetingTextAreaText.value = `Say I am ${newName}, how can I help you today?`;
   }
 }
 
 watch(() => newGreetingTextAreaText.value, (newVal) => {
-  if (thisPageDataItem.greetingType === 'static') {
-    thisPageDataItem.staticGreeting = newVal;
+  if (thisPageContentItem.greetingType === 'static') {
+    thisPageContentItem.staticGreeting = newVal;
   }
 });
 
 const pageUrlInputHasFocus = ref(false);
 
-const onSavePageData = () => {
+const onSavePageContent = () => {
   emit('save-page-options');
 };
 
@@ -273,12 +273,12 @@ const onSavePageOptions = () => {
 };
 
 // emit events for the parent component
-watch(() => thisPageDataItem.chatbotName, (newVal) => {
+watch(() => thisPageContentItem.chatbotName, (newVal) => {
   emit('chatbot-name-change', newVal);
 
 
-  if (thisPageDataItem.greetingType === 'generated') {
-    // const newName = newVal[0].toUpperCase() + activePageDataItem.value.chatbotName.slice(1);
+  if (thisPageContentItem.greetingType === 'generated') {
+    // const newName = newVal[0].toUpperCase() + activePageContentItem.value.chatbotName.slice(1);
     newGreetingTextAreaText.value = `Say I am ${newVal}, how can I help you today?`;
   }
 });
@@ -287,7 +287,7 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
   emit('greeting-change', newVal);
 });
 
-watch(() => thisPageDataItem.promptPlaceholder, (newVal) => {
+watch(() => thisPageContentItem.promptPlaceholder, (newVal) => {
   emit('prompt-placeholder-change', newVal);
 });
 
@@ -315,7 +315,8 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
           class="tabs flex flex-row font-semibold sticky top-0 z-10 bg-white"
           role="tablist"
       >
-        <li v-for="(tab) in sidebarTabs" :key="tab.name" :class="activeSidebarDataTab === tab.value ? 'tab-active border-primary' : ''"
+        <li v-for="(tab) in sidebarTabs" :key="tab.name"
+            :class="activeSidebarDataTab === tab.value ? 'tab-active border-primary' : ''"
             class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14"
             role="presentation"
             @click="toggleTab(tab.value)">
@@ -408,7 +409,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 </label>
                 <input
                     id="chatbot-name"
-                    v-model="thisPageDataItem.chatbotName"
+                    v-model="thisPageContentItem.chatbotName"
                     class="input input-bordered input-primary w-full text-sm" placeholder="Chatbot Name" type="text"/>
                 <small class="text-xs text-gray-500">This is the name that will appear on the chatbot bubble.</small>
                 <div>
@@ -418,7 +419,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <label class="label text-xs font-semibold">
                   Greeting
                 </label>
-                <MyListBox :options="greetingTypes" :selected-value="thisPageDataItem.greetingType"
+                <MyListBox :options="greetingTypes" :selected-value="thisPageContentItem.greetingType"
                            @change="onGreetingTypeChange"/>
                 <small class="text-xs text-gray-500">This is the greeting that will appear on the chatbot
                   bubble.</small>
@@ -434,7 +435,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 </label>
                 <input
                     id="chatbot-name"
-                    v-model="thisPageDataItem.promptPlaceholder"
+                    v-model="thisPageContentItem.promptPlaceholder"
                     class="input input-bordered input-primary w-full text-sm" placeholder="Chatbot Name" type="text"/>
                 <small class="text-xs text-gray-500">This is the placeholder that will appear on the user input.</small>
               </div>
@@ -444,7 +445,7 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                   Directive
                 </label>
                 <textarea
-                    v-model="thisPageDataItem.directive"
+                    v-model="thisPageContentItem.directive"
                     class="textarea textarea-primary w-full resize-y" placeholder="Add new directive..."></textarea>
                 <small class="text-xs text-gray-500">
                   This is the directive that will be used to generate the chatbot's response.
@@ -454,12 +455,12 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <label class="label text-xs font-semibold" for="creativity">
                   Creativity
                 </label>
-                <input id="creativity" v-model="thisPageDataItem.creativity" class="range range-xs" max="10" min="1"
+                <input id="creativity" v-model="thisPageContentItem.creativity" class="range range-xs" max="10" min="1"
                        step="1" type="range"/>
                 <div class="w-full flex justify-between text-xs px-2">
                   <span>0</span>
                   <span class="text-sm font-semibold">
-                    {{ thisPageDataItem.creativity / 10 }}
+                    {{ thisPageContentItem.creativity / 10 }}
                   </span>
                   <span>1</span>
                 </div>
@@ -480,9 +481,9 @@ const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
                 <div class="py-3 bg-gradient-to-t from-white block basis-2/12 w-full"></div>
                 <div class="bg-white w-full px-4 md:px-6 basis-10/12">
                   <button
-                      :disabled="!savePageDataBtnIsActive"
+                      :disabled="!savePageContentBtnIsActive"
                       class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full"
-                      @click="onSavePageData">
+                      @click="onSavePageContent">
                     Save Changes
                   </button>
                 </div>
