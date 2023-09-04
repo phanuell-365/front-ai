@@ -96,7 +96,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 model: rawPageContentItem['gptModel'] as string,
                 maxResponseLength: 200 as number,
                 creativity: rawPageContentItem['chatbotCreativity'] as number,
-                displayClosureMessage: rawPageContentItem['displayClosureMsg'] as boolean,
+                displayClosureMessage: rawPageContentItem['displayClosureMsg'] ?? false as boolean,
                 closureMessage: rawPageContentItem['closureMsg'] as string,
             } as PageContent;
         });
@@ -120,6 +120,23 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             });
 
             console.log('savePageOptions', response);
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function savePageContent(pageContent: PageContent) {
+        try {
+            const response = fetch(`${BASE_URL}/pages/${pageContent.pageId}/content/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(pageContent),
+            });
+
+            console.log('savePageContent', response);
 
         } catch (error) {
             console.error(error);
@@ -185,6 +202,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         getPageContentByPageId,
         fetchPageContentItems,
         savePageOptions,
+        savePageContent,
         setPageContentItems,
         createNewPageContentItem,
         addPageContentItem,

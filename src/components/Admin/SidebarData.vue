@@ -7,8 +7,8 @@ import {useField} from "vee-validate";
 import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 interface PageContent {
+  pageId: string;
   chatbotName: string;
-  chatbotId: string;
   greetingType: 'static' | 'generated';
   staticGreeting: string;
   generatedGreeting: string;
@@ -18,6 +18,7 @@ interface PageContent {
   maxResponseLength: number;
   creativity: number;
   displayClosureMessage: boolean;
+  closureMessage: string;
 }
 
 interface Page {
@@ -35,7 +36,7 @@ interface SidebarDataProps {
 
 interface Option {
   name: string;
-  value: string;
+  value: string | boolean | number;
 }
 
 const props = defineProps<SidebarDataProps>();
@@ -53,6 +54,17 @@ const greetingTypes = [
   {
     name: 'Static',
     value: 'static',
+  },
+] as Option[];
+
+const closureMsgOptions = [
+  {
+    name: 'Yes',
+    value: true,
+  },
+  {
+    name: 'No',
+    value: false,
   },
 ] as Option[];
 
@@ -77,6 +89,8 @@ watch(() => thisPage, (newVal) => {
   if (JSON.stringify(newVal) !== JSON.stringify(pageOrgClone)) {
     // activate save button
     savePageBtnIsActive.value = true;
+    // not only that but also check if the rest of the fields are valid
+    // savePageBtnIsActive.value = pageOptionsAreValid.value;
 
     emit('sidebar-data-changed', true);
   } else {
@@ -87,9 +101,9 @@ watch(() => thisPage, (newVal) => {
   }
 }, {deep: true});
 
-const thisPageContentItem = reactive<PageContent>({
+const thisPageContentItem = reactive<PageContent>(<PageContent>{
+  pageId: activePageContentItem.value.pageId,
   chatbotName: activePageContentItem.value.chatbotName,
-  chatbotId: activePageContentItem.value.chatbotId,
   greetingType: activePageContentItem.value.greetingType,
   staticGreeting: activePageContentItem.value.staticGreeting,
   generatedGreeting: activePageContentItem.value.generatedGreeting,
@@ -99,11 +113,12 @@ const thisPageContentItem = reactive<PageContent>({
   maxResponseLength: activePageContentItem.value.maxResponseLength,
   creativity: activePageContentItem.value.creativity,
   displayClosureMessage: activePageContentItem.value.displayClosureMessage,
+  closureMessage: activePageContentItem.value.closureMessage,
 });
 
-const pageContentItemOrgClone = reactive<PageContent>({
+const pageContentItemOrgClone = reactive<PageContent>(<PageContent>{
+  pageId: activePageContentItem.value.pageId,
   chatbotName: activePageContentItem.value.chatbotName,
-  chatbotId: activePageContentItem.value.chatbotId,
   greetingType: activePageContentItem.value.greetingType,
   staticGreeting: activePageContentItem.value.staticGreeting,
   generatedGreeting: activePageContentItem.value.generatedGreeting,
@@ -113,6 +128,7 @@ const pageContentItemOrgClone = reactive<PageContent>({
   maxResponseLength: activePageContentItem.value.maxResponseLength,
   creativity: activePageContentItem.value.creativity,
   displayClosureMessage: activePageContentItem.value.displayClosureMessage,
+  closureMessage: activePageContentItem.value.closureMessage,
 });
 
 const savePageContentBtnIsActive = ref(false);
@@ -122,6 +138,8 @@ watch(() => thisPageContentItem, (newVal) => {
   if (JSON.stringify(newVal) !== JSON.stringify(pageContentItemOrgClone)) {
     // activate save button
     savePageContentBtnIsActive.value = true;
+    // not only that but also check if the rest of the fields are valid
+    // savePageContentBtnIsActive.value = pageContentsAreValid.value;
 
     emit('sidebar-data-changed', true);
   } else {
@@ -133,8 +151,8 @@ watch(() => thisPageContentItem, (newVal) => {
 }, {deep: true});
 
 onMounted(() => {
+  thisPageContentItem.pageId = activePageContentItem.value.pageId;
   thisPageContentItem.chatbotName = activePageContentItem.value.chatbotName;
-  thisPageContentItem.chatbotId = activePageContentItem.value.chatbotId;
   thisPageContentItem.greetingType = activePageContentItem.value.greetingType;
   thisPageContentItem.staticGreeting = activePageContentItem.value.staticGreeting;
   thisPageContentItem.generatedGreeting = activePageContentItem.value.generatedGreeting;
@@ -144,6 +162,7 @@ onMounted(() => {
   thisPageContentItem.maxResponseLength = activePageContentItem.value.maxResponseLength;
   thisPageContentItem.creativity = activePageContentItem.value.creativity;
   thisPageContentItem.displayClosureMessage = activePageContentItem.value.displayClosureMessage;
+  thisPageContentItem.closureMessage = activePageContentItem.value.closureMessage;
 
   if (activePageContentItem.value.greetingType === 'static') {
     newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
@@ -166,8 +185,8 @@ const newGreetingType = ref<Option | null>(greetingTypes[0]);
 watch(() => pageContentStore.activePageContentItem, (newVal) => {
   activePageContentItem.value = newVal;
 
+  thisPageContentItem.pageId = activePageContentItem.value.pageId;
   thisPageContentItem.chatbotName = activePageContentItem.value.chatbotName;
-  thisPageContentItem.chatbotId = activePageContentItem.value.chatbotId;
   thisPageContentItem.greetingType = activePageContentItem.value.greetingType;
   thisPageContentItem.staticGreeting = activePageContentItem.value.staticGreeting;
   thisPageContentItem.generatedGreeting = activePageContentItem.value.generatedGreeting;
@@ -195,7 +214,7 @@ onMounted(() => {
 const emit = defineEmits<{
   (event: 'close-sidebar-data'): void;
   (event: 'save-page-options', value: Page): void;
-  (event: 'save-page-content'): void;
+  (event: 'save-page-content', value: PageContent): void;
   (event: 'chatbot-name-change', value: string): void;
   (event: 'greeting-change', value: string): void;
   (event: 'prompt-placeholder-change', value: string): void;
@@ -259,6 +278,10 @@ const onGreetingTypeChange = (option: Option) => {
   }
 }
 
+const onClosureMsgChange = (option: Option) => {
+  thisPageContentItem.displayClosureMessage = option.value as boolean;
+}
+
 watch(() => newGreetingTextAreaText.value, (newVal) => {
   if (thisPageContentItem.greetingType === 'static') {
     thisPageContentItem.staticGreeting = newVal;
@@ -268,33 +291,20 @@ watch(() => newGreetingTextAreaText.value, (newVal) => {
 const pageUrlInputHasFocus = ref(false);
 
 const onSavePageContent = () => {
-  emit('save-page-content');
+  emit('save-page-content', thisPageContentItem);
 };
 
 const onSavePageOptions = () => {
   emit('save-page-options', thisPage);
 };
 
-// emit events for the parent component
-watch(() => thisPageContentItem.chatbotName, (newVal) => {
-  emit('chatbot-name-change', newVal);
-
-
-  if (thisPageContentItem.greetingType === 'generated') {
-    // const newName = newVal[0].toUpperCase() + activePageContentItem.value.chatbotName.slice(1);
-    newGreetingTextAreaText.value = `Say I am ${newVal}, how can I help you today?`;
-  }
-});
-
-watch(() => newGreetingTextAreaText.value, (newVal) => {
-  emit('greeting-change', newVal);
-});
-
-watch(() => thisPageContentItem.promptPlaceholder, (newVal) => {
-  emit('prompt-placeholder-change', newVal);
-});
+// watch(() => newGreetingTextAreaText.value, (newVal) => {
+//   emit('greeting-change', newVal);
+// });
 
 const baseUrl = ref(import.meta.env.VITE_APP_BASE_URL);
+
+// page options validation
 
 // validation for page name
 
@@ -333,17 +343,6 @@ const {
 watch(() => thisPage.name, (newVal) => {
   pageName.value = newVal;
 
-  if (newVal !== pageOrgClone.name) {
-    // activate save button
-    savePageBtnIsActive.value = true;
-
-    emit('sidebar-data-changed', true);
-  } else {
-    // deactivate save button
-    savePageBtnIsActive.value = false;
-
-    emit('sidebar-data-changed', false);
-  }
 });
 
 // validation for page url
@@ -421,34 +420,210 @@ const {
 
 watch(() => thisPage.title, (newVal) => {
   pageTitle.value = newVal;
-
-  if (newVal !== pageOrgClone.title) {
-    // activate save button
-    savePageBtnIsActive.value = true;
-
-    emit('sidebar-data-changed', true);
-  } else {
-    // deactivate save button
-    savePageBtnIsActive.value = false;
-
-    emit('sidebar-data-changed', false);
-  }
 });
 
 watch(() => thisPage.path, (newVal) => {
   pageUrl.value = newVal;
+});
 
-  if (newVal !== pageOrgClone.path) {
-    // activate save button
-    savePageBtnIsActive.value = true;
+// ----------------------------- end of page options validation -----------------------------
 
-    emit('sidebar-data-changed', true);
-  } else {
-    // deactivate save button
-    savePageBtnIsActive.value = false;
+// page content validation
 
-    emit('sidebar-data-changed', false);
+// validation for chatbot name
+
+const chatbotNameValidator = (value: string) => {
+  if (!value) {
+    return "Chatbot name is required";
   }
+
+  if (value.length < 3) {
+    return "Chatbot name must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Chatbot name must not exceed 50 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: chatbotName,
+  errorMessage: chatbotNameErrorMessage,
+  meta: chatbotNameMeta,
+} = useField("chatbotName", chatbotNameValidator);
+
+watch(() => thisPageContentItem.chatbotName, (newVal) => {
+  chatbotName.value = newVal;
+
+  emit('chatbot-name-change', newVal);
+
+  if (thisPageContentItem.greetingType === 'generated') {
+    // const newName = newVal[0].toUpperCase() + activePageContentItem.value.chatbotName.slice(1);
+    newGreetingTextAreaText.value = `Say I am ${newVal}, how can I help you today?`;
+  }
+});
+
+// validation for prompt placeholder
+
+const promptPlaceholderValidator = (value: string) => {
+  if (!value) {
+    return "Prompt placeholder is required";
+  }
+
+  if (value.length < 3) {
+    return "Prompt placeholder must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Prompt placeholder must not exceed 50 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: promptPlaceholder,
+  errorMessage: promptPlaceholderErrorMessage,
+  meta: promptPlaceholderMeta,
+} = useField("promptPlaceholder", promptPlaceholderValidator);
+
+watch(() => thisPageContentItem.promptPlaceholder, (newVal) => {
+  promptPlaceholder.value = newVal;
+
+  emit('prompt-placeholder-change', newVal);
+});
+
+// validation for static greeting
+
+const staticGreetingValidator = (value: string) => {
+  if (!value) {
+    return "Static greeting is required";
+  }
+
+  if (value.length < 3) {
+    return "Static greeting must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Static greeting must not exceed 50 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: staticGreeting,
+  errorMessage: staticGreetingErrorMessage,
+  meta: staticGreetingMeta,
+} = useField("staticGreeting", staticGreetingValidator);
+
+watch(() => thisPageContentItem.staticGreeting, (newVal) => {
+  staticGreeting.value = newVal;
+
+  emit('greeting-change', newVal);
+});
+
+// validation for directive
+
+const directiveValidator = (value: string) => {
+  if (!value) {
+    return "Directive is required";
+  }
+
+  if (value.length < 12) {
+    return "Directive must be at least 12 characters long";
+  }
+
+  if (value.length > 200) {
+    return "Directive must not exceed 200 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: directive,
+  errorMessage: directiveErrorMessage,
+  meta: directiveMeta,
+} = useField("directive", directiveValidator);
+
+watch(() => thisPageContentItem.directive, (newVal) => {
+  directive.value = newVal;
+});
+
+// validation for model
+
+const modelValidator = (value: string) => {
+  if (!value) {
+    return "Model is required";
+  }
+
+  if (value.length < 3) {
+    return "Model must be at least 3 characters long";
+  }
+
+  if (value.length > 20) {
+    return "Model must not exceed 20 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: model,
+  errorMessage: modelErrorMessage,
+  meta: modelMeta,
+} = useField("model", modelValidator);
+
+watch(() => thisPageContentItem.model, (newVal) => {
+  model.value = newVal;
+});
+
+// validation for closure message
+
+const closureMessageValidator = (value: string) => {
+  if (!value) {
+    return "Closure message is required";
+  }
+
+  if (value.length < 3) {
+    return "Closure message must be at least 3 characters long";
+  }
+
+  if (value.length > 50) {
+    return "Closure message must not exceed 50 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: closureMessage,
+  errorMessage: closureMessageErrorMessage,
+  meta: closureMessageMeta,
+} = useField("closureMessage", closureMessageValidator);
+
+watch(() => thisPageContentItem.closureMessage, (newVal) => {
+  closureMessage.value = newVal;
+});
+
+// ----------------------------- end of page content validation -----------------------------
+
+const pageContentsAreValid = computed(() => {
+  return chatbotNameMeta.valid && chatbotNameMeta.validated
+      && promptPlaceholderMeta.valid && promptPlaceholderMeta.validated
+      && staticGreetingMeta.valid && staticGreetingMeta.validated
+      && directiveMeta.valid && directiveMeta.validated
+      && modelMeta.valid && modelMeta.validated
+      && closureMessageMeta.valid && closureMessageMeta.validated;
+});
+
+const pageOptionsAreValid = computed(() => {
+  return pageNameMeta.valid && pageNameMeta.validated
+      && pageUrlMeta.valid && pageUrlMeta.validated
+      && pageTitleMeta.valid && pageTitleMeta.validated;
 });
 
 </script>
@@ -478,7 +653,7 @@ watch(() => thisPage.path, (newVal) => {
             :class="activeSidebarDataTab === tab.value ? 'tab-active border-primary' : ''"
             class="tab tab-bordered grow h-8 sm:h-10 md:h-12 lg:h-14"
             role="presentation"
-            @click="toggleTab(tab.value)">
+            @click="toggleTab(<string>tab.value)">
           <p>{{ tab.name }}</p>
         </li>
       </ul>
@@ -576,14 +751,19 @@ watch(() => thisPage.path, (newVal) => {
               class="tab-content px-5 grow h-full" role="tabpanel"
           >
             <div class="grid grid-cols-1 gap-3 py-3">
-              <div>
+              <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="chatbot-name">
                   Chatbot name
                 </label>
                 <input
                     id="chatbot-name"
                     v-model="thisPageContentItem.chatbotName"
+                    :class="{'input-error': chatbotNameMeta.validated && !chatbotNameMeta.valid, 'input-primary': chatbotNameMeta.validated && chatbotNameMeta.valid}"
                     class="input input-bordered input-primary w-full text-sm" placeholder="Chatbot Name" type="text"/>
+                <small v-if="chatbotNameMeta.validated && !chatbotNameMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ chatbotNameErrorMessage }}
+                </small>
                 <small class="text-xs text-gray-500">This is the name that will appear on the chatbot bubble.</small>
                 <div>
                 </div>
@@ -597,29 +777,47 @@ watch(() => thisPage.path, (newVal) => {
                 <small class="text-xs text-gray-500">This is the greeting that will appear on the chatbot
                   bubble.</small>
               </div>
-              <div class="">
+              <div v-if="thisPageContentItem.greetingType === 'static'" class="flex flex-col space-y-2">
                 <textarea
                     v-model="newGreetingTextAreaText"
+                    :class="{'textarea-error': staticGreetingMeta.validated && !staticGreetingMeta.valid, 'textarea-primary': staticGreetingMeta.validated && staticGreetingMeta.valid}"
                     class="textarea textarea-primary w-full resize-y" placeholder="Bio"></textarea>
+                <small v-if="staticGreetingMeta.validated && !staticGreetingMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ staticGreetingErrorMessage }}
+                </small>
+                <small class="text-xs text-gray-500">
+                  This is the greeting that will appear on the chatbot bubble.
+                </small>
               </div>
-              <div>
+              <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="prompt-placeholder">
                   Prompt placeholder
                 </label>
                 <input
                     id="chatbot-name"
                     v-model="thisPageContentItem.promptPlaceholder"
+                    :class="{'input-error': promptPlaceholderMeta.validated && !promptPlaceholderMeta.valid, 'input-primary': promptPlaceholderMeta.validated && promptPlaceholderMeta.valid}"
                     class="input input-bordered input-primary w-full text-sm" placeholder="Chatbot Name" type="text"/>
+                <small v-if="promptPlaceholderMeta.validated && !promptPlaceholderMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ promptPlaceholderErrorMessage }}
+                </small>
                 <small class="text-xs text-gray-500">This is the placeholder that will appear on the user input.</small>
               </div>
               <hr class="my-3"/>
-              <div>
+              <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="directive">
                   Directive
                 </label>
                 <textarea
                     v-model="thisPageContentItem.directive"
+                    :class="{'textarea-error': directiveMeta.validated && !directiveMeta.valid, 'textarea-primary': directiveMeta.validated && directiveMeta.valid}"
                     class="textarea textarea-primary w-full resize-y" placeholder="Add new directive..."></textarea>
+                <small v-if="directiveMeta.validated && !directiveMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ directiveErrorMessage }}
+                </small>
                 <small class="text-xs text-gray-500">
                   This is the directive that will be used to generate the chatbot's response.
                 </small>
@@ -647,6 +845,51 @@ watch(() => thisPage.path, (newVal) => {
                 </div>
                 <small class="text-xs text-gray-500">
                   This is the creativity level that will be used to generate the chatbot's response.
+                </small>
+              </div>
+              <div class="flex flex-col space-y-2">
+                <label class="label text-xs font-semibold">
+                  Display closure message
+                </label>
+                <MyListBox :options="closureMsgOptions" :selected-value="thisPageContentItem.displayClosureMessage"
+                           @change="onClosureMsgChange"/>
+                <small class="text-xs text-gray-500">
+                  This is will determine whether the closure message will be displayed at the bottom of the chatbot
+                  response.
+                </small>
+              </div>
+              <div v-if="thisPageContentItem.displayClosureMessage" class="flex flex-col space-y-2">
+                <label class="label text-xs font-semibold" for="closure-msg">
+                  Closure message
+                </label>
+                <textarea
+                    v-model="thisPageContentItem.closureMessage"
+                    :class="{'textarea-error': closureMessageMeta.validated && !closureMessageMeta.valid, 'textarea-primary': closureMessageMeta.validated && closureMessageMeta.valid}"
+                    class="textarea textarea-primary w-full resize-y"
+                    placeholder="Add new closure messsage..."></textarea>
+                <small v-if="closureMessageMeta.validated && !closureMessageMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ closureMessageErrorMessage }}
+                </small>
+                <small class="text-xs text-gray-500">
+                  This is the message that will be displayed at the bottom of the chatbot response.
+                </small>
+              </div>
+              <div class="flex flex-col space-y-2">
+                <label class="label text-xs font-semibold" for="model">
+                  Model
+                </label>
+                <input
+                    id="model"
+                    v-model="thisPageContentItem.model"
+                    :class="{'input-error': modelMeta.validated && !modelMeta.valid, 'input-primary': modelMeta.validated && modelMeta.valid}"
+                    class="input input-bordered input-primary w-full text-sm" placeholder="Model" type="text"/>
+                <small v-if="modelMeta.validated && !modelMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ modelErrorMessage }}
+                </small>
+                <small class="text-xs text-gray-500">
+                  This is the model that will be used to generate the chatbot's response.
                 </small>
               </div>
               <div
