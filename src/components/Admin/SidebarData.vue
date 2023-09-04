@@ -612,11 +612,11 @@ watch(() => thisPageContentItem.closureMessage, (newVal) => {
 // ----------------------------- end of page content validation -----------------------------
 
 const pageContentsAreValid = computed(() => {
-  return chatbotNameMeta.valid && chatbotNameMeta.validated
-      && promptPlaceholderMeta.valid && promptPlaceholderMeta.validated
-      && staticGreetingMeta.valid && staticGreetingMeta.validated
-      && directiveMeta.valid && directiveMeta.validated
-      && modelMeta.valid && modelMeta.validated
+  return chatbotNameMeta.valid
+      && promptPlaceholderMeta.valid
+      && staticGreetingMeta.valid
+      && directiveMeta.valid
+      && modelMeta.valid
       && closureMessageMeta.valid && closureMessageMeta.validated;
 });
 
