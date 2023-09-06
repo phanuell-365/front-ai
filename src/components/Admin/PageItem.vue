@@ -49,6 +49,24 @@ const dropdownItems = [
   },
 ];
 
+const onDropdownItemClick = (_e: Event, item: { name: string; path: string }) => {
+  console.log(item);
+
+  if (item.name === "Edit") {
+    handleEditClick();
+  } else if (item.name === "Delete") {
+    handleDeleteClick();
+  }
+};
+
+const handleEditClick = () => {
+  router.push({name: "DynamicPage", params: {page: props.page.path}, query: {pageId: props.page.id, editPage: 'true'}});
+};
+
+const handleDeleteClick = () => {
+  console.log('delete');
+};
+
 </script>
 
 <template>
@@ -80,6 +98,7 @@ const dropdownItems = [
             <a
                 class="menu-item text-xs"
                 href="#"
+                @click.stop="onDropdownItemClick($event, item)"
             >
               {{ item.name }}
             </a>

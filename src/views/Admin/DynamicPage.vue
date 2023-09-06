@@ -31,7 +31,14 @@ onBeforeRouteUpdate(async (to, _from, next) => {
   next();
 });
 
+const editPage = ref(route.query?.editPage as string | undefined);
 const isSidebarDataOpen = ref(false);
+
+setTimeout(() => {
+  if (editPage.value === "true") {
+    isSidebarDataOpen.value = true;
+  }
+}, 1000);
 
 const toggleSidebarData = () => {
   isSidebarDataOpen.value = !isSidebarDataOpen.value;
