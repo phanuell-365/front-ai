@@ -84,6 +84,11 @@ const handleSavePageContent = async (pageContentArg: PageContent) => {
   pageContent.value = await pageContentStore.savePageContent(pageContentArg);
 };
 
+const handleFileUpload = async (file: File, pageId: string) => {
+  const url = await pageContentStore.uploadFile(file, pageId);
+  console.log(url);
+};
+
 const handleChatbotNameChange = (value) => {
   chatbotName.value = value;
 }
@@ -116,6 +121,7 @@ const url = ref(`${import.meta.env.VITE_APP_BASE_URL}/chat/${currentPage.value.p
                      @greeting-change="handleStaticGreetingChange" @save-page-options="handleSavePageOptions"
                      @save-page-content="handleSavePageContent"
                      @sidebar-data-changed="handleSidebarDataChanged"
+                     @file-upload="handleFileUpload"
         />
         <div :class="[showEditButton ? 'cursor-pointer': '']"
              class="container mx-auto px-10 md:px-18 lg:px-24 py-14 flex flex-col items-center relative"

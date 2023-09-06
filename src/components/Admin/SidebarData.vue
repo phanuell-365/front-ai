@@ -219,6 +219,7 @@ const emit = defineEmits<{
   (event: 'greeting-change', value: string): void;
   (event: 'prompt-placeholder-change', value: string): void;
   (event: 'sidebar-data-changed', value: boolean): void;
+  (event: 'file-upload', value: File, pageId: string): void;
 }>();
 
 const sidebarTabs = ref([
@@ -626,6 +627,31 @@ const pageOptionsAreValid = computed(() => {
       && pageTitleMeta.valid && pageTitleMeta.validated;
 });
 
+// Handle the data tab
+
+
+const uploadDataBtnIsActive = ref(false);
+
+const uploadedFile = ref<File | null>(null);
+
+const onFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const files = target.files as FileList;
+
+  if (files.length > 0) {
+    uploadedFile.value = files[0];
+    uploadDataBtnIsActive.value = true;
+
+    // TODO: validate the file type
+  }
+};
+
+const onUploadData = () => {
+  uploadDataBtnIsActive.value = false;
+
+  emit('file-upload', uploadedFile.value as File, thisPage.id);
+};
+
 </script>
 
 <template>
@@ -919,9 +945,21 @@ const pageOptionsAreValid = computed(() => {
                 <label class="label text-sm font-semibold text-center" for="data-file">
                   Connect a custom data source
                 </label>
-                <input id="data-file" class="file-input file-input-ghost w-full max-w-xs" multiple type="file"/>
+                <!-- Accept .txt, .pdf, .docx, .csv -->
+                <input id="data-file"
+                       accept=".csv, .txt, .pdf, .docx"
+                       class="file-input file-input-ghost w-full max-w-xs"
+                       type="file" @change="onFileChange">
                 <small class="text-xs text-gray-500">This is the data file that will be used to train the
                   chatbot.</small>
+              </div>
+              <div class="bg-white w-full px-4 md:px-6 basis-10/12">
+                <button
+                    :disabled="!uploadDataBtnIsActive"
+                    class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full"
+                    @click="onUploadData">
+                  Upload Data
+                </button>
               </div>
             </div>
           </div>

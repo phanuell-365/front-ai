@@ -272,6 +272,26 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         }
     }
 
+    async function uploadFile(file: File, pageId: string) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`${BASE_URL}/pages/${pageId}/data/`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const {data} = await response.json();
+
+            const {file: uploadedFile} = data;
+
+            return uploadedFile;
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     return {
         newItem,
         pageContentItems,
@@ -291,5 +311,6 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         removePageContentItem,
         updatePageContentItem,
         setActivePageContentItem,
+        uploadFile,
     };
 });
