@@ -397,6 +397,26 @@ export const useTabsStore = defineStore('tabsStore', () => {
         tabs.value = [...tabs.value, ...newUniqueTabs];
     }
 
+    function addNewTab(rawTab: any) {
+        const newTab = {
+            name: rawTab['PageName'],
+            title: rawTab['PageName'],
+            to: rawTab['PageName'].toLowerCase().replace(' ', '-'),
+            active: false,
+            id: rawTab['tabId'],
+            pageId: rawTab['PageId'],
+        } as Tab;
+
+        // add the tab to the tabs
+        tabs.value.push(newTab);
+
+        // set the active tab
+        setActiveTab(newTab.name);
+
+        // update the local storage
+        return newTab;
+    }
+
     /**
      * Only use this function when the tabs are already set
      * @param rawTabs
@@ -439,6 +459,26 @@ export const useTabsStore = defineStore('tabsStore', () => {
                 openTabs.value.push(newTab);
             }
         });
+    }
+
+    function addNewOpenTab(rawTab: any) {
+        const newTab = {
+            name: rawTab['PageName'],
+            title: rawTab['PageName'],
+            to: rawTab['PageName'].toLowerCase().replace(' ', '-'),
+            active: false,
+            id: rawTab['tabId'],
+            pageId: rawTab['PageId'],
+        } as Tab;
+
+        // add the tab to the tabs
+        openTabs.value.push(newTab);
+
+        // set the active tab
+        setActiveTab(newTab.name);
+
+        // update the local storage
+        return newTab;
     }
 
     function setActiveTab(tab_name: string) {
@@ -559,6 +599,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
         setTabs,
         setOpenTabs,
         setActiveTab,
+        addNewTab,
         updateActiveTab,
         setActiveTabByPageName,
         closeTab,

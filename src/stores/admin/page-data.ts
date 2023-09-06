@@ -102,6 +102,27 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         });
     }
 
+    function addNewPageContentItem(rawPageOptions: any, rawPageContentItem: any) {
+        const newPageContent = {
+            pageId: rawPageOptions['pageId'] as string,
+            chatbotName: rawPageContentItem['chatbotName'] as string,
+            pageSlug: rawPageContentItem['pageSlug'] as string,
+            greetingType: rawPageContentItem['greetingType'] === 0 ? 'static' : 'generated',
+            generatedGreeting: 'Hello, how can I help you?',
+            staticGreeting: rawPageContentItem['staticGreeting'] as string,
+            promptPlaceholder: rawPageContentItem['placeholderContent'] as string,
+            directive: rawPageContentItem['chatbotDirective'] as string,
+            model: rawPageContentItem['gptModel'] as string,
+            maxResponseLength: 200 as number,
+            creativity: rawPageContentItem['chatbotCreativity'] as number,
+            displayClosureMessage: rawPageContentItem['displayClosureMessage'] === 1,
+            closureMessage: rawPageContentItem['closureMessage'] as string,
+        } as PageContent
+        pageContentItems.value.push(newPageContent);
+
+        return newPageContent;
+    }
+
     function savePageOptions(pageOptions: Page) {
         const newPageOptions: PageOptions = {
             pageId: pageOptions.id.toString(),
@@ -208,6 +229,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         getActivePageContentItem,
         getPageContentByPageId,
         fetchPageContentItems,
+        addNewPageContentItem,
         savePageOptions,
         savePageContent,
         setPageContentItems,

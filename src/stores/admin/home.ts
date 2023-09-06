@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
-import {PageContent} from "./page-data.ts";
+import {PageContent, usePageContentStore} from "./page-data.ts";
 import {computed, ref} from "vue";
+import {useTabsStore} from "./tabs.ts";
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
@@ -229,6 +230,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         isOpen: false,
     });
 
+    const pageContentStore = usePageContentStore();
+    const tabsStore = useTabsStore();
+
     // getters
 
     const getPages = computed(() => pages.value);
@@ -299,9 +303,20 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             if (response.ok) {
                 const page = await response.json();
 
+                const {data} = page;
+
+                const {content, options, tab} = data;
+
+                const [pageContent] = content;
+
+                const [pageOption] = options;
+
+                const newPageContent = pageContentStore.addNewPageContentItem(pageOption, pageContent);
+                tabsStore.setActiveTab(tab['TabName']);
+
                 await fetchPages();
 
-                return page;
+                return newPageContent;
             }
         } catch (e) {
             console.error(e);

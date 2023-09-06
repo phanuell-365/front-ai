@@ -56,31 +56,22 @@ const createPage = async () => {
     const page = await homeStore.createNewPage(pageName.value);
 
     console.log(page);
-    const newPage = pageContentStore.createNewPageContentItem(pageName.value);
 
-    if (newPage) {
-      const newTab = tabsStore.createTabFromPageContent(newPage);
+    if (page) {
 
-      if (newTab) {
+      tabsStore.setActiveTabByPageName(page.name);
 
-        const page = homeStore.createPageFromData(newPage);
+      pageContentStore.setActivePageContentItem(page.name);
 
-        if (page) {
-          tabsStore.setActiveTabByPageName(page.name);
+      homeStore.closeCreateDialog();
 
-          pageContentStore.setActivePageContentItem(page.name);
+      // reset the page name field
+      pageName.value = "";
+      pageNameMeta.valid = false;
+      pageNameMeta.validated = false;
+      pageNameMeta.touched = false;
 
-          homeStore.closeCreateDialog();
-
-          // reset the page name field
-          pageName.value = "";
-          pageNameMeta.valid = false;
-          pageNameMeta.validated = false;
-          pageNameMeta.touched = false;
-
-          await router.push({name: "DynamicPage", params: {page: page.path}});
-        }
-      }
+      await router.push({name: "DynamicPage", params: {page: page.pageSlug}, query: {pageId: page.pageId}});
     }
   }
 }

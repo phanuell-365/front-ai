@@ -2,7 +2,7 @@
 import {useTabsStore} from "@/stores/admin/tabs.ts";
 import {onMounted, ref} from "vue";
 import LinkBar from "@/components/Admin/LinkBar.vue";
-import {onBeforeRouteUpdate, useRoute} from "vue-router";
+import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
 import SidebarData from "@/components/Admin/SidebarData.vue";
 import {PageContent, PageOptions, usePageContentStore} from "@/stores/admin/page-data.ts";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
@@ -15,6 +15,7 @@ onMounted(() => {
 });
 
 const route = useRoute();
+const router = useRouter();
 const tabsStore = useTabsStore();
 const pageContentStore = usePageContentStore();
 const adminHomeStore = useAdminHomeStore();
@@ -59,6 +60,11 @@ tabsStore.setActiveTabByPageName(page.value);
 
 const tab = ref(tabsStore.getTabByTo(page.value));
 const pageContent = ref(pageContentStore.getPageContentByPageId(pageId.value));
+console.log('pageId', pageId.value)
+// if there's no page content, automatically redirect to home
+if (!pageContent.value) {
+  router.replace({name: "AdminHome"});
+}
 
 const currentPage = ref(adminHomeStore.getPageById(pageId.value));
 
