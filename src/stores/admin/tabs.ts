@@ -345,8 +345,8 @@ export const useTabsStore = defineStore('tabsStore', () => {
     const getTabs = computed(() => tabs.value);
     const getActiveTab = computed(() => activeTab.value);
     const getOpenTabs = computed(() => openTabs.value);
-    const getTabByTo = (to: string) => tabs.value.find((tab) => tab.to === to);
-
+    // const getTabByTo = (to: string) => tabs.value.find((tab) => tab.to === to);
+    const getTabByTo = computed(() => (to: string) => tabs.value.find((tab) => tab.to === to));
 
     // actions
 

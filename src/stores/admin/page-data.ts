@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
-import {Page} from "./home.ts";
+import {Page, useAdminHomeStore} from "./home.ts";
 
 export interface PageContent {
     pageId: string;
@@ -46,6 +46,8 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
     const pageContentItems = ref<PageContent[]>([]);
     const activePageContentItem = ref<PageContent | null>(null);
+
+    const adminHomeStore = useAdminHomeStore();
 
     // getters
 
@@ -95,7 +97,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 directive: rawPageContentItem['chatbotDirective'] as string,
                 model: rawPageContentItem['gptModel'] as string,
                 maxResponseLength: 200 as number,
-                creativity: rawPageContentItem['chatbotCreativity'] as number,
+                creativity: rawPageContentItem['chatbotCreativity'] * 10,
                 displayClosureMessage: rawPageContentItem['displayClosureMessage'] === 1,
                 closureMessage: rawPageContentItem['closureMessage'] as string,
             } as PageContent;
@@ -114,7 +116,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             directive: rawPageContentItem['chatbotDirective'] as string,
             model: rawPageContentItem['gptModel'] as string,
             maxResponseLength: 200 as number,
-            creativity: rawPageContentItem['chatbotCreativity'] as number,
+            creativity: rawPageContentItem['chatbotCreativity'] * 10,
             displayClosureMessage: rawPageContentItem['displayClosureMessage'] === 1,
             closureMessage: rawPageContentItem['closureMessage'] as string,
         } as PageContent
@@ -123,7 +125,40 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         return newPageContent;
     }
 
-    function savePageOptions(pageOptions: Page) {
+    function updatePageContentItem(rawPageOptions: any, rawPageContentItem) {
+        // we'll find and replace the page content item
+        const pageContentItem = pageContentItems.value.find(pageContentItem => pageContentItem.pageId === rawPageOptions['pageId']);
+
+        if (pageContentItem) {
+            pageContentItem.chatbotName = rawPageContentItem['chatbotName'] as string;
+            pageContentItem.pageSlug = rawPageContentItem['pageSlug'] as string;
+            pageContentItem.greetingType = rawPageContentItem['greetingType'] === 0 ? 'static' : 'generated';
+            pageContentItem.staticGreeting = rawPageContentItem['staticGreeting'] as string;
+            pageContentItem.promptPlaceholder = rawPageContentItem['placeholderContent'] as string;
+            pageContentItem.directive = rawPageContentItem['chatbotDirective'] as string;
+            pageContentItem.model = rawPageContentItem['gptModel'] as string;
+            pageContentItem.maxResponseLength = 200 as number;
+            pageContentItem.creativity = rawPageContentItem['chatbotCreativity'] * 10;
+            pageContentItem.displayClosureMessage = rawPageContentItem['displayClosureMessage'] === 1;
+            pageContentItem.closureMessage = rawPageContentItem['closureMessage'] as string;
+        }
+
+        return pageContentItem;
+    }
+
+    function updatePageOptions(rawPageOptions: any) {
+        // we'll find and replace the page content item
+        const pageContentItem = pageContentItems.value.find(pageContentItem => pageContentItem.pageId === rawPageOptions['pageId']);
+
+        if (pageContentItem) {
+            pageContentItem.chatbotName = rawPageOptions['pageName'] as string;
+            pageContentItem.pageSlug = rawPageOptions['pageUrl'] as string;
+        }
+
+        return pageContentItem;
+    }
+
+    async function savePageOptions(pageOptions: Page) {
         const newPageOptions: PageOptions = {
             pageId: pageOptions.id.toString(),
             pageName: pageOptions.name,
@@ -132,7 +167,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         }
 
         try {
-            const response = fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
+            const response = await fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
@@ -140,14 +175,22 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 body: JSON.stringify(newPageOptions),
             });
 
-            console.log('savePageOptions', response);
+            const {data} = await response.json();
+
+            const {options} = data;
+
+            const [pageOption] = options;
+
+            await adminHomeStore.fetchPages();
+
+            return updatePageOptions(pageOption);
 
         } catch (error) {
             console.error(error);
         }
     }
 
-    function savePageContent(pageContent: PageContent) {
+    async function savePageContent(pageContent: PageContent) {
         // pageContent.displayClosureMessage = pageContent.displayClosureMessage ? 1 : 0;
         const pageContentBody = {
             ...pageContent,
@@ -156,7 +199,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         };
 
         try {
-            const response = fetch(`${BASE_URL}/pages/${pageContent.pageId}/content/`, {
+            const response = await fetch(`${BASE_URL}/pages/${pageContentBody.pageId}/content/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
@@ -164,7 +207,17 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 body: JSON.stringify(pageContentBody),
             });
 
-            console.log('savePageContent', response);
+            const {data} = await response.json();
+
+            const {content, options} = data;
+
+            const [pageContent] = content;
+
+            const [pageOption] = options;
+
+            await adminHomeStore.fetchPages();
+
+            return updatePageContentItem(pageOption, pageContent);
 
         } catch (error) {
             console.error(error);
@@ -205,9 +258,9 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         pageContentItems.value.splice(pageContentItems.value.indexOf(pageContentItem), 1);
     }
 
-    function updatePageContentItem(pageContentItem: PageContent) {
-        pageContentItems.value[pageContentItems.value.indexOf(pageContentItem)] = pageContentItem;
-    }
+    // function updatePageContentItem(pageContentItem: PageContent) {
+    //     pageContentItems.value[pageContentItems.value.indexOf(pageContentItem)] = pageContentItem;
+    // }
 
     function setActivePageContentItem(pageContentName: string) {
         // find the page data item by id

@@ -72,12 +72,16 @@ const chatbotName = ref(pageContent.value.chatbotName);
 const promptPlaceholder = ref(pageContent.value.promptPlaceholder);
 const staticGreeting = ref(pageContent.value.staticGreeting);
 
-const handleSavePageOptions = (pageOptions: PageOptions) => {
-  pageContentStore.savePageOptions(pageOptions);
+const handleSavePageOptions = async (pageOptions: PageOptions) => {
+  const newOption = await adminHomeStore.updatePage(pageOptions);
+  console.log(newOption)
+  await tabsStore.fetchTabs();
+  tabsStore.setActiveTabByPageName(newOption.path);
+  currentPage.value = newOption;
 };
 
-const handleSavePageContent = (pageContent: PageContent) => {
-  pageContentStore.savePageContent(pageContent);
+const handleSavePageContent = async (pageContentArg: PageContent) => {
+  pageContent.value = await pageContentStore.savePageContent(pageContentArg);
 };
 
 const handleChatbotNameChange = (value) => {

@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {PageContent, usePageContentStore} from "./page-data.ts";
+import {PageContent, PageOptions, usePageContentStore} from "./page-data.ts";
 import {computed, ref} from "vue";
 import {useTabsStore} from "./tabs.ts";
 
@@ -225,7 +225,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
     // state
 
-    const pages = ref([]);
+    const pages = ref<Page[]>([]);
     const createDialog = ref({
         isOpen: false,
     });
@@ -334,12 +334,64 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         });
     }
 
+    function updatePageOptions(rawPage: any) {
+        // const page = {
+        //     id: rawPage.pageId,
+        //     name: rawPage.pageName,
+        //     path: rawPage.pageUrl,
+        //     title: rawPage.pageTitle,
+        // }
+        //
+        // pages.value[pages.value.indexOf(getPageById.value(page.id))] = page;
+        //
+        // return page;
+
+        // we'll opt for find and update instead of the above code
+        const page = pages.value.find((page) => page.id === rawPage.pageId);
+
+        if (page) {
+            page.name = rawPage.pageName;
+            page.path = rawPage.pageUrl;
+            page.title = rawPage.pageTitle;
+        }
+
+        return page;
+    }
+
     function removePage(page: any) {
         pages.value.splice(pages.value.indexOf(page), 1);
     }
 
-    function updatePage(page: any) {
-        pages.value[pages.value.indexOf(page)] = page;
+    async function updatePage(pageOptions: Page) {
+        const newPageOptions: PageOptions = {
+            pageId: pageOptions.id.toString(),
+            pageName: pageOptions.name,
+            pageTitle: pageOptions.title,
+            pageUrl: pageOptions.path,
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newPageOptions),
+            });
+
+            const {data} = await response.json();
+
+            const {options} = data;
+
+            const [pageOption] = options;
+
+            await fetchPages();
+
+            return updatePageOptions(pageOption);
+
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     function openCreateDialog() {
