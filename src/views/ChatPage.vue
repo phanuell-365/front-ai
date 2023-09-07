@@ -10,6 +10,7 @@
       </Suspense>
     </RouterView>
   </div>
+  <Teleport to="body"></Teleport>
 </template>
 
 <style scoped>

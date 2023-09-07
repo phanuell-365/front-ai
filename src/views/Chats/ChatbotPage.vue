@@ -3,12 +3,16 @@
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, Ref, ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import {usePageContentStore} from "@/stores/admin/page-data.ts";
+import {useChatbotStore} from "@/stores/chatbot";
+// import {useTextProcessor} from "@/composables/text-processor.ts";
+import {marked} from "marked";
 
 const route = useRoute();
 const pageContentStore = usePageContentStore();
+const chatbot = useChatbotStore();
 
 await pageContentStore.fetchPageContentItems();
 
@@ -62,7 +66,8 @@ interface Conversation {
 const conversationContainerRef = ref<HTMLDivElement | null>();
 const userInputContainerHeight = ref(0);
 const userInputContainerHeightRef = ref<HTMLDivElement | null>();
-const conversation = ref<Conversation[]>([]);
+const conversation = ref<Ref<Conversation>[]>([]);
+const aiResponses = ref<string[]>([]);
 
 // create sample conversations from the sample data
 // for (let i = 0; i < aiResponses.value.length; i++) {
@@ -80,15 +85,147 @@ const scrollToBottom = () => {
   });
 };
 
-const handleUserInput = (_value: string, formatted: string) => {
+const handleUserInput = async (_value: string, formatted: string) => {
   // add the user's response to the conversation
   // scroll to the bottom of the conversation
   scrollToBottom();
 
-  const userMessage: Conversation = {message: formatted, isUser: true};
+  const userMessage = ref<Conversation>({message: formatted, isUser: true});
 
   conversation.value.push(userMessage);
+  const aiMessage = ref<Conversation>({message: '', isUser: false});
+
+  conversation.value.push(aiMessage);
+  // send the user's response to the server
+  // and wait for the server to send the AI's response
+  try {
+    const responseStream = await chatbot.establishConnection(pageId.value, formatted);
+
+    // create a new reader
+    const reader2 = responseStream.body.getReader();
+
+    // read the stream
+    const result = await reader2.read();
+
+    // convert the stream to a string
+    const decoder = new TextDecoder();
+
+    let newMessage = decoder.decode(result.value);
+
+    console.log(newMessage)
+
+    // convert the string to html
+    // newMessage = aiResponseHtmlConverter(newMessage);
+
+    // convert the html to code
+    // newMessage = aiResponseCodeConverter(newMessage);
+    // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
+
+    // newMessage = tableProcessor(newMessage);
+    newMessage = marked.parse(newMessage);
+
+    // push the result to the string array
+    aiResponses.value.push(newMessage);
+
+    // aiMessage.value.message = decoder.decode(result.value);
+    aiMessage.value.message = newMessage
+    // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
+
+    // listen for new data
+    reader2.read().then(function processText({done, value}) {
+      // Result objects contain two properties:
+      // done  - true if the stream has already given you all its data.
+      // value - some data. Always undefined when done is true.
+      if (done) {
+        console.log("Stream complete");
+
+        console.log(aiResponses.value)
+        return;
+      }
+      // value for fetch streams is a Uint8Array
+      console.log("Received", decoder.decode(value));
+
+      newMessage = decoder.decode(value);
+
+      console.log(newMessage)
+
+      // newMessage = aiResponseHtmlConverter(newMessage);
+
+      // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
+
+      // newMessage = tableProcessor(newMessage);
+
+      newMessage = marked.parse(newMessage);
+
+      aiResponses.value.push(newMessage);
+      // aiMessage.value.message = decoder.decode(value);
+      aiMessage.value.message = newMessage
+      // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
+
+      console.log(aiMessage.value.message)
+
+      scrollToBottom();
+      // responseString.value = decoder.decode(value);
+      // stringArray.value.push(decoder.decode(value));
+      // Read some more, and call this function again
+      return reader2.read().then(processText);
+    });
+
+
+  } catch (error) {
+    console.log(error);
+  }
 };
+
+const aiResponseHtmlConverter = (message: string) => {
+  return message.replace(/(?:\r\n|\r|\n)/g, '<br>');
+};
+
+// convert '```' to '<pre><code>' and '```' to '</code></pre>'
+const aiResponseCodeConverter = (message: string) => {
+  const regex = /```/g;
+  const subst = `<pre><div class="mockup-code"><code>`;
+
+  // The substituted value will be contained in the result variable
+  let result = message.replace(regex, subst);
+
+  const regex2 = /```/g;
+  const subst2 = `</code></div></pre>`;
+
+  // The substituted value will be contained in the result variable
+  result = result.replace(regex2, subst2);
+
+  return result;
+};
+
+const tableProcessor = (inputText: string) => {
+  const rows = inputText.trim().split('\n').map(row => row.split('|').map(cell => cell.trim()));
+  // if (rows.length < 3) {
+  //   // Not enough rows to form a table
+  //   return '';
+  // }
+
+  const headerRow = rows[0];
+  const headerCells = headerRow.map(cell => `<th>${cell}</th>`).join('');
+
+  const bodyRows = rows.slice(2).map(row => {
+    const bodyCells = row.map(cell => `<td>${cell}</td>`).join('');
+    return `<tr>${bodyCells}</tr>`;
+  }).join('');
+
+  return `<div class="overflow-x-auto">
+        <table class="table table-zebra">
+        <thead>
+            <tr>${headerCells}</tr>
+        </thead>
+        <tbody>
+            ${bodyRows}
+        </tbody>
+    </table>
+    </div>`;
+}
+
+// handle openAI tables
 
 // Create a variable for toggling the relative and the sticky position
 const toggleSticky = computed(() => {
@@ -148,10 +285,11 @@ watch(conversation.value, () => {
                        :chatbot-name="chatbotName"/>
 
         <div v-for="(message, index) in conversation" :key="index">
-          <UserBubble v-if="message.isUser && message.message && message.message.length > 0"
-                      :key="index" :user-message="message.message" user-name="John Doe"/>
-          <ChatbotBubble v-else-if="!message.isUser && message.message && message.message.length > 0"
-                         :chatbot-message="message.message" :chatbot-name="chatbotName" :is-copyable="index !== 0"/>
+          <UserBubble v-if="message.value.isUser && message.value.message && message.value.message.length > 0"
+                      :key="index" :user-message="message.value.message" user-name="John Doe"/>
+          <ChatbotBubble v-else-if="!message.value.isUser && message.value.message && message.value.message.length > 0"
+                         :chatbot-message="message.value.message" :chatbot-name="chatbotName"
+                         :is-copyable="index !== 0"/>
         </div>
       </TransitionGroup>
     </div>
