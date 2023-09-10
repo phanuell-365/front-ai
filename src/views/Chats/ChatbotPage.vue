@@ -68,6 +68,7 @@ const userInputContainerHeight = ref(0);
 const userInputContainerHeightRef = ref<HTMLDivElement | null>();
 const conversation = ref<Ref<Conversation>[]>([]);
 const aiResponses = ref<string[]>([]);
+const isGeneratingResponse = ref(false);
 
 // create sample conversations from the sample data
 // for (let i = 0; i < aiResponses.value.length; i++) {
@@ -94,6 +95,8 @@ const handleUserInput = async (_value: string, formatted: string) => {
 
   conversation.value.push(userMessage);
   const aiMessage = ref<Conversation>({message: '', isUser: false});
+
+  isGeneratingResponse.value = true;
 
   conversation.value.push(aiMessage);
   // send the user's response to the server
@@ -140,6 +143,8 @@ const handleUserInput = async (_value: string, formatted: string) => {
         console.log("Stream complete");
 
         console.log(aiResponses.value)
+
+        isGeneratingResponse.value = false;
         return;
       }
       // value for fetch streams is a Uint8Array
@@ -310,7 +315,8 @@ watch(conversation.value, () => {
       <div class="py-6 bg-gradient-to-t from-requested-color block"></div>
       <div class="bg-requested-color w-full px-4 md:px-6 pb-14 flex-1">
         <div class="grid grid-cols-1 w-11/12 md:w-10/12 mx-auto">
-          <UserInput :disabled="false" :prompt-placeholder="promptPlaceholder" user-input=""
+          <UserInput :disabled="false" :is-generating="isGeneratingResponse" :prompt-placeholder="promptPlaceholder"
+                     user-input=""
                      @userInput="handleUserInput"/>
         </div>
       </div>

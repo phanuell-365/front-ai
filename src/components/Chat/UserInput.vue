@@ -1,10 +1,11 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, nextTick, ref, watch} from "vue";
 
 interface UserInputProps {
   userInput: string;
   promptPlaceholder: string;
   disabled: boolean;
+  isGenerating?: boolean;
 }
 
 const props = defineProps<UserInputProps>();
@@ -59,6 +60,13 @@ const onEnterKey = (e: KeyboardEvent) => {
       // if the user input is empty, do nothing
       return;
     }
+
+    // check if a response is being generated
+    if (props.isGenerating) {
+      // if a response is being generated, do nothing
+      return;
+    }
+
     // emit the user input
     emits('userInput', userInput.value, formattedUserInput.value);
 
@@ -110,17 +118,21 @@ const addFocus = () => {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow-lg shadow-slate-300/10 flex flex-row items-center space-x-4 m-0 p-5" @click.stop="addFocus"
-       :class="inputHasFocus ? 'ring-2 ring-primary ring-opacity-50' : ''">
-    <textarea v-model="userInput"
+  <div :class="inputHasFocus ? 'ring-2 ring-primary ring-opacity-50' : ''"
+       class="bg-white rounded-xl shadow-lg shadow-slate-300/10 flex flex-row items-center space-x-4 m-0 p-5"
+       @click.stop="addFocus">
+    <textarea ref="textareaRef"
+              v-model="userInput"
+              :disabled="props.disabled" :placeholder="props.promptPlaceholder"
               class="w-full border-none resize-none focus:outline-none bg-transparent h-6 text-sm grow transition duration-150"
-              @focus="inputHasFocus = true" @blur="inputHasFocus = false" :disabled="props.disabled"
-              :placeholder="props.promptPlaceholder" ref="textareaRef" rows="1" @keydown="onEnterKey"
+              rows="1" @blur="inputHasFocus = false" @focus="inputHasFocus = true" @keydown="onEnterKey"
     ></textarea>
-    <button type="button" @click.stop="sendButtonClicked" class="btn btn-sm btn-square btn-ghost normal-case" :disabled="!hasText">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-           class="w-6 h-6 transition duration-150"
-           :class="hasText ? 'text-primary' : 'text-neutral-400'">
+    <button :disabled="!hasText || props.isGenerating" class="btn btn-sm btn-square btn-ghost normal-case" type="button"
+            @click.stop="sendButtonClicked">
+      <svg :class="hasText && !props.isGenerating ? 'text-primary' : 'text-neutral-400'"
+           class="w-6 h-6 transition duration-150" fill="currentColor"
+           viewBox="0 0 24 24"
+           xmlns="http://www.w3.org/2000/svg">
         <path
             d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
       </svg>
