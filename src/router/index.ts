@@ -71,7 +71,13 @@ const routes = [
                 }
             },
         ],
-    }
+    },
+    // all
+    {
+        path: "/:notFound(.*)*",
+        name: "not-found",
+        component: () => import("../views/errors/NotFound.vue"),
+    },
 ];
 
 const router = createRouter({
