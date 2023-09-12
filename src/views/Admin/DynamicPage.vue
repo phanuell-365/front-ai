@@ -8,8 +8,8 @@ import {PageContent, PageOptions, usePageContentStore} from "@/stores/admin/page
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
-import {useAppHomeStore} from "@/stores/home";
+import {Page, useAdminHomeStore} from "@/stores/admin/home.ts";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
 
 interface DynamicPageProps {
   page?: string;
@@ -23,8 +23,6 @@ const router = useRouter();
 const tabsStore = useTabsStore();
 const pageContentStore = usePageContentStore();
 const adminHomeStore = useAdminHomeStore();
-const appHomeStore = useAppHomeStore();
-
 
 const appIsFetching = ref(true);
 
@@ -42,7 +40,7 @@ setTimeout(() => {
   }
 }, 1000);
 
-const currentPage = ref(null);
+const currentPage = ref<Page | null>(null);
 
 const pageContent = ref<PageContent | null>(null);
 const chatbotName = ref<string | null>(null);
@@ -53,19 +51,9 @@ const tab = ref(null);
 
 const sidebarDataChanged = ref(false);
 
-const url = ref(null);
-
-console.log('pageId', pageId.value)
-// if there's no page content, automatically redirect to home
-// if (!pageContent.value) {
-//   router.replace({name: "AdminHome"});
-// }
+const url = ref<string | null>(null);
 
 onBeforeMount(() => {
-  // await pageContentStore.fetchPageContentItems();
-  // await adminHomeStore.fetchPages();
-  // await tabsStore.fetchTabs();
-
   pageContentStore.fetchPageContentItems().then(() => {
     adminHomeStore.fetchPages().then(() => {
       tabsStore.fetchTabs().then(() => {
@@ -79,7 +67,6 @@ onBeforeMount(() => {
           router.replace({name: "not-found"});
         }
 
-        console.log('currentPage', currentPage.value)
         pageContent.value = pageContentStore.getPageContentByPageId(pageId.value);
         chatbotName.value = pageContent.value?.chatbotName;
         promptPlaceholder.value = pageContent.value?.promptPlaceholder;
@@ -160,58 +147,52 @@ const handleSidebarDataChanged = (value: boolean) => {
 </script>
 
 <template>
-  <template v-if="!appIsFetching">
-    <div class="flex-1 overflow-hidden">
-      <LinkBar :name="currentPage?.name" :text="`chat/${currentPage?.path}`" :url="url"/>
-      <div class="relative flex flex-col h-full">
-        <div class="flex-1 overflow-auto h-screen">
-          <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-content="pageContent"
-                       @closeSidebarData="onCloseSidebarData" @chatbot-name-change="handleChatbotNameChange"
-                       @prompt-placeholder-change="handlePromptPlaceholderChange"
-                       @greeting-change="handleStaticGreetingChange" @save-page-options="handleSavePageOptions"
-                       @save-page-content="handleSavePageContent"
-                       @sidebar-data-changed="handleSidebarDataChanged"
-                       @file-upload="handleFileUpload"
-          />
-          <div :class="[showEditButton ? 'cursor-pointer': '']"
-               class="container mx-auto px-10 md:px-18 lg:px-24 py-14 flex flex-col items-center relative"
-               @click="toggleSidebarData" @mouseleave="onMainContainerMouseLeave" @mouseover="onMainContainerMouseOver">
-            <div class="grid grid-cols-1 gap-7 w-9/12 mx-auto">
-              <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
-                             :chatbot-name="chatbotName"/>
-              <UserBubble :user-message="`What is this?`" user-name="John Doe"/>
-              <ChatbotBubble :key="2"
-                             :chatbot-message="`Sorry! I can't help you with that at the moment. Please try again later.`"
-                             :chatbot-name="chatbotName"
-                             is-copyable/>
+  <Transition mode="out-in" name="slide-in">
+    <template v-if="!appIsFetching">
+      <div class="flex-1 overflow-hidden">
+        <LinkBar :name="currentPage?.name" :text="`chat/${currentPage?.path}`" :url="url"/>
+        <div class="relative flex flex-col h-full">
+          <div class="flex-1 overflow-auto h-screen">
+            <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-content="pageContent"
+                         @closeSidebarData="onCloseSidebarData" @chatbot-name-change="handleChatbotNameChange"
+                         @prompt-placeholder-change="handlePromptPlaceholderChange"
+                         @greeting-change="handleStaticGreetingChange" @save-page-options="handleSavePageOptions"
+                         @save-page-content="handleSavePageContent"
+                         @sidebar-data-changed="handleSidebarDataChanged"
+                         @file-upload="handleFileUpload"
+            />
+            <div :class="[showEditButton ? 'cursor-pointer': '']"
+                 class="container mx-auto px-10 md:px-18 lg:px-24 py-14 flex flex-col items-center relative"
+                 @click="toggleSidebarData" @mouseleave="onMainContainerMouseLeave"
+                 @mouseover="onMainContainerMouseOver">
+              <div class="grid grid-cols-1 gap-7 w-9/12 mx-auto">
+                <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
+                               :chatbot-name="chatbotName"/>
+                <UserBubble :user-message="`What is this?`" user-name="John Doe"/>
+                <ChatbotBubble :key="2"
+                               :chatbot-message="`Sorry! I can't help you with that at the moment. Please try again later.`"
+                               :chatbot-name="chatbotName"
+                               is-copyable/>
 
-              <UserInput :prompt-placeholder="promptPlaceholder" disabled user-input=""/>
+                <UserInput :prompt-placeholder="promptPlaceholder" disabled user-input=""/>
+              </div>
+
+              <!-- Toggler -->
+              <button v-if="showEditButton"
+                      class="absolute top-10 right-5 md:right-36 btn btn-primary btn-sm normal-case text-xs md:text-sm"
+                      type="button"
+                      @click.stop="toggleSidebarData">
+                <span class="material-icons-round text-xs">edit</span> Edit
+              </button>
             </div>
-
-            <!-- Toggler -->
-            <button v-if="showEditButton"
-                    class="absolute top-10 right-5 md:right-36 btn btn-primary btn-sm normal-case text-xs md:text-sm"
-                    type="button"
-                    @click.stop="toggleSidebarData">
-              <span class="material-icons-round text-xs">edit</span> Edit
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  </template>
-  <template v-else-if="appIsFetching">
-    <div class="absolute inset-0 z-30 bg-neutral-800 bg-opacity-10 backdrop-blur cursor-pointer">
-      <!--      <div class="flex flex-col items-center justify-center h-screen">-->
-      <div class="flex flex-col items-center justify-center h-full">
-        <div class="flex flex-col items-center justify-center mx-auto space-y-2">
-          <span class="loading loading-spinner w-12"></span>
-          <!--        <p class="text-sm text-neutral-500 dark:text-neutral-400">-->
-          <!--        </p>-->
-        </div>
-      </div>
-    </div>
-  </template>
+    </template>
+    <template v-else-if="appIsFetching">
+      <LoadingOverlay :show="appIsFetching"/>
+    </template>
+  </Transition>
 </template>
 
 <style scoped></style>
