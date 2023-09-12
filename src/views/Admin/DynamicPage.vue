@@ -109,7 +109,6 @@ const onMainContainerMouseLeave = () => {
   showEditButton.value = false;
 };
 
-
 const handleSavePageOptions = async (pageOptions: PageOptions) => {
   const newOption = await adminHomeStore.updatePage(pageOptions);
   console.log(newOption)
@@ -126,20 +125,15 @@ const handleFileUpload = async (file: File, pageId: string) => {
   const url = await pageContentStore.uploadFile(file, pageId);
   console.log(url);
 };
-
 const handleChatbotNameChange = (value) => {
   chatbotName.value = value;
 }
-
 const handlePromptPlaceholderChange = (value) => {
   promptPlaceholder.value = value;
 }
-
 const handleStaticGreetingChange = (value) => {
   staticGreeting.value = value;
 }
-
-
 const handleSidebarDataChanged = (value: boolean) => {
   sidebarDataChanged.value = value;
 }

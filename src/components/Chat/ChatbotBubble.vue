@@ -5,6 +5,7 @@ interface ChatbotBubble {
   chatbotName: string;
   chatbotMessage: string;
   isCopyable?: boolean;
+  hasError?: boolean;
 }
 
 const props = withDefaults(defineProps<ChatbotBubble>(), {
@@ -39,7 +40,7 @@ const onCopyTextMouseLeave = () => {
 
 <template>
   <div class="w-[98%] mr-auto chatbot-pop">
-    <div class="px-4 py-5 bg-blue-100 rounded-xl shadow-lg shadow-blue-400/10">
+    <div v-if="!hasError" class="px-4 py-5 bg-blue-100 rounded-xl shadow-lg shadow-blue-400/10">
       <div class="text-sm font-poppins-semi-bold mb-2 tracking-wide leading-tight">
         {{ props.chatbotName }}
       </div>
@@ -67,6 +68,15 @@ const onCopyTextMouseLeave = () => {
         </svg>
         <span v-if="isTextCopied" class="text-xs font-poppins-semi-bold">Copied</span>
       </button>
+    </div>
+    <div v-else>
+      <div class="px-4 py-5 bg-red-100 rounded-xl shadow-lg shadow-red-400/10">
+        <div class="text-sm font-poppins-semi-bold mb-2 tracking-wide leading-tight">
+          {{ props.chatbotName }}
+        </div>
+        <div class="" v-html="props.chatbotMessage">
+        </div>
+      </div>
     </div>
   </div>
 </template>

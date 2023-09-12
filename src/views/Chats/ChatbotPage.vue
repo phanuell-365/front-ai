@@ -3,29 +3,50 @@
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
-import {computed, onMounted, Ref, ref, watch} from "vue";
-import {useRoute} from "vue-router";
-import {usePageContentStore} from "@/stores/admin/page-data.ts";
+import {computed, onBeforeMount, onMounted, Ref, ref, watch} from "vue";
+import {useRoute, useRouter} from "vue-router";
+import {PageContent, usePageContentStore} from "@/stores/admin/page-data.ts";
 import {useChatbotStore} from "@/stores/chatbot";
 // import {useTextProcessor} from "@/composables/text-processor.ts";
 import {marked} from "marked";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
 
 const route = useRoute();
 const pageContentStore = usePageContentStore();
 const chatbot = useChatbotStore();
+const router = useRouter();
 
-await pageContentStore.fetchPageContentItems();
+const appIsFetching = ref(true);
 
 const page = ref(route.params.chatbotId);
 const pageId = ref(route.query.pageId as string);
-const pageContent = ref(pageContentStore.getPageContentByPageId(pageId.value));
+const pageContent = ref<PageContent | null>(null);
 
-const chatbotName = ref(pageContent.value.chatbotName);
-const promptPlaceholder = ref(pageContent.value.promptPlaceholder);
-const staticGreeting = ref(pageContent.value.staticGreeting);
+const chatbotName = ref<string | null>(null);
+const promptPlaceholder = ref<string | null>(null);
+const staticGreeting = ref<string | null>(null);
 
+onBeforeMount(() => {
+  pageContentStore.fetchPageContentItems().then(() => {
+
+    pageContent.value = pageContentStore.getPageContentByPageId(pageId.value);
+
+    if (!pageContent.value) {
+      router.replace({name: "not-found"});
+    }
+
+    chatbotName.value = pageContent.value.chatbotName;
+    promptPlaceholder.value = pageContent.value.promptPlaceholder;
+    staticGreeting.value = pageContent.value.staticGreeting;
+
+    window.document.title = pageContent.value.chatbotName;
+
+    setTimeout(() => {
+      appIsFetching.value = false;
+    }, 500);
+  });
+});
 // set page metadata
-window.document.title = pageContent.value.chatbotName;
 
 // sample data
 
@@ -61,6 +82,7 @@ window.document.title = pageContent.value.chatbotName;
 interface Conversation {
   message: string;
   isUser: boolean;
+  hasError?: boolean;
 }
 
 const conversationContainerRef = ref<HTMLDivElement | null>();
@@ -179,6 +201,16 @@ const handleUserInput = async (_value: string, formatted: string) => {
 
   } catch (error) {
     console.log(error);
+
+    aiMessage.value.hasError = true;
+    aiMessage.value.message = `
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative text-sm" role="alert">
+            <strong class="font-bold">Oops!</strong>
+            <span class="block sm:inline">Something went wrong. Please try again.</span>
+        </div>
+    `;
+
+    isGeneratingResponse.value = false;
   }
 };
 
@@ -280,48 +312,59 @@ watch(conversation.value, () => {
 </script>
 
 <template>
-  <div id="main-container" :class="!toggleSticky ? 'relative' : ''" class="flex-1 overflow-scroll flex flex-col">
-    <div class="pt-10 md:pt-20">
-      <!-- Simulate a conversation loop -->
-      <TransitionGroup id="conversation-container" class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10" name="fade-slide"
-                       tag="div"
-                       @enter="scrollToBottom">
-        <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
-                       :chatbot-name="chatbotName"/>
+  <Transition mode="out-in" name="slide-in">
+    <template v-if="!appIsFetching">
+      <div id="main-container" :class="!toggleSticky ? 'relative' : ''" class="flex-1 overflow-scroll flex flex-col">
+        <div class="pt-10 md:pt-20">
+          <!-- Simulate a conversation loop -->
+          <TransitionGroup id="conversation-container" class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10"
+                           name="fade-slide"
+                           tag="div"
+                           @enter="scrollToBottom">
+            <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
+                           :chatbot-name="chatbotName"/>
 
-        <div v-for="(message, index) in conversation" :key="index">
-          <UserBubble v-if="message.value.isUser && message.value.message && message.value.message.length > 0"
-                      :key="index" :user-message="message.value.message" user-name="John Doe"/>
-          <ChatbotBubble v-else-if="!message.value.isUser && message.value.message && message.value.message.length > 0"
-                         :chatbot-message="message.value.message" :chatbot-name="chatbotName"
-                         :is-copyable="index !== 0"/>
+            <div v-for="(message, index) in conversation" :key="index">
+              <UserBubble v-if="message.value.isUser && message.value.message && message.value.message.length > 0"
+                          :key="index" :user-message="message.value.message" user-name="John Doe"/>
+              <ChatbotBubble
+                  v-else-if="!message.value.isUser && message.value.message && message.value.message.length > 0"
+                  :chatbot-message="message.value.message" :chatbot-name="chatbotName"
+                  :has-error="message.value?.hasError"
+                  :is-copyable="index !== 0"/>
+            </div>
+          </TransitionGroup>
         </div>
-      </TransitionGroup>
-    </div>
-    <div v-if="toggleSticky" id="user-input-placeholder" :style="{'padding-bottom': userInputContainerHeight + 'px'}">
-    </div>
-    <div v-if="showScrollToBottomButton" class="absolute bottom-2 right-0 mb-32 mr-8 md:mr-12 z-40">
-      <button class="rounded-full bg-white shadow-lg shadow-slate-300/10 p-2"
-              @click="scrollToBottom">
-        <svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor"
-             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round"
-                stroke-width="2"/>
-        </svg>
-      </button>
-    </div>
-    <div ref="userInputContainerHeightRef"
-         :class="!toggleSticky ? 'sticky' : 'absolute'" class="w-full bottom-0">
-      <div class="py-6 bg-gradient-to-t from-requested-color block"></div>
-      <div class="bg-requested-color w-full px-4 md:px-6 pb-14 flex-1">
-        <div class="grid grid-cols-1 w-11/12 md:w-10/12 mx-auto">
-          <UserInput :disabled="false" :is-generating="isGeneratingResponse" :prompt-placeholder="promptPlaceholder"
-                     user-input=""
-                     @userInput="handleUserInput"/>
+        <div v-if="toggleSticky" id="user-input-placeholder"
+             :style="{'padding-bottom': userInputContainerHeight + 'px'}">
+        </div>
+        <div v-if="showScrollToBottomButton" class="absolute bottom-2 right-0 mb-32 mr-8 md:mr-12 z-40">
+          <button class="rounded-full bg-white shadow-lg shadow-slate-300/10 p-2"
+                  @click="scrollToBottom">
+            <svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor"
+                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+        <div ref="userInputContainerHeightRef"
+             :class="!toggleSticky ? 'sticky' : 'absolute'" class="w-full bottom-0">
+          <div class="py-6 bg-gradient-to-t from-requested-color block"></div>
+          <div class="bg-requested-color w-full px-4 md:px-6 pb-14 flex-1">
+            <div class="grid grid-cols-1 w-11/12 md:w-10/12 mx-auto">
+              <UserInput :disabled="false" :is-generating="isGeneratingResponse" :prompt-placeholder="promptPlaceholder"
+                         user-input=""
+                         @userInput="handleUserInput"/>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    </template>
+    <template v-else-if="appIsFetching">
+      <LoadingOverlay :show="appIsFetching"/>
+    </template>
+  </Transition>
 </template>
 
 <style scoped>
