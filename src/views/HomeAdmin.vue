@@ -80,21 +80,21 @@ const createPage = async () => {
 
 <template>
   <div class="flex flex-col h-screen bg-blue-50">
-    <Suspense>
-      <TopBar/>
-    </Suspense>
+    <!--    <Suspense>-->
+    <TopBar/>
+    <!--    </Suspense>-->
     <RouterView #default="{ Component, route }">
-      <Suspense>
-        <component :is="Component" :key="route.fullPath"/>
-        <template #fallback>
-          <div class="flex flex-col items-center justify-center h-full">
-            <div class="flex flex-col items-center justify-center space-y-2">
-              <div class="w-16 h-16 rounded-full bg-primary-100 animate-pulse"/>
-              <div class="w-16 h-4 rounded-full bg-primary-100 animate-pulse"/>
-            </div>
-          </div>
-        </template>
-      </Suspense>
+      <!--      <Suspense>-->
+      <component :is="Component" :key="route.fullPath"/>
+      <!--        <template #fallback>-->
+      <!--          <div class="flex flex-col items-center justify-center h-full">-->
+      <!--            <div class="flex flex-col items-center justify-center space-y-2">-->
+      <!--              <div class="w-16 h-16 rounded-full bg-primary-100 animate-pulse"/>-->
+      <!--              <div class="w-16 h-4 rounded-full bg-primary-100 animate-pulse"/>-->
+      <!--            </div>-->
+      <!--          </div>-->
+      <!--        </template>-->
+      <!--      </Suspense>-->
     </RouterView>
     <Teleport to="body">
       <DialogModal :is-open="homeStore.createDialog.isOpen" @closeModal="closeModal">

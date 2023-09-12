@@ -4,7 +4,9 @@ import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 const adminHome = useAdminHomeStore();
 
-await adminHome.fetchPages();
+// await adminHome.fetchPages();
+
+adminHome.fetchPages();
 </script>
 
 <template>

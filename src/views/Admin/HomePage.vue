@@ -19,8 +19,12 @@ const pageItems = computed(() => {
   return adminHome.pages.slice(0, 5);
 });
 
-await adminHome.fetchPages();
-await tabsStore.fetchTabs();
+// await adminHome.fetchPages();
+// await tabsStore.fetchTabs();
+
+adminHome.fetchPages();
+tabsStore.fetchTabs();
+
 
 const openModal = () => {
   adminHome.openCreateDialog();

@@ -2,217 +2,9 @@ import {defineStore} from "pinia";
 import {PageContent, PageOptions, usePageContentStore} from "./page-data.ts";
 import {computed, ref} from "vue";
 import {useTabsStore} from "./tabs.ts";
+import {useAppHomeStore} from "../home";
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
-
-// export const useAdminHomeStore = defineStore({
-//     id: 'adminHome',
-//     state: () => ({
-//         // pages: [
-//         //     {
-//         //         id: 1,
-//         //         name: 'Habahaba',
-//         //         path: 'habahaba',
-//         //         title: 'Habahaba'
-//         //     },
-//         //     {
-//         //         id: 2,
-//         //         name: 'Salesforce',
-//         //         path: 'salesforce',
-//         //         title: 'Salesforce'
-//         //     },
-//         //     {
-//         //         id: 3,
-//         //         name: 'Google',
-//         //         path: 'google',
-//         //         title: 'Google'
-//         //     },
-//         //     {
-//         //         id: 4,
-//         //         name: 'Facebook',
-//         //         path: 'facebook',
-//         //         title: 'Facebook'
-//         //     }
-//         // ],
-//         pages: [],
-//         createDialog: {
-//             isOpen: false,
-//         },
-//     }),
-//     getters: {
-//         getPages: (state) => state.pages,
-//         getPageByPath: (state) => (path: string) => {
-//             return state.pages.find(page => page.path === path);
-//         }
-//     },
-//     actions: {
-//         createPageFromData(pageContent: PageContent) {
-//             // let's check first if the page name is already taken
-//             const pageNameExists = this.pages.some(page => page.name === pageContent.chatbotName);
-//
-//             if (pageNameExists) {
-//                 // if the page name is already taken, we'll just append the word "copy" to the page name
-//                 pageContent.chatbotName = `${pageContent.chatbotName} copy`;
-//             }
-//             const page = {
-//                 id: this.pages.length + 1,
-//                 name: pageContent.chatbotName,
-//                 path: pageContent.chatbotId.toLowerCase().replace(' ', '-'),
-//                 title: pageContent.chatbotName,
-//             };
-//             this.pages.push(page);
-//
-//             return page;
-//         },
-//         addPage(page: any) {
-//             this.pages.push(page);
-//         },
-//         async fetchPages() {
-//             try {
-//                 const response = await fetch(`${BASE_URL}/pages/`, {
-//                     method: 'GET',
-//                     headers: {
-//                         'Content-Type': 'application/json'
-//                     }
-//                 });
-//                 const res = await response.json();
-//                 console.log('res', res)
-//                 const {pages, tabs, openTabs} = res.data;
-//
-//                 // set the pages
-//                 this.setPages(pages)
-//
-//                 // set the page data items
-//                 this.setPageContentItems(pages);
-//
-//                 // set the tabs
-//                 this.setTabs(tabs);
-//
-//                 // set the open tabs
-//                 const active = this.setOpenTabs(tabs, openTabs);
-//
-//                 console.log('active', active)
-//
-//                 return active as Tab;
-//             } catch (error) {
-//                 console.error(error)
-//             }
-//         },
-//         async createNewPage(pageName: string) {
-//             try {
-//                 const response = await fetch(`${BASE_URL}/pages/`, {
-//                     method: 'POST',
-//                     body: JSON.stringify({
-//                         pageName,
-//                     }),
-//                     headers: {
-//                         'Content-Type': 'application/json'
-//                     }
-//                 });
-//
-//                 if (response.ok) {
-//                     const page = await response.json();
-//
-//                     await this.fetchPages();
-//
-//                     return page;
-//                 }
-//             } catch (e) {
-//                 console.error(e);
-//             }
-//         },
-//         setPages(pages: any) {
-//             this.pages = pages.map((page: any) => {
-//                 return {
-//                     id: page.PageId,
-//                     name: page.PageName,
-//                     path: page.PageSlug,
-//                     title: page.PageTitle,
-//                 }
-//             });
-//         },
-//         setPageContentItems(pageContentItems: object[]) {
-//             return pageContentStore.setPageContentItems(pageContentItems.map((pageContentItem: any) => {
-//                 return {
-//                     chatbotId: pageContentItem.PageSlug as string,
-//                     chatbotName: pageContentItem.ChatbotName as string,
-//                     greetingType: pageContentItem.GreetingType === 0 ? 'static' : 'generated',
-//                     staticGreeting: 'Hello, how can I help you?',
-//                     generatedGreeting: pageContentItem.Greeting as string,
-//                     promptPlaceholder: pageContentItem.PlaceholderContent as string,
-//                     directive: pageContentItem.ChatbotDirective as string,
-//                     model: pageContentItem.GptModel as string,
-//                     maxResponseLength: 200 as number,
-//                     creativity: pageContentItem.ChatbotCreativity as number,
-//                     displayClosureMessage: pageContentItem.DisplayClosureMessage as boolean,
-//                     closureMessage: pageContentItem.ClosureMessage as string,
-//                 } as PageContent;
-//             }));
-//         },
-//         setTabs(tabs: any) {
-//             return tabsStore.setTabs(tabs.map((tab: any) => {
-//                 return {
-//                     name: tab.TabName,
-//                     title: tab.TabName,
-//                     to: tab.TabName.toLowerCase().replace(' ', '-'),
-//                     active: false,
-//                     id: tab.TabId,
-//                 } as Tab;
-//             }));
-//         },
-//         setOpenTabs(tabs: any, openTabs: any) {
-//             // create a new array of tabs from the tabs whose id is in the openTabs array
-//             let newTabs = tabs.filter((tab: any) => openTabs.some((openTab: any) => tab.TabId === openTab.TabId));
-//
-//             // add the Active property to the tabs that is in the openTabs array
-//             newTabs = newTabs.map((tab: any) => {
-//                 return {
-//                     ...tab,
-//                     Active: openTabs.find((openTab: any) => tab.TabId === openTab.TabId).Active,
-//                 }
-//             });
-//
-//             // set the open tabs
-//             const newOpenTabs = newTabs.map((tab: any) => {
-//                 return {
-//                     name: tab.TabName,
-//                     title: tab.TabName,
-//                     to: tab.TabName.toLowerCase().replace(' ', '-'),
-//                     active: tab.Active === 1,
-//                     id: tab.TabId,
-//                 } as Tab;
-//             });
-//
-//             // set the open tabs
-//             tabsStore.setOpenTabs(newOpenTabs);
-//
-//             const activeTab = tabsStore.getActiveTab;
-//
-//             if (activeTab) {
-//                 // set the active page data item
-//                 pageContentStore.setActivePageContentItem(activeTab.to);
-//             }
-//
-//             return activeTab;
-//         },
-//         removePage(page: any) {
-//             this.pages.splice(this.pages.indexOf(page), 1);
-//         },
-//         updatePage(page: any) {
-//             this.pages[this.pages.indexOf(page)] = page;
-//         },
-//         openCreateDialog() {
-//             this.createDialog.isOpen = true;
-//         },
-//         closeCreateDialog() {
-//             this.createDialog.isOpen = false;
-//         }
-//     }
-// });
-
-//// OLD CODE ABOVE ////
-
-// we need to convert the adminHome store from using Options API to using Composition API
 
 export interface Page {
     id: string
@@ -269,6 +61,10 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     }
 
     async function fetchPages() {
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
         try {
             const response = await fetch(`${BASE_URL}/pages/`, {
                 method: 'GET',
@@ -285,10 +81,19 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
         } catch (error) {
             console.error(error)
+        } finally {
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
+            // appHomeStore.setIsAppFetching(false);
         }
     }
 
     async function createNewPage(pageName: string) {
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
         try {
             const response = await fetch(`${BASE_URL}/pages/`, {
                 method: 'POST',
@@ -320,6 +125,11 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             }
         } catch (e) {
             console.error(e);
+        } finally {
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
+            // appHomeStore.setIsAppFetching(false);
         }
     }
 
@@ -370,6 +180,10 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             pageUrl: pageOptions.path,
         }
 
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
         try {
             const response = await fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
                 method: 'PATCH',
@@ -391,6 +205,11 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
         } catch (error) {
             console.error(error);
+        } finally {
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
+            // appHomeStore.setIsAppFetching(false);
         }
     }
 

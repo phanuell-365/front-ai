@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import {Page, useAdminHomeStore} from "./home.ts";
+import {useAppHomeStore} from "../home";
 
 export interface PageContent {
     pageId: string;
@@ -64,6 +65,10 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
     // actions
 
     async function fetchPageContentItems() {
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
         try {
 
             const response = await fetch(`${BASE_URL}/pages/`, {
@@ -80,6 +85,10 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             setPageContentItems(pageOptions, pageContent);
         } catch (error) {
             console.error(error);
+        } finally {
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
         }
     }
 
@@ -166,6 +175,10 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             pageUrl: pageOptions.path,
         }
 
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
         try {
             const response = await fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
                 method: 'PATCH',
@@ -187,6 +200,12 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
         } catch (error) {
             console.error(error);
+        } finally {
+            // appHomeStore.setIsAppFetching(false);
+
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
         }
     }
 
@@ -197,6 +216,10 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             greetingType: pageContent.greetingType === 'static' ? 0 : 1,
             displayClosureMessage: pageContent.displayClosureMessage ? 1 : 0,
         };
+
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
 
         try {
             const response = await fetch(`${BASE_URL}/pages/${pageContentBody.pageId}/content/`, {
@@ -221,6 +244,12 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
         } catch (error) {
             console.error(error);
+        } finally {
+            // appHomeStore.setIsAppFetching(false);
+
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
         }
     }
 
@@ -276,6 +305,10 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         const formData = new FormData();
         formData.append('file', file);
 
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
         try {
             const response = await fetch(`${BASE_URL}/pages/${pageId}/data/`, {
                 method: 'POST',
@@ -289,6 +322,12 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             return uploadedFile;
         } catch (error) {
             console.error(error);
+        } finally {
+            // appHomeStore.setIsAppFetching(false);
+
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
         }
     }
 
