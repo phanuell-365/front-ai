@@ -533,12 +533,12 @@ const directiveValidator = (value: string) => {
     return "Directive is required";
   }
 
-  if (value.length < 12) {
+  if (value.length < 15) {
     return "Directive must be at least 12 characters long";
   }
 
-  if (value.length > 200) {
-    return "Directive must not exceed 200 characters";
+  if (value.length > 2000) {
+    return "Directive must not exceed 2000 characters";
   }
 
   return true;

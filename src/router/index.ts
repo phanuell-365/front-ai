@@ -17,6 +17,11 @@ const routes = [
         component: () => import("../views/HomeAdmin.vue"),
         children: [
             {
+                path: "pages",
+                name: "AdminPages",
+                component: () => import("../views/Admin/PagesPage.vue"),
+            },
+            {
                 path: "settings",
                 name: "AdminSettings",
                 component: () => import("../views/Admin/SettingsPage.vue"),

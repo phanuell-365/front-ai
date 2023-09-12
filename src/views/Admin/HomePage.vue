@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import {onMounted} from "vue";
+import {computed, onMounted} from "vue";
 import {useAdminHomeStore} from "@/stores/admin/home.ts";
 import PageItem from "@/components/Admin/PageItem.vue";
 import {useTabsStore} from "@/stores/admin/tabs.ts";
+import {useRouter} from "vue-router";
 
 onMounted(() => {
   tabsStore.setActiveTabByPageName('home');
@@ -11,12 +12,22 @@ onMounted(() => {
 
 const tabsStore = useTabsStore();
 const adminHome = useAdminHomeStore();
+const router = useRouter();
+
+// page items to render, first 5
+const pageItems = computed(() => {
+  return adminHome.pages.slice(0, 5);
+});
 
 await adminHome.fetchPages();
 await tabsStore.fetchTabs();
 
 const openModal = () => {
   adminHome.openCreateDialog();
+}
+
+const onViewAllPagesClick = () => {
+  router.push({name: 'AdminPages'});
 }
 
 </script>
@@ -61,9 +72,19 @@ const openModal = () => {
             </p>
           </div>
           <ul v-else class="my-4 p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <PageItem v-for="(page) in adminHome.pages" :key="page.id" :page="page"/>
+            <PageItem v-for="(page) in pageItems" :key="page.id" :page="page"/>
           </ul>
 
+          <div class="flex items-center justify-end">
+            <!-- Let's have the view all button -->
+            <button
+                class="btn btn-sm md:btn-md normal-case text-xs md:text-sm btn-primary btn-outline"
+                type="button"
+                @click="onViewAllPagesClick"
+            >
+              View All
+            </button>
+          </div>
         </div>
       </div>
     </section>
