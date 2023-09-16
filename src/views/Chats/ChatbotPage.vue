@@ -10,6 +10,8 @@ import {useChatbotStore} from "@/stores/chatbot";
 // import {useTextProcessor} from "@/composables/text-processor.ts";
 import {marked} from "marked";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import _ from 'lodash';
+import hljs from 'highlight.js';
 
 const route = useRoute();
 const pageContentStore = usePageContentStore();
@@ -83,10 +85,13 @@ interface Conversation {
   message: string;
   isUser: boolean;
   hasError?: boolean;
+  uniqueId: string | number;
 }
 
 const conversationContainerRef = ref<HTMLDivElement | null>();
-const userInputContainerHeight = ref(0);
+const userInputContainerHeight = computed(() => {
+  return userInputContainerHeightRef.value?.clientHeight || 0;
+});
 const userInputContainerHeightRef = ref<HTMLDivElement | null>();
 const conversation = ref<Ref<Conversation>[]>([]);
 const aiResponses = ref<string[]>([]);
@@ -108,99 +113,496 @@ const scrollToBottom = () => {
   });
 };
 
-const handleUserInput = async (_value: string, formatted: string) => {
+const renderer = new marked.Renderer();
+
+renderer.link = (href, title, text) => {
+  return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
+};
+
+renderer.table = (header, body) => {
+  return `
+   <div class="bg-white p-3 rounded-xl shadow-lg shadow-slate-300/10 my-3">
+    <div class="overflow-x-auto py-4">
+        <table class="table table-zebra border">
+        <thead>
+            ${header}
+        </thead>
+        <tbody>
+            ${body}
+        </tbody>
+    </table>
+    </div>
+    </div>
+  `;
+};
+
+renderer.tablerow = (content) => {
+  return `
+    <tr class="hover">${content}</tr>
+  `;
+};
+
+renderer.tablecell = (content, flags) => {
+  return `
+    <td>${content}</td>
+  `;
+};
+
+renderer.code = (code, language, isEscaped) => {
+// return `
+//   <pre><div class="mockup-code my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+// `;
+
+  if (language) {
+    const ignoreIllegals = true;
+    return `
+      <pre><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl"><div class="px-4"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
+    `;
+  } else {
+    return `
+    <pre><div class="mockup-code bg-neutral-800 my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+  `;
+  }
+
+};
+
+renderer.list = (body, ordered, start) => {
+
+  if (ordered) {
+    if (start) {
+      return `
+      <ol start="${start}" class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
+    `;
+    }
+    return `
+      <ol class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
+    `;
+  } else {
+    return `
+      <ul class="list-disc list-outside my-2 py-2 space-y-2">${body}</ul>
+    `;
+  }
+};
+
+renderer.listitem = (text) => {
+  return `
+    <li class="text-neutral-800 dark:text-neutral-50">${text}</li>
+  `;
+};
+
+renderer.paragraph = (text) => {
+  return `
+    <p class="text-neutral-800 dark:text-neutral-50">${text}</p>
+  `;
+};
+
+renderer.heading = (text, level, raw, slugger) => {
+  return `
+    <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
+  `;
+};
+
+renderer.hr = () => {
+  return `
+    <hr class="my-4 border-neutral-200 dark:border-neutral-700"/>
+  `;
+};
+
+renderer.blockquote = (quote) => {
+  return `
+    <blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${quote}</blockquote>
+  `;
+};
+
+renderer.image = (href, title, text) => {
+  return `
+    <img src="${href}" alt="${text}" title="${title}" class="w-full"/>
+  `;
+};
+
+renderer.strong = (text) => {
+  return `
+    <strong class="font-poppins-semi-bold my-1 text-base">${text}</strong>
+  `;
+};
+
+renderer.codespan = (code) => {
+  // return `
+  //   <pre><div class="mockup-code"><div class="px-4"><code>${code}</code></div></div></pre>
+  // `;
+
+  // we'll rather render this like in chatGPT
+  return `
+    <code class="font-poppins-semi-bold my-1">&acute;${code}&acute;</code>
+  `;
+};
+
+// const walkTokens = (token) => {
+//   let html = '';
+//
+//   // tokens.forEach((token) => {
+//   if (token.type === 'text') {
+//     html += token.text;
+//   } else if (token.type === 'paragraph') {
+//     html += `<p class="text-neutral-800 dark:text-neutral-50">${walkTokens(token.tokens)}</p>`;
+//   } else if (token.type === 'strong') {
+//     html += `<strong class="font-poppins-bold my-1">${walkTokens(token.tokens)}</strong>`;
+//   } else if (token.type === 'codespan') {
+//     html += `<code class="font-poppins-semi-bold my-1">${token.text}</code>`;
+//   } else if (token.type === 'code') {
+//     html += `<pre><div class="mockup-code my-3"><div class="px-4"><code class="language-${token.lang}">${token.text}</code></div></div></pre>`;
+//   } else if (token.type === 'blockquote') {
+//     html += `<blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${walkTokens(token.tokens)}</blockquote>`;
+//   } else if (token.type === 'list') {
+//     html += `<${token.ordered ? 'ol' : 'ul'} class="${token.ordered ? 'list-decimal' : 'list-disc'} list-inside my-2 py-2 gap-2">${walkTokens(token.tokens)}</${token.ordered ? 'ol' : 'ul'}>`;
+//   } else if (token.type === 'list_item') {
+//     html += `<li>${walkTokens(token.tokens)}</li>`;
+//   } else if (token.type === 'table') {
+//     html += `
+//         <div class="overflow-x-auto py-4">
+//             <table class="table table-zebra">
+//             <thead>
+//                 ${walkTokens(token.tokens.header)}
+//             </thead>
+//             <tbody>
+//                 ${walkTokens(token.tokens.body)}
+//             </tbody>
+//         </table>
+//         </div>
+//       `;
+//   } else if (token.type === 'table_row') {
+//     html += `<tr>${walkTokens(token.tokens)}</tr>`;
+//   } else if (token.type === 'table_cell') {
+//     html += `<td>${walkTokens(token.tokens)}</td>`;
+//   } else if (token.type === 'link') {
+//     html += `<a target="_blank" class="link link-primary" href="${token.href}" title="${token.title}">${token.text}</a>`;
+//   } else if (token.type === 'image') {
+//     html += `<img src="${token.href}" alt="${token.text}" title="${token.title}" class="w-full"/>`;
+//   } else if (token.type === 'heading') {
+//     html += `<h${token.depth} class="text-2xl font-bold text-neutral-800 dark:text-neutral-50">${walkTokens(token.tokens)}</h${token.depth}>`;
+//   } else if (token.type === 'hr') {
+//     html += `<hr class="my-4 border-neutral-200 dark:border-neutral-700"/>`;
+//   } else {
+//     html += token.text;
+//   }
+//   // });
+//
+//   return html;
+// };
+
+
+// create a custom description list renderer
+
+const descriptionList = {
+  name: 'descriptionList',
+  level: 'block',                                     // Is this a block-level or inline-level tokenizer?
+  start(src) {
+    return src.match(/:[^:\n]/)?.index;
+  }, // Hint to Marked.js to stop and check for a match
+  tokenizer(src, tokens) {
+    const rule = /^(?::[^:\n]+:[^:\n]*(?:\n|$))+/;    // Regex for the complete token, anchor to string start
+    const match = rule.exec(src);
+    if (match) {
+      const token = {                                 // Token to generate
+        type: 'descriptionList',                      // Should match "name" above
+        raw: match[0],                                // Text to consume from the source
+        text: match[0].trim(),                        // Additional custom properties
+        tokens: []                                    // Array where child inline tokens will be generated
+      };
+      this.lexer.inline(token.text, token.tokens);    // Queue this data to be processed for inline tokens
+      return token;
+    }
+  },
+  renderer(token) {
+    return `<dl>${this.parser.parseInline(token.tokens)}\n</dl>`; // parseInline to turn child tokens into HTML
+  }
+};
+
+const description = {
+  name: 'description',
+  level: 'inline',                                 // Is this a block-level or inline-level tokenizer?
+  start(src) {
+    return src.match(/:/)?.index;
+  },    // Hint to Marked.js to stop and check for a match
+  tokenizer(src, tokens) {
+    const rule = /^:([^:\n]+):([^:\n]*)(?:\n|$)/;  // Regex for the complete token, anchor to string start
+    const match = rule.exec(src);
+    if (match) {
+      return {                                         // Token to generate
+        type: 'description',                           // Should match "name" above
+        raw: match[0],                                 // Text to consume from the source
+        dt: this.lexer.inlineTokens(match[1].trim()),  // Additional custom properties, including
+        dd: this.lexer.inlineTokens(match[2].trim())   //   any further-nested inline tokens
+      };
+    }
+  },
+  renderer(token) {
+    return `\n<dt>${this.parser.parseInline(token.dt)}</dt><dd>${this.parser.parseInline(token.dd)}</dd>`;
+  },
+  childTokens: ['dt', 'dd'],                 // Any child tokens to be visited by walkTokens
+};
+
+// function walkTokens(token) {                        // Post-processing on the completed token tree
+//   if (token.type === 'strong') {
+//     token.text += ' walked';
+//     token.tokens = this.Lexer.lexInline(token.text)
+//   } else if (token.type === 'code') {
+//     token.text += ' walked';
+//     token.tokens = this.Lexer.lexInline(token.text)
+//   }
+// }
+
+// marked.use({extensions: [descriptionList, description]});
+
+marked.use({
+  renderer,
+  breaks: true,
+  gfm: true,
+  // walkTokens,
+  // extensions: [descriptionList, description],
+});
+
+// Function to find the difference between two strings
+const lastKnownText = ref('');
+const currentText = ref('');
+
+const handleUserInput = (_value: string, formatted: string) => {
   // add the user's response to the conversation
   // scroll to the bottom of the conversation
   scrollToBottom();
 
-  const userMessage = ref<Conversation>({message: formatted, isUser: true});
+  const userMessage = ref<Conversation>({message: formatted, isUser: true, uniqueId: _.uniqueId('user-')});
 
   conversation.value.push(userMessage);
-  const aiMessage = ref<Conversation>({message: '', isUser: false});
+
+  const aiMessage = ref<Conversation>({message: '', isUser: false, uniqueId: _.uniqueId('ai-')});
 
   isGeneratingResponse.value = true;
 
-  conversation.value.push(aiMessage);
+  setTimeout(() => {
+    conversation.value.push(aiMessage);
+  }, 500);
+
+  const debouncedUpdateResponse = _.throttle((newMessage) => {
+    aiResponses.value.push(newMessage);
+    aiMessage.value.message = newMessage;
+
+    // Scroll to the bottom after adding new data
+    scrollToBottom();
+  }, 100);
+
   // send the user's response to the server
   // and wait for the server to send the AI's response
-  try {
-    const responseStream = await chatbot.establishConnection(pageId.value, formatted);
+  chatbot.establishConnection(pageId.value, formatted).then((responseStream) => {
 
     // create a new reader
     const reader2 = responseStream.body.getReader();
 
     // read the stream
-    const result = await reader2.read();
+    reader2.read().then((result) => {
 
-    // convert the stream to a string
-    const decoder = new TextDecoder();
+      // convert the stream to a string
+      const decoder = new TextDecoder();
 
-    let newMessage = decoder.decode(result.value);
+      let newMessage = decoder.decode(result.value);
 
-    console.log(newMessage)
+      console.log(newMessage);
 
-    // convert the string to html
-    // newMessage = aiResponseHtmlConverter(newMessage);
+      // const isCompleteMessage = newMessage.endsWith('~~~NEWLINE~~~');
+      //
+      // if (isCompleteMessage) {
+      //
+      //   const newText = buffer + newMessage;
+      //   const difference = findDifference(lastKnownText.value, newText);
+      //
+      //   aiMessage.value.message += difference;
+      //   lastKnownText.value = newText; // Update the last known text
+      //   buffer = ''; // Clear the buffer
+      // } else {
+      //   buffer += newMessage;
+      // }
 
-    // convert the html to code
-    // newMessage = aiResponseCodeConverter(newMessage);
-    // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
+      const lastKnownTextTokens = lastKnownText.value.split('~~~NEWLINE~~~');
+      const currentTextTokens = currentText.value.split('~~~NEWLINE~~~');
+      const newMessageTokens = newMessage.split('~~~NEWLINE~~~');
 
-    // newMessage = tableProcessor(newMessage);
-    newMessage = marked.parse(newMessage);
+      const newTokens = newMessageTokens.filter((token) => {
+        return !lastKnownTextTokens.includes(token);
+      });
 
-    // push the result to the string array
-    aiResponses.value.push(newMessage);
+      // newMessage = newTokens.join('~~~NEWLINE~~~');
 
-    // aiMessage.value.message = decoder.decode(result.value);
-    aiMessage.value.message = newMessage
-    // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
+      // for each token in the new message
+      newTokens.forEach((token) => {
 
-    // listen for new data
-    reader2.read().then(function processText({done, value}) {
-      // Result objects contain two properties:
-      // done  - true if the stream has already given you all its data.
-      // value - some data. Always undefined when done is true.
-      if (done) {
-        console.log("Stream complete");
+        console.log(token)
+        // if the token is not in the last known text
+        if (!lastKnownTextTokens.includes(token)) {
+          // add the token to the last known text
+          // lastKnownTextTokens.push(token);
+          // add the token to the ai message
+          // aiMessage.value.message = token;
+          // const previousToken = aiMessage.value.message;
+          const previousToken = currentText.value;
 
-        console.log(aiResponses.value)
+          if (previousToken.length <= token.length) {
+            // add the token to the AI message
+            aiMessage.value.message = marked.parse(token);
+            currentText.value = token;
 
-        isGeneratingResponse.value = false;
-        return;
-      }
-      // value for fetch streams is a Uint8Array
-      console.log("Received", decoder.decode(value));
+            // add the token to the last known text
+            lastKnownTextTokens.push(token);
+          }
+        } else {
+          // add the token to the last known text
+          lastKnownTextTokens.push(token);
 
-      newMessage = decoder.decode(value);
+          console.log(lastKnownTextTokens)
+        }
+      });
 
-      console.log(newMessage)
+      // lastKnownText.value = newMessage;
 
+      // console.log(newMessage);
+
+      // convert the string to html
       // newMessage = aiResponseHtmlConverter(newMessage);
 
+      // convert the html to code
+      // newMessage = aiResponseCodeConverter(newMessage);
       // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
 
       // newMessage = tableProcessor(newMessage);
 
-      newMessage = marked.parse(newMessage);
+      // push the result to the string array
 
-      aiResponses.value.push(newMessage);
-      // aiMessage.value.message = decoder.decode(value);
-      aiMessage.value.message = newMessage
+      // aiMessage.value.message = decoder.decode(result.value);
+      // aiMessage.value.message = newMessage
       // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
 
-      console.log(aiMessage.value.message)
+      // const newAiMessageLength = newMessage.length;
+      // const previousAiMessageLength = aiMessage.value.message.length;
 
-      scrollToBottom();
-      // responseString.value = decoder.decode(value);
-      // stringArray.value.push(decoder.decode(value));
-      // Read some more, and call this function again
-      return reader2.read().then(processText);
-    });
+      // if (newAiMessageLength > previousAiMessageLength) {
+      //
+      // newMessage = marked.parse(newMessage);
+      aiResponses.value.push(newMessage);
+      //
+      // aiMessage.value.message = '';
+      // aiMessage.value.message = newMessage;
+      // }
 
+      // debouncedUpdateResponse(newMessage);
 
-  } catch (error) {
+      // listen for new data
+      reader2.read().then(function processText({done, value}) {
+        // Result objects contain two properties:
+        // done  - true if the stream has already given you all its data.
+        // value - some data. Always undefined when done is true.
+        if (done) {
+          console.log("Stream complete");
+
+          console.log(aiResponses.value)
+
+          isGeneratingResponse.value = false;
+
+          lastKnownText.value = '';
+
+          currentText.value = '';
+          return;
+        }
+        newMessage = decoder.decode(value);
+
+        // value for fetch streams is a Uint8Array
+        console.log("Received", newMessage);
+
+        // const isCompleteMessage = newMessage.endsWith('\n');
+        // const isCompleteMessage = newMessage.includes('~~~NEWLINE~~~');
+        //
+        // if (isCompleteMessage) {
+        //   const newText = buffer + newMessage;
+        //   // const difference = findDifference(lastKnownText.value, newText);
+        //
+        //   aiMessage.value.message += difference;
+        //   lastKnownText.value = newText; // Update the last known text
+        //   buffer = ''; // Clear the buffer
+        // } else {
+        //   buffer += newMessage;
+        // }
+
+        const lastKnownTextTokens = lastKnownText.value.split('~~~NEWLINE~~~');
+        const newMessageTokens = newMessage.split('~~~NEWLINE~~~');
+
+        const newTokens = newMessageTokens.filter((token) => {
+          return !lastKnownTextTokens.includes(token);
+        });
+
+        newTokens.forEach((token) => {
+
+          console.log(token)
+          // if the token is not in the last known text
+          if (!lastKnownTextTokens.includes(token)) {
+            // add the token to the ai message
+            // const previousToken = aiMessage.value.message;
+            const previousToken = currentText.value;
+
+            if (previousToken.length <= token.length) {
+              // add the token to the ai message
+              aiMessage.value.message = marked.parse(token);
+              currentText.value = token;
+
+              // add the token to the last known text
+              lastKnownTextTokens.push(token);
+            }
+          } else {
+            // add the token to the last known text
+            lastKnownTextTokens.push(token);
+
+            console.log(lastKnownTextTokens)
+          }
+        });
+
+        // newMessage = aiResponseHtmlConverter(newMessage);
+
+        // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
+
+        // newMessage = tableProcessor(newMessage);
+
+        // newMessage = marked.parse(newMessage);
+
+        // aiResponses.value.push(newMessage);
+        // aiMessage.value.message = decoder.decode(value);
+        // aiMessage.value.message = newMessage
+        // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
+
+        // aiMessage.value.message += findDifference(aiMessage.value.message, newMessage);
+
+        // const newAiMessageLength = newMessage.length;
+        // const previousAiMessageLength = aiMessage.value.message.length;
+
+        // if (newAiMessageLength > previousAiMessageLength) {
+        // aiResponses.value.push(newMessage);
+        //
+        // newMessage = marked.parse(newMessage);
+        //
+        // aiMessage.value.message = '';
+        // aiMessage.value.message = newMessage;
+        // }
+
+        // debouncedUpdateResponse(newMessage);
+        console.log(aiMessage.value.message)
+
+        scrollToBottom();
+        // responseString.value = decoder.decode(value);
+        // stringArray.value.push(decoder.decode(value));
+        // Read some more, and call this function again
+        return reader2.read().then(processText);
+      });
+    })
+  }).catch((error) => {
     console.log(error);
+
+    scrollToBottom();
 
     aiMessage.value.hasError = true;
     aiMessage.value.message = `
@@ -211,7 +613,7 @@ const handleUserInput = async (_value: string, formatted: string) => {
     `;
 
     isGeneratingResponse.value = false;
-  }
+  });
 };
 
 const aiResponseHtmlConverter = (message: string) => {
@@ -277,19 +679,16 @@ const showScrollToBottomButton = computed(() => {
 
 // We'll calculate the viewport height and the height of the conversation container
 // to determine when to toggle the sticky position
-const viewportHeight = ref(0);
+const viewportHeight = computed(() => {
+  console.log('window.innerHeight', window.innerHeight)
+  return window.innerHeight;
+});
 const currentScrollPosition = ref(0);
 
 // We'll also create a variable for the height of the conversation container
 const conversationContainerHeight = ref(0);
 
 onMounted(() => {
-  userInputContainerHeight.value = userInputContainerHeightRef.value?.clientHeight || 0;
-  // get the viewport height
-  viewportHeight.value = window.innerHeight;
-
-  conversationContainerRef.value = document.querySelector('#conversation-container') as HTMLDivElement;
-
   document.querySelector('#main-container')?.addEventListener('scroll', (evt) => {
     currentScrollPosition.value = (evt.target as HTMLDivElement).scrollTop;
   });
@@ -306,6 +705,7 @@ watch(conversation.value, () => {
   // get the height of the conversation container
   conversationContainerHeight.value = conversationContainerRef.value?.clientHeight || 0;
 
+  scrollToBottom();
   // if the conversation container height is greater than the viewport height
   // toggleSticky.value =
 });
@@ -317,23 +717,21 @@ watch(conversation.value, () => {
       <div id="main-container" :class="!toggleSticky ? 'relative' : ''" class="flex-1 overflow-scroll flex flex-col">
         <div class="pt-10 md:pt-20">
           <!-- Simulate a conversation loop -->
-          <TransitionGroup id="conversation-container" class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10"
-                           name="fade-slide"
-                           tag="div"
-                           @enter="scrollToBottom">
+          <div ref="conversationContainerRef" class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10">
             <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
                            :chatbot-name="chatbotName"/>
 
             <div v-for="(message, index) in conversation" :key="index">
               <UserBubble v-if="message.value.isUser && message.value.message && message.value.message.length > 0"
-                          :key="index" :user-message="message.value.message" user-name="John Doe"/>
+                          :key="message.value.uniqueId" :user-message="message.value.message" user-name="John Doe"/>
               <ChatbotBubble
-                  v-else-if="!message.value.isUser && message.value.message && message.value.message.length > 0"
-                  :chatbot-message="message.value.message" :chatbot-name="chatbotName"
+                  v-else-if="!message.value.isUser"
+                  :key="message.value.uniqueId" :chatbot-message="message.value.message"
+                  :chatbot-name="chatbotName"
                   :has-error="message.value?.hasError"
                   :is-copyable="index !== 0"/>
             </div>
-          </TransitionGroup>
+          </div>
         </div>
         <div v-if="toggleSticky" id="user-input-placeholder"
              :style="{'padding-bottom': userInputContainerHeight + 'px'}">

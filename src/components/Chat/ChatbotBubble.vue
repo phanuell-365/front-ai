@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ref} from "vue";
+import {computed, ref} from "vue";
 
 interface ChatbotBubble {
   chatbotName: string;
@@ -10,6 +10,14 @@ interface ChatbotBubble {
 
 const props = withDefaults(defineProps<ChatbotBubble>(), {
   isCopyable: false
+});
+
+const hasCopyButton = computed(() => {
+  return props.isCopyable && props.chatbotMessage.length > 0;
+});
+
+const hasText = computed(() => {
+  return props.chatbotMessage.length > 0;
 });
 
 // const chatbotName = ref(props.chatbotName);
@@ -44,30 +52,47 @@ const onCopyTextMouseLeave = () => {
       <div class="text-sm font-poppins-semi-bold mb-2 tracking-wide leading-tight">
         {{ props.chatbotName }}
       </div>
-      <div :class="{'mb-3': props.isCopyable}"
-           class="text-sm text-blue-950" v-html="props.chatbotMessage">
-      </div>
-      <!-- have the copy button here -->
-      <button v-if="props.isCopyable"
-              :class="!isTextCopied ? 'bg-blue-400 hover:bg-blue-500 text-blue-950 hover:text-blue-950': 'bg-blue-300 hover:bg-blue-400 text-blue-700 hover:text-blue-950'"
-              class="btn btn-xs btn-ghost normal-case gap-1" type="button"
-              @click="onCopyClick"
-              @mouseleave="onCopyTextMouseLeave">
-        <svg v-if="!isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5"
-             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path
-              d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-              stroke-linecap="round"
-              stroke-linejoin="round"/>
-        </svg>
-        <span v-if="!isTextCopied" class="text-xs font-poppins-semi-bold">Copy</span>
+      <template v-if="hasText">
+        <div :class="{'mb-3': props.isCopyable}"
+             class="text-sm text-blue-950 flex-1 overflow-hidden">
+          <div class="h-full w-full overflow-auto">
+            <div class="" v-html="props.chatbotMessage"></div>
+            <!--            <div>-->
+            <!--              {{ chatbotMessage }}-->
+            <!--            </div>-->
+          </div>
+        </div>
+        <!-- have the copy button here -->
+        <button v-if="hasCopyButton"
+                :class="!isTextCopied ? 'bg-blue-400 hover:bg-blue-500 text-blue-950 hover:text-blue-950': 'bg-blue-300 hover:bg-blue-400 text-blue-700 hover:text-blue-950'"
+                class="btn btn-xs btn-ghost normal-case gap-1" type="button"
+                @click="onCopyClick"
+                @mouseleave="onCopyTextMouseLeave">
+          <svg v-if="!isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5"
+               viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+                stroke-linecap="round"
+                stroke-linejoin="round"/>
+          </svg>
+          <span v-if="!isTextCopied" class="text-xs font-poppins-semi-bold">Copy</span>
 
-        <svg v-else-if="isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor"
-             stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span v-if="isTextCopied" class="text-xs font-poppins-semi-bold">Copied</span>
-      </button>
+          <svg v-else-if="isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor"
+               stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span v-if="isTextCopied" class="text-xs font-poppins-semi-bold">Copied</span>
+        </button>
+      </template>
+      <template v-else-if="!hasText">
+        <!-- We get here while we're waiting for the chatbot to respond -->
+        <!-- Basically, we could say it's 'typing' -->
+        <div class="flex flex-row items-center justify-start pr-3">
+          <!--          <p class="text-xs text-blue-950">Typing -->
+          <span class="loading loading-dots w-8 loader"></span>
+          <!--          </p>-->
+        </div>
+      </template>
     </div>
     <div v-else>
       <div class="px-4 py-5 bg-red-100 rounded-xl shadow-lg shadow-red-400/10">

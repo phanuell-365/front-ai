@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import {computed, nextTick, ref, watch} from "vue";
+import DOMPurify from "dompurify";
 
 interface UserInputProps {
   userInput: string;
@@ -12,7 +13,13 @@ const props = defineProps<UserInputProps>();
 
 const userInput = ref<string>(props.userInput);
 const formattedUserInput = computed(() => {
-  return userInput.value.replace(/\n/g, "<br>");
+  let purifiedBreak = userInput.value.replace(/\n/g, "<br>");
+
+  purifiedBreak = DOMPurify.sanitize(purifiedBreak, {
+    ALLOWED_TAGS: ["br"],
+  });
+
+  return purifiedBreak;
 });
 
 const hasText = computed(() => {

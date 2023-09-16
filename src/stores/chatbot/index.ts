@@ -38,7 +38,6 @@ export const useChatbotStore = defineStore('chatbot', () => {
     async function establishConnection(pageId: string, userQuery: string) {
         console.log('establishConnection', pageId);
 
-
         try {
 
             const response = await fetch(`${BASE_URL}/openai/`, {
