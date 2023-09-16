@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import {useRouter} from "vue-router";
 import {useTabsStore} from "@/stores/admin/tabs.ts";
+import {useAdminHomeStore} from "@/stores/admin/home.ts";
 
 interface PageItem {
   name: string;
@@ -15,6 +16,7 @@ const props = defineProps<{
 const router = useRouter();
 
 const tabsStore = useTabsStore();
+const homeStore = useAdminHomeStore();
 
 const onClick = () => {
   setTimeout(async () => {
@@ -64,7 +66,9 @@ const handleEditClick = () => {
 };
 
 const handleDeleteClick = () => {
-  console.log('delete');
+  homeStore.openDeleteDialog();
+
+  homeStore.setPageToDelete(props.page.id);
 };
 
 </script>

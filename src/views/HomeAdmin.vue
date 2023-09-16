@@ -46,8 +46,12 @@ const {
   meta: pageNameMeta,
 } = useField("pageName", pageNameValidator);
 
-const closeModal = () => {
+const closeCreateModal = () => {
   homeStore.closeCreateDialog();
+}
+
+const closeDeleteModal = () => {
+  homeStore.closeDeleteDialog();
 }
 
 const createPage = async () => {
@@ -76,6 +80,16 @@ const createPage = async () => {
   }
 }
 
+const deletePage = async () => {
+  const page = await homeStore.deletePage();
+
+  if (page) {
+    homeStore.closeDeleteDialog();
+
+    await router.push({name: "AdminHome", params: {page: "home"}, query: {pageId: page.pageId}});
+  }
+}
+
 </script>
 
 <template>
@@ -97,7 +111,7 @@ const createPage = async () => {
       <!--      </Suspense>-->
     </RouterView>
     <Teleport to="body">
-      <DialogModal :is-open="homeStore.createDialog.isOpen" @closeModal="closeModal">
+      <DialogModal :is-open="homeStore.createDialog.isOpen" @closeModal="closeCreateModal">
         <template #title>
           <span class="text-lg font-semibold">
             Create a new page
@@ -131,11 +145,41 @@ const createPage = async () => {
         <template #footer>
           <div class="flex flex-row items-center space-x-2 w-full">
             <button class="grow btn btn-sm md:btn-md btn-ghost normal-case border border-1 border-gray-400"
-                    @click="closeModal">
+                    @click="closeCreateModal">
               Cancel
             </button>
             <button class="grow btn btn-sm md:btn-md btn-primary normal-case" @click="createPage">
               Create
+            </button>
+          </div>
+        </template>
+      </DialogModal>
+
+      <DialogModal :is-open="homeStore.deleteDialog.isOpen" @closeModal="closeDeleteModal">
+        <template #title>
+          <span class="text-lg font-semibold">
+            Delete page
+          </span>
+        </template>
+
+        <template #body>
+          <div class="grid grid-cols-1 gap-3">
+            <div class="flex flex-col space-y-2">
+              <p class="text-sm">
+                Are you sure you want to delete this page?
+              </p>
+            </div>
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex flex-row items-center space-x-2 w-full">
+            <button class="grow btn btn-sm md:btn-md btn-ghost normal-case border border-1 border-gray-400"
+                    @click="closeDeleteModal">
+              Cancel
+            </button>
+            <button class="grow btn btn-sm md:btn-md btn-error normal-case text-white" @click="deletePage">
+              Delete
             </button>
           </div>
         </template>

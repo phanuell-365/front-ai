@@ -21,6 +21,11 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     const createDialog = ref({
         isOpen: false,
     });
+    const deleteDialog = ref({
+        isOpen: false,
+    });
+    // will be set when the user clicks the delete button
+    const pageIdToDelete = ref<string>('');
 
     const pageContentStore = usePageContentStore();
     const tabsStore = useTabsStore();
@@ -35,7 +40,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         return pages.value.find(page => page.id === id);
     });
 
-// actions
+    // actions
 
     function createPageFromData(pageContent: PageContent) {
         // let's check first if the page name is already taken
@@ -213,6 +218,42 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         }
     }
 
+    async function deletePage() {
+        const appHomeStore = useAppHomeStore();
+
+        appHomeStore.setIsAppFetching(true);
+
+        try {
+            const response = await fetch(`${BASE_URL}/pages/${pageIdToDelete.value}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const {data} = await response.json();
+
+                const {pageId} = data;
+
+                const page = getPageById.value(pageId);
+
+                removePage(page);
+
+                await fetchPages();
+
+                return page;
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
+            // appHomeStore.setIsAppFetching(false);
+        }
+    }
+
     function openCreateDialog() {
         createDialog.value.isOpen = true;
     }
@@ -221,9 +262,26 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         createDialog.value.isOpen = false;
     }
 
+    function openDeleteDialog() {
+        // reset the pageIdToDelete
+        pageIdToDelete.value = '';
+        // then open the dialog
+        deleteDialog.value.isOpen = true;
+    }
+
+    function closeDeleteDialog() {
+        deleteDialog.value.isOpen = false;
+    }
+
+    function setPageToDelete(pageId: string) {
+        pageIdToDelete.value = pageId;
+    }
+
     return {
         pages,
         createDialog,
+        deleteDialog,
+        pageIdToDelete,
         getPages,
         getPageByPath,
         getPageById,
@@ -236,5 +294,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         updatePage,
         openCreateDialog,
         closeCreateDialog,
+        openDeleteDialog,
+        closeDeleteDialog,
+        setPageToDelete,
+        deletePage,
     }
 });
