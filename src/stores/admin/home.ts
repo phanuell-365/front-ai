@@ -3,6 +3,7 @@ import {PageContent, PageOptions, usePageContentStore} from "./page-data.ts";
 import {computed, ref} from "vue";
 import {useTabsStore} from "./tabs.ts";
 import {useAppHomeStore} from "../home";
+import {useNotificationsStore} from "../notifications.ts";
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
@@ -67,6 +68,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
     async function fetchPages() {
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -85,7 +87,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             setPages(pages)
 
         } catch (error) {
-            console.error(error)
+            console.error(error);
+
+            notificationStore.addNotification('An error occurred while fetching pages', 'error');
         } finally {
             setTimeout(() => {
                 appHomeStore.setIsAppFetching(false);
@@ -96,6 +100,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
     async function createNewPage(pageName: string) {
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -126,10 +131,14 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
                 await fetchPages();
 
+                notificationStore.addNotification('Page created successfully', 'success');
+
                 return newPageContent;
             }
         } catch (e) {
             console.error(e);
+
+            notificationStore.addNotification('An error occurred while creating a new page', 'error');
         } finally {
             setTimeout(() => {
                 appHomeStore.setIsAppFetching(false);
@@ -186,6 +195,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         }
 
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -206,10 +216,14 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
             await fetchPages();
 
+            notificationStore.addNotification('Page updated successfully', 'success');
+
             return updatePageOptions(pageOption);
 
         } catch (error) {
             console.error(error);
+
+            notificationStore.addNotification('An error occurred while updating the page', 'error');
         } finally {
             setTimeout(() => {
                 appHomeStore.setIsAppFetching(false);
@@ -220,6 +234,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
     async function deletePage() {
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -242,10 +257,14 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
                 await fetchPages();
 
+                notificationStore.addNotification('Page deleted successfully', 'success');
+
                 return page;
             }
         } catch (error) {
             console.error(error);
+
+            notificationStore.addNotification('An error occurred while deleting the page', 'error');
         } finally {
             setTimeout(() => {
                 appHomeStore.setIsAppFetching(false);

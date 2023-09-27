@@ -2,10 +2,12 @@
 
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
+import {useNotificationsStore} from "../notifications.ts";
 
-// const BASE_URL = import.meta.env.VITE_API_URL as string;
+const BASE_URL = import.meta.env.VITE_API_URL as string;
 
-const BASE_URL = 'http://35.179.94.88/api';
+// const BASE_URL = 'http://35.179.94.88/api';
+// const BASE_URL = 'http://192.168.1.7:5000/api';
 
 export const useChatbotStore = defineStore('chatbot', () => {
 
@@ -38,6 +40,8 @@ export const useChatbotStore = defineStore('chatbot', () => {
     async function establishConnection(pageId: string, userQuery: string) {
         console.log('establishConnection', pageId);
 
+        const notificationsStore = useNotificationsStore();
+
         try {
 
             const response = await fetch(`${BASE_URL}/openai/`, {
@@ -51,7 +55,7 @@ export const useChatbotStore = defineStore('chatbot', () => {
                 }),
             });
 
-            const reader = response.body.getReader();
+            const reader = response.body?.getReader();
 
             // handle the streamable response
             const stream = new ReadableStream({
@@ -111,6 +115,10 @@ export const useChatbotStore = defineStore('chatbot', () => {
             // return stringArray.value.join('');
         } catch (e) {
             console.error(e);
+
+            notificationStore.addNotification('An error occurred while fetching the chatbot response', 'error');
+
+            throw e;
         }
     }
 

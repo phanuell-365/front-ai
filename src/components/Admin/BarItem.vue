@@ -42,23 +42,23 @@ const onClick = () => {
   }, 300);
 };
 
-const onCloseTabClick = (e: Event) => {
+const onCloseTabClick = async (e: Event) => {
   e.stopPropagation();
-  tabsStore.closeTab(props.name);
+  await tabsStore.closeTab(props.name);
 
   // get the new active tab
   const newActiveTab = tabsStore.getActiveTab;
 
   // if the new active tab is the home tab, navigate to the home page
   if (newActiveTab.name === "Home") {
-    router.replace({name: "AdminHome"});
+    await router.replace({name: "AdminHome"});
     return;
   } else if (newActiveTab.name === "Settings") {
-    router.replace({name: "AdminSettings"});
+    await router.replace({name: "AdminSettings"});
     return;
   } else {
     // otherwise, navigate to the new active tab
-    router.replace({name: "DynamicPage", params: {page: newActiveTab.to}});
+    await router.replace({name: "DynamicPage", params: {page: newActiveTab.to}});
     return;
   }
 };
@@ -98,7 +98,7 @@ const onCloseTabClick = (e: Event) => {
 
     <div v-if="props.name !== 'Home'" class="">
       <h6 :class="props.active ? 'text-neutral-800 dark:text-neutral-50' : 'text-neutral-400 dark:text-neutral-300'"
-          class="text-xs font-semibold leading-tight tracking-wide group-hover/bar-item:text-neutral-800 group-hover/bar-item:dark:text-neutral-50 transition-all duration-300 ease-in-out">
+          class="text-xxs md:text-xs font-semibold leading-tight tracking-wide group-hover/bar-item:text-neutral-800 group-hover/bar-item:dark:text-neutral-50 transition-all duration-300 ease-in-out">
         {{ props.title }}
       </h6>
     </div>

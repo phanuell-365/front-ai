@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-
 import UserBubble from "@/components/Chat/UserBubble.vue";
 import UserInput from "@/components/Chat/UserInput.vue";
 import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
@@ -7,11 +6,13 @@ import {computed, onBeforeMount, onMounted, Ref, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {PageContent, usePageContentStore} from "@/stores/admin/page-data.ts";
 import {useChatbotStore} from "@/stores/chatbot";
-// import {useTextProcessor} from "@/composables/text-processor.ts";
 import {marked} from "marked";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
 import _ from 'lodash';
 import hljs from 'highlight.js';
+import {useNotificationsStore} from "@/stores/notifications.ts";
+
+const notificationsStore = useNotificationsStore();
 
 const route = useRoute();
 const pageContentStore = usePageContentStore();
@@ -113,14 +114,140 @@ const scrollToBottom = () => {
   });
 };
 
-const renderer = new marked.Renderer();
+// const renderer = new marked.Renderer();
+//
+// renderer.link = (href, title, text) => {
+//   return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
+// };
+//
+// renderer.table = (header, body) => {
+//   return `
+//    <div class="bg-white p-3 rounded-xl shadow-lg shadow-slate-300/10 my-3">
+//     <div class="overflow-x-auto py-4">
+//         <table class="table table-zebra border">
+//         <thead>
+//             ${header}
+//         </thead>
+//         <tbody>
+//             ${body}
+//         </tbody>
+//     </table>
+//     </div>
+//     </div>
+//   `;
+// };
+//
+// renderer.tablerow = (content) => {
+//   return `
+//     <tr class="hover">${content}</tr>
+//   `;
+// };
+//
+// renderer.tablecell = (content, flags) => {
+//   return `
+//     <td>${content}</td>
+//   `;
+// };
+//
+// renderer.code = (code, language, isEscaped) => {
+// // return `
+// //   <pre><div class="mockup-code my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+// // `;
+//
+//   if (language) {
+//     const ignoreIllegals = true;
+//     return `
+//   <div class="p-3">
+//       <pre><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl"><div class="px-4"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
+//   </div>
+//     `;
+//   } else {
+//     return `
+//   <div class="p-3">
+//     <pre><div class="mockup-code bg-neutral-800 my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+//   </div>
+//   `;
+//   }
+//
+// };
+//
+// renderer.list = (body, ordered, start) => {
+//
+//   if (ordered) {
+//     // if (start) {
+//     //   return `
+//     //   <ol start="${start}" class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
+//     // `;
+//     // }
+//     return `
+//       <ol class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
+//     `;
+//   } else {
+//     return `
+//       <ul class="list-disc list-outside my-2 py-2 space-y-2">${body}</ul>
+//     `;
+//   }
+// };
+//
+// renderer.listitem = (text) => {
+//   return `
+//     <li class="text-neutral-800 dark:text-neutral-50">${text}</li>
+//   `;
+// };
+//
+// // renderer.paragraph = (text) => {
+// //   return `
+// //     <p class="text-neutral-800 dark:text-neutral-50">${text}</p>
+// //   `;
+// // };
+// //
+// renderer.heading = (text, level, raw, slugger) => {
+//   return `
+//     <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
+//   `;
+// };
+//
+// renderer.hr = () => {
+//   return `
+//     <hr class="my-4 border-neutral-200 dark:border-neutral-700"/>
+//   `;
+// };
+//
+// renderer.blockquote = (quote) => {
+//   return `
+//     <blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${quote}</blockquote>
+//   `;
+// };
+//
+// renderer.image = (href, title, text) => {
+//   return `
+//     <img src="${href}" alt="${text}" title="${title}" class="w-full"/>
+//   `;
+// };
+//
+// renderer.strong = (text) => {
+//   return `
+//     <strong class="font-poppins-semi-bold my-1 text-base">${text}</strong>
+//   `;
+// };
+//
+// renderer.codespan = (code) => {
+//   // return `
+//   //   <pre><div class="mockup-code"><div class="px-4"><code>${code}</code></div></div></pre>
+//   // `;
+//
+//   // we'll rather render this like in chatGPT
+//   return `
+//     <code class="font-poppins-semi-bold my-1">&acute;${code}&acute;</code>
+//   `;
+// };
 
-renderer.link = (href, title, text) => {
-  return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
-};
-
-renderer.table = (header, body) => {
-  return `
+const renderer = {
+  link(href, title, text) {
+    return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
+  },
+  table(header, body) {
+    return `
    <div class="bg-white p-3 rounded-xl shadow-lg shadow-slate-300/10 my-3">
     <div class="overflow-x-auto py-4">
         <table class="table table-zebra border">
@@ -134,107 +261,115 @@ renderer.table = (header, body) => {
     </div>
     </div>
   `;
-};
-
-renderer.tablerow = (content) => {
-  return `
+  },
+  tablerow(content) {
+    return `
     <tr class="hover">${content}</tr>
   `;
-};
-
-renderer.tablecell = (content, flags) => {
-  return `
+  },
+  tablecell(content, flags) {
+    return `
     <td>${content}</td>
   `;
-};
+  },
+  code(code, language, isEscaped) {
+    // return `
+    //   <pre><div class="mockup-code my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+    // `;
 
-renderer.code = (code, language, isEscaped) => {
-// return `
-//   <pre><div class="mockup-code my-3"><div class="px-4"><code>${code}</code></div></div></pre>
-// `;
-
-  if (language) {
-    const ignoreIllegals = true;
-    return `
-      <pre><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl"><div class="px-4"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
-    `;
-  } else {
-    return `
-    <pre><div class="mockup-code bg-neutral-800 my-3"><div class="px-4"><code>${code}</code></div></div></pre>
-  `;
-  }
-
-};
-
-renderer.list = (body, ordered, start) => {
-
-  if (ordered) {
-    if (start) {
+    if (language) {
+      const ignoreIllegals = true;
       return `
-      <ol start="${start}" class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
+  <div class="p-3">
+       <pre><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl"><div class="px-4"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
+  </div>
+    `;
+    } else {
+      return `
+  <div class="p-3">
+    <pre><div class="mockup-code bg-neutral-800 my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+  </div>
+  `;
+    }
+  },
+  list(body, ordered, start) {
+    if (ordered) {
+      if (start) {
+        return `
+         <div class="my-2 py-2">
+            <ol start="${start}" class="list-decimal list-outside mx-5">${body}</ol>
+         </div>
+      `;
+      }
+      return `
+         <div class="my-2 py-2">
+            <ol class="list-decimal mx-5 list-outside">${body}</ol>
+         </div>
+    `;
+    } else {
+      return `
+         <div class="my-2 py-2">
+            <ul class="list-disc list-outside mx-5">${body}</ul>
+         </div>
     `;
     }
+  },
+  listitem(text) {
     return `
-      <ol class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
-    `;
-  } else {
-    return `
-      <ul class="list-disc list-outside my-2 py-2 space-y-2">${body}</ul>
-    `;
-  }
-};
-
-renderer.listitem = (text) => {
-  return `
     <li class="text-neutral-800 dark:text-neutral-50">${text}</li>
   `;
-};
-
-renderer.paragraph = (text) => {
-  return `
+  },
+  paragraph(text) {
+    return `
     <p class="text-neutral-800 dark:text-neutral-50">${text}</p>
   `;
-};
-
-renderer.heading = (text, level, raw, slugger) => {
-  return `
+  },
+  heading(text, level, raw, slugger) {
+    return `
     <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
   `;
-};
-
-renderer.hr = () => {
-  return `
+  },
+  hr() {
+    return `
     <hr class="my-4 border-neutral-200 dark:border-neutral-700"/>
   `;
-};
-
-renderer.blockquote = (quote) => {
-  return `
+  },
+  blockquote(quote) {
+    return `
     <blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${quote}</blockquote>
   `;
-};
-
-renderer.image = (href, title, text) => {
-  return `
+  },
+  image(href, title, text) {
+    return `
     <img src="${href}" alt="${text}" title="${title}" class="w-full"/>
   `;
-};
-
-renderer.strong = (text) => {
-  return `
+  },
+  strong(text) {
+    return `
     <strong class="font-poppins-semi-bold my-1 text-base">${text}</strong>
   `;
-};
+  },
+  codespan(code) {
+    // return `
+    //   <pre><div class="mockup-code"><div class="px-4"><code>${code}</code></div></div></pre>
+    // `;
 
-renderer.codespan = (code) => {
-  // return `
-  //   <pre><div class="mockup-code"><div class="px-4"><code>${code}</code></div></div></pre>
-  // `;
-
-  // we'll rather render this like in chatGPT
-  return `
+    // we'll rather render this like in chatGPT
+    return `
     <code class="font-poppins-semi-bold my-1">&acute;${code}&acute;</code>
   `;
+  },
+  descriptionList(body) {
+    return `
+    <dl>${body}</dl>
+  `;
+  },
+  description(dt, dd) {
+    return `
+    <dt>${dt}</dt>
+    <dd>${dd}</dd>
+  `;
+  }
 };
 
 // const walkTokens = (token) => {
@@ -393,13 +528,13 @@ const handleUserInput = (_value: string, formatted: string) => {
 
   // send the user's response to the server
   // and wait for the server to send the AI's response
-  chatbot.establishConnection(pageId.value, formatted).then((responseStream) => {
+  chatbot.establishConnection(pageId.value, formatted).then((responseStream: Response) => {
 
     // create a new reader
-    const reader2 = responseStream.body.getReader();
+    const reader2 = responseStream.body?.getReader();
 
     // read the stream
-    reader2.read().then((result) => {
+    reader2?.read().then((result) => {
 
       // convert the stream to a string
       const decoder = new TextDecoder();
@@ -605,7 +740,7 @@ const handleUserInput = (_value: string, formatted: string) => {
     scrollToBottom();
 
     aiMessage.value.hasError = true;
-    aiMessage.value.message = `
+    aiMessage.value.message += `
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative text-sm" role="alert">
             <strong class="font-bold">Oops!</strong>
             <span class="block sm:inline">Something went wrong. Please try again.</span>
@@ -613,6 +748,8 @@ const handleUserInput = (_value: string, formatted: string) => {
     `;
 
     isGeneratingResponse.value = false;
+
+    notificationsStore.addNotification('Oops! Something went wrong. Please try again.', 'error');
   });
 };
 

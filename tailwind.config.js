@@ -19,6 +19,9 @@ export default {
                 'poppins-semi-bold': ['Poppins Semibold', 'Ubuntu', 'san-serif', 'serif'],
                 'poppins-extra-bold': ['Poppins Extrabold', 'Ubuntu', 'san-serif', 'serif']
             },
+            fontSize: {
+                'xxs': '.65rem',
+            }
         },
     },
     // eslint-disable-next-line no-undef

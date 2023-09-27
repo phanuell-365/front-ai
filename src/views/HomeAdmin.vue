@@ -6,11 +6,15 @@ import {useRouter} from "vue-router";
 import {useTabsStore} from "@/stores/admin/tabs.ts";
 import {usePageContentStore} from "@/stores/admin/page-data.ts";
 import {useField} from "vee-validate";
+import ToastContainer from "@/views/Admin/toasts/ToastContainer.vue";
+import ToastAlert from "@/views/Admin/toasts/ToastAlert.vue";
+import {useNotificationsStore} from "@/stores/notifications.ts";
 
 const router = useRouter();
 const tabsStore = useTabsStore();
 const pageContentStore = usePageContentStore();
 const homeStore = useAdminHomeStore();
+const notificationsStore = useNotificationsStore();
 
 // by grace before we get here, the pages have already been fetched
 
@@ -119,7 +123,7 @@ const deletePage = async () => {
         </template>
 
         <template #body>
-          <div class="grid grid-cols-1 gap-3">
+          <form class="grid grid-cols-1 gap-3" @submit.prevent="createPage">
             <div class="flex flex-col space-y-2">
               <label class="label text-xs font-semibold" for="chatbot-name">
                 Page Name
@@ -139,7 +143,7 @@ const deletePage = async () => {
                 This will be used as the page title. More configurations will be shown after creating the page.
               </small>
             </div>
-          </div>
+          </form>
         </template>
 
         <template #footer>
@@ -184,6 +188,13 @@ const deletePage = async () => {
           </div>
         </template>
       </DialogModal>
+
+      <ToastContainer v-if="notificationsStore.hasNotifications">
+        <!--        <ToastAlert text="Page name is required" type="error" id=""/>-->
+        <ToastAlert v-for="(notification) in notificationsStore.getNotifications" :id="notification.id"
+                    :key="notification.id" :is-shown="notification.isShown" :message="notification.message"
+                    :type="notification.type"/>
+      </ToastContainer>
     </Teleport>
   </div>
 </template>

@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import {useAppHomeStore} from "../home";
+import {useNotificationsStore} from "../notifications.ts";
 
 export interface Tab {
     name: string;
@@ -73,6 +74,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
 
     async function fetchTabs() {
         const appHomeStore = useAppHomeStore();
+        const notificationsStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -93,6 +95,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
             await setOpenTabs(tabs, openTabs);
         } catch (error) {
             console.error(error);
+            notificationsStore.addNotification('An error occurred while fetching the tabs', 'error');
         } finally {
             // appHomeStore.setIsAppFetching(false);
 
@@ -260,11 +263,12 @@ export const useTabsStore = defineStore('tabsStore', () => {
             // if it's not the 'home' or 'settings' tab
             if (tab.name !== 'Home' && tab.name !== 'Settings') {
                 const appHomeStore = useAppHomeStore();
+                const notificationStore = useNotificationsStore();
 
                 appHomeStore.setIsAppFetching(true);
 
                 try {
-                    const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}`, {
+                    const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}/`, {
                         method: 'PATCH',
                         body: JSON.stringify({
                             msg: 'hello'
@@ -281,7 +285,9 @@ export const useTabsStore = defineStore('tabsStore', () => {
                         await setActiveTab(tab.name);
                     }
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
+
+                    notificationStore.addNotification('An error occurred while updating the active tab', 'error');
                 } finally {
                     // appHomeStore.setIsAppFetching(false);
 
@@ -306,35 +312,67 @@ export const useTabsStore = defineStore('tabsStore', () => {
         }
     }
 
-    function closeTab(tab_name: string) {
+    async function closeTab(tab_name: string) {
         // get the tab by id
         const tab = tabs.value.find((tab) => tab.name === tab_name);
 
         // deactivate the tab
         if (tab) {
-            tab.active = false;
+            // tab.active = false;
+            //
+            // // remove the tab from the open tabs
+            // openTabs.value = openTabs.value.filter((openTab) => openTab.name !== tab.name);
+            //
+            // // remove the tab from the tabs
+            // tabs.value = tabs.value.filter((tab) => tab.name !== tab.name);
+            //
+            // // check if only the home and settings tabs are left
+            // if (openTabs.value.length === 2) {
+            //     // set the home tab to active
+            //     activeTab.value = openTabs.value[0];
+            // } else {
+            //     // set the active tab
+            //     activeTab.value = openTabs.value[openTabs.value.length - 1];
+            // }
+            //
+            // // set the open tabs to local storage
+            // localStorage.setItem('openTabs', JSON.stringify(openTabs.value));
+            //
+            // // call setActiveTab
+            // setActiveTab(activeTab.value?.name as string);
 
-            // remove the tab from the open tabs
-            openTabs.value = openTabs.value.filter((openTab) => openTab.name !== tab.name);
+            const appHomeStore = useAppHomeStore();
+            const notificationStore = useNotificationsStore();
 
-            // remove the tab from the tabs
-            tabs.value = tabs.value.filter((tab) => tab.name !== tab.name);
+            try {
+                const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}/`, {
+                    method: 'DELETE',
+                    body: JSON.stringify({
+                        msg: 'hello'
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-            // check if only the home and settings tabs are left
-            if (openTabs.value.length === 2) {
-                // set the home tab to active
-                activeTab.value = openTabs.value[0];
-            } else {
-                // set the active tab
-                activeTab.value = openTabs.value[openTabs.value.length - 1];
+                const res = await response.json();
+
+                const {tabs, openTabs} = res.data;
+
+                await setTabs(tabs);
+
+                await setOpenTabs(tabs, openTabs);
+            } catch (error) {
+                console.error(error);
+
+                notificationStore.addNotification('An error occurred while closing the tab', 'error');
+            } finally {
+                // appHomeStore.setIsAppFetching(false);
+
+                setTimeout(() => {
+                    appHomeStore.setIsAppFetching(false);
+                }, 400);
             }
-
-            // set the open tabs to local storage
-            localStorage.setItem('openTabs', JSON.stringify(openTabs.value));
-
-            // call setActiveTab
-            setActiveTab(activeTab.value?.name as string);
-
         }
     }
 

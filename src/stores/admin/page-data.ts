@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import {Page, useAdminHomeStore} from "./home.ts";
 import {useAppHomeStore} from "../home";
+import {useNotificationsStore} from "../notifications.ts";
 
 export interface PageContent {
     pageId: string;
@@ -66,6 +67,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
     async function fetchPageContentItems() {
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -85,6 +87,8 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             setPageContentItems(pageOptions, pageContent);
         } catch (error) {
             console.error(error);
+
+            notificationStore.addNotification('An error occurred while fetching the page content items.', 'error');
         } finally {
             setTimeout(() => {
                 appHomeStore.setIsAppFetching(false);
@@ -176,6 +180,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         }
 
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -196,10 +201,14 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
             await adminHomeStore.fetchPages();
 
+            notificationStore.addNotification('Page options saved successfully.', 'success');
+
             return updatePageOptions(pageOption);
 
         } catch (error) {
             console.error(error);
+
+            notificationStore.addNotification('An error occurred while saving the page options.', 'error');
         } finally {
             // appHomeStore.setIsAppFetching(false);
 
@@ -218,6 +227,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         };
 
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -240,10 +250,14 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
             await adminHomeStore.fetchPages();
 
+            notificationStore.addNotification('Page content saved successfully.', 'success');
+
             return updatePageContentItem(pageOption, pageContent);
 
         } catch (error) {
             console.error(error);
+
+            notificationStore.addNotification('An error occurred while saving the page content.', 'error');
         } finally {
             // appHomeStore.setIsAppFetching(false);
 
@@ -306,6 +320,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         formData.append('file', file);
 
         const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -319,9 +334,13 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
             const {file: uploadedFile} = data;
 
+            notificationStore.addNotification('File uploaded successfully.', 'success');
+
             return uploadedFile;
         } catch (error) {
             console.error(error);
+
+            notificationStore.addNotification('An error occurred while uploading the file.', 'error');
         } finally {
             // appHomeStore.setIsAppFetching(false);
 
