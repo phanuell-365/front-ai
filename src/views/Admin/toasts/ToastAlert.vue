@@ -81,7 +81,7 @@ const onCloseClick = () => {
 <template>
   <div
       :class="[alertTextColor, alertBgColor, !(isToastShown || isShown) ? 'hiding': '']"
-      class="grid grid-cols-12 flex-1 w-full relative rounded-md overflow-hidden drop-shadow-lg pl-2 mr-auto py-5 transition duration-300 ease-in-out"
+      class="grid grid-cols-12 flex-1 w-full relative rounded-md overflow-hidden drop-shadow-lg py-5 transition duration-300 ease-in-out"
       tabindex="0">
     <div :class="alertBgDashColor" class="absolute inset-y-0 left-0 w-1"></div>
     <div class="col-span-2 flex items-center justify-center">
@@ -89,10 +89,12 @@ const onCloseClick = () => {
         {{ iconName }}
       </i>
     </div>
-    <div class="flex flex-col items-start justify-center col-span-8">
-      <span :class="alertTextColor" class="text-sm font-medium">
-        {{ message }}
-      </span>
+    <div class="flex flex-row flex-wrap text-start items-center col-span-8">
+      <div class="w-full inline max-h-14 md:max-h-18 lg:max-h-20 overflow-y-auto">
+        <p :class="alertTextColor" class="text-sm font-medium whitespace-normal break-words w-full">
+          {{ message }}
+        </p>
+      </div>
     </div>
     <div class="col-span-2 flex items-center justify-center px-1">
       <button class="btn btn-ghost btn-sm btn-circle" @click="onCloseClick">

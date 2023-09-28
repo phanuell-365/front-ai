@@ -152,7 +152,9 @@ const deletePage = async () => {
                     @click="closeCreateModal">
               Cancel
             </button>
-            <button class="grow btn btn-sm md:btn-md btn-primary normal-case" @click="createPage">
+            <button :disabled="!homeStore.enabledCreateDialogBtn"
+                    class="grow btn btn-sm md:btn-md btn-primary normal-case"
+                    @click="createPage">
               Create
             </button>
           </div>
@@ -182,7 +184,9 @@ const deletePage = async () => {
                     @click="closeDeleteModal">
               Cancel
             </button>
-            <button class="grow btn btn-sm md:btn-md btn-error normal-case text-white" @click="deletePage">
+            <button :disabled="!homeStore.enabledDeleteDialogBtn"
+                    class="grow btn btn-sm md:btn-md btn-error normal-case text-white"
+                    @click="deletePage">
               Delete
             </button>
           </div>

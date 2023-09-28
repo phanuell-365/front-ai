@@ -63,6 +63,8 @@ onBeforeMount(() => {
 
         currentPage.value = adminHomeStore.getPageById(pageId.value);
 
+        console.log('Page Id => ', pageId.value);
+
         if (!currentPage.value) {
           router.replace({name: "not-found"});
         }

@@ -101,6 +101,7 @@ const onViewAllPagesClick = () => {
                     @click="onViewAllPagesClick"
                 >
                   View All
+                  <i class="material-icons-round ml-2">east</i>
                 </button>
               </div>
             </div>

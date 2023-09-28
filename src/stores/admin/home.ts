@@ -22,9 +22,11 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     const createDialog = ref({
         isOpen: false,
     });
+    const enabledCreateDialogBtn = ref<boolean>(true);
     const deleteDialog = ref({
         isOpen: false,
     });
+    const enabledDeleteDialogBtn = ref<boolean>(true);
     // will be set when the user clicks the delete button
     const pageIdToDelete = ref<string>('');
 
@@ -104,6 +106,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
         appHomeStore.setIsAppFetching(true);
 
+        // disable the create button
+        enabledCreateDialogBtn.value = false;
+
         try {
             const response = await fetch(`${BASE_URL}/pages/`, {
                 method: 'POST',
@@ -144,6 +149,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
                 appHomeStore.setIsAppFetching(false);
             }, 500);
             // appHomeStore.setIsAppFetching(false);
+
+            // enable the create button
+            enabledCreateDialogBtn.value = true;
         }
     }
 
@@ -238,6 +246,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
         appHomeStore.setIsAppFetching(true);
 
+        // disable the delete button
+        enabledDeleteDialogBtn.value = false;
+
         try {
             const response = await fetch(`${BASE_URL}/pages/${pageIdToDelete.value}/`, {
                 method: 'DELETE',
@@ -259,7 +270,11 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
 
                 notificationStore.addNotification('Page deleted successfully', 'success');
 
+                console.log('page', page);
+
                 return page;
+            } else {
+                notificationStore.addNotification('An error occurred while deleting the page', 'error');
             }
         } catch (error) {
             console.error(error);
@@ -270,6 +285,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
                 appHomeStore.setIsAppFetching(false);
             }, 500);
             // appHomeStore.setIsAppFetching(false);
+
+            // enable the delete button
+            enabledDeleteDialogBtn.value = true;
         }
     }
 
@@ -301,6 +319,8 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         createDialog,
         deleteDialog,
         pageIdToDelete,
+        enabledCreateDialogBtn,
+        enabledDeleteDialogBtn,
         getPages,
         getPageByPath,
         getPageById,
