@@ -831,7 +831,7 @@ const onUploadData = () => {
                 </small>
                 <small class="text-xs text-gray-500">This is the placeholder that will appear on the user input.</small>
               </div>
-              <hr class="my-3"/>
+              <hr class="my-3 h-0.5"/>
               <div class="flex flex-col space-y-2">
                 <label class="label text-xs font-semibold" for="directive">
                   Directive

@@ -49,6 +49,7 @@ onBeforeMount(() => {
     }, 500);
   });
 });
+
 // set page metadata
 
 // sample data
@@ -85,6 +86,7 @@ onBeforeMount(() => {
 interface Conversation {
   message: string;
   isUser: boolean;
+  isTyping?: boolean;
   hasError?: boolean;
   uniqueId: string | number;
 }
@@ -99,10 +101,6 @@ const aiResponses = ref<string[]>([]);
 const isGeneratingResponse = ref(false);
 
 // create sample conversations from the sample data
-// for (let i = 0; i < aiResponses.value.length; i++) {
-//   conversation.value.push({message: userResponses.value[i], isUser: true});
-//   conversation.value.push({message: aiResponses.value[i], isUser: false});
-// }
 
 const scrollToBottom = () => {
   const conversationCon = document.querySelector('#user-input-placeholder');
@@ -114,141 +112,13 @@ const scrollToBottom = () => {
   });
 };
 
-// const renderer = new marked.Renderer();
-//
-// renderer.link = (href, title, text) => {
-//   return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
-// };
-//
-// renderer.table = (header, body) => {
-//   return `
-//    <div class="bg-white p-3 rounded-xl shadow-lg shadow-slate-300/10 my-3">
-//     <div class="overflow-x-auto py-4">
-//         <table class="table table-zebra border">
-//         <thead>
-//             ${header}
-//         </thead>
-//         <tbody>
-//             ${body}
-//         </tbody>
-//     </table>
-//     </div>
-//     </div>
-//   `;
-// };
-//
-// renderer.tablerow = (content) => {
-//   return `
-//     <tr class="hover">${content}</tr>
-//   `;
-// };
-//
-// renderer.tablecell = (content, flags) => {
-//   return `
-//     <td>${content}</td>
-//   `;
-// };
-//
-// renderer.code = (code, language, isEscaped) => {
-// // return `
-// //   <pre><div class="mockup-code my-3"><div class="px-4"><code>${code}</code></div></div></pre>
-// // `;
-//
-//   if (language) {
-//     const ignoreIllegals = true;
-//     return `
-//   <div class="p-3">
-//       <pre><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl"><div class="px-4"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
-//   </div>
-//     `;
-//   } else {
-//     return `
-//   <div class="p-3">
-//     <pre><div class="mockup-code bg-neutral-800 my-3"><div class="px-4"><code>${code}</code></div></div></pre>
-//   </div>
-//   `;
-//   }
-//
-// };
-//
-// renderer.list = (body, ordered, start) => {
-//
-//   if (ordered) {
-//     // if (start) {
-//     //   return `
-//     //   <ol start="${start}" class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
-//     // `;
-//     // }
-//     return `
-//       <ol class="list-decimal list-outside my-2 py-2 space-y-2">${body}</ol>
-//     `;
-//   } else {
-//     return `
-//       <ul class="list-disc list-outside my-2 py-2 space-y-2">${body}</ul>
-//     `;
-//   }
-// };
-//
-// renderer.listitem = (text) => {
-//   return `
-//     <li class="text-neutral-800 dark:text-neutral-50">${text}</li>
-//   `;
-// };
-//
-// // renderer.paragraph = (text) => {
-// //   return `
-// //     <p class="text-neutral-800 dark:text-neutral-50">${text}</p>
-// //   `;
-// // };
-// //
-// renderer.heading = (text, level, raw, slugger) => {
-//   return `
-//     <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
-//   `;
-// };
-//
-// renderer.hr = () => {
-//   return `
-//     <hr class="my-4 border-neutral-200 dark:border-neutral-700"/>
-//   `;
-// };
-//
-// renderer.blockquote = (quote) => {
-//   return `
-//     <blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${quote}</blockquote>
-//   `;
-// };
-//
-// renderer.image = (href, title, text) => {
-//   return `
-//     <img src="${href}" alt="${text}" title="${title}" class="w-full"/>
-//   `;
-// };
-//
-// renderer.strong = (text) => {
-//   return `
-//     <strong class="font-poppins-semi-bold my-1 text-base">${text}</strong>
-//   `;
-// };
-//
-// renderer.codespan = (code) => {
-//   // return `
-//   //   <pre><div class="mockup-code"><div class="px-4"><code>${code}</code></div></div></pre>
-//   // `;
-//
-//   // we'll rather render this like in chatGPT
-//   return `
-//     <code class="font-poppins-semi-bold my-1">&acute;${code}&acute;</code>
-//   `;
-// };
-
 const renderer = {
-  link(href, title, text) {
+  link(href: string, title: string, text: string) {
     return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
   },
-  table(header, body) {
+  table(header: string, body: string) {
     return `
-   <div class="bg-white p-3 rounded-xl shadow-lg shadow-slate-300/10 my-3">
+   <div class="bg-white p-2.5 rounded-xl shadow-lg shadow-slate-300/10 my-3">
     <div class="overflow-x-auto py-4">
         <table class="table table-zebra border">
         <thead>
@@ -262,17 +132,17 @@ const renderer = {
     </div>
   `;
   },
-  tablerow(content) {
+  tablerow(content: string) {
     return `
     <tr class="hover">${content}</tr>
   `;
   },
-  tablecell(content, flags) {
+  tablecell(content: string) {
     return `
     <td>${content}</td>
   `;
   },
-  code(code, language, isEscaped) {
+  code(code: string, language: string) {
     // return `
     //   <pre><div class="mockup-code my-3"><div class="px-4"><code>${code}</code></div></div></pre>
     // `;
@@ -280,51 +150,51 @@ const renderer = {
     if (language) {
       const ignoreIllegals = true;
       return `
-  <div class="p-3">
-       <pre><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl"><div class="px-4"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
+  <div class="p-2 flex w-full">
+       <pre class="w-full"><div class="mockup-code bg-neutral-800 my-3 relative shadow-xl w-full overflow-auto"><div class="px-4 flex-1 overflow-auto h-full w-full"><code class="language-${language}">${hljs.highlight(code, {language, ignoreIllegals}).value}</code></div></div></pre>
   </div>
     `;
     } else {
       return `
-  <div class="p-3">
-    <pre><div class="mockup-code bg-neutral-800 my-3"><div class="px-4"><code>${code}</code></div></div></pre>
+  <div class="p-3 flex w-full">
+    <pre class="w-full"><div class="mockup-code bg-neutral-800 my-2.5 w-full overflow-auto"><div class="px-4 flex-1 overflow-auto h-full w-full"><code>${code}</code></div></div></pre>
   </div>
   `;
     }
   },
-  list(body, ordered, start) {
+  list(body: string, ordered: boolean, start: number | undefined) {
     if (ordered) {
       if (start) {
         return `
-         <div class="my-2 py-2">
-            <ol start="${start}" class="list-decimal list-outside mx-5">${body}</ol>
+         <div class="my-2 py-2 mx-3">
+            <ol start="${start}" class="list-decimal list-outside mx-5 space-y-0.5 md:space-y-1 lg:space-y-1.5">${body}</ol>
          </div>
       `;
       }
       return `
-         <div class="my-2 py-2">
-            <ol class="list-decimal mx-5 list-outside">${body}</ol>
+         <div class="my-2 py-2 mx-3">
+            <ol class="list-decimal mx-5 list-outside space-y-0.5 md:space-y-1 lg:space-y-1.5">${body}</ol>
          </div>
     `;
     } else {
       return `
-         <div class="my-2 py-2">
-            <ul class="list-disc list-outside mx-5">${body}</ul>
+         <div class="my-2 py-2 mx-3">
+            <ul class="list-disc list-outside mx-5 space-y-0.5 md:space-y-1 lg:space-y-1.5">${body}</ul>
          </div>
     `;
     }
   },
-  listitem(text) {
+  listitem(text: string) {
     return `
     <li class="text-neutral-800 dark:text-neutral-50">${text}</li>
   `;
   },
-  paragraph(text) {
+  paragraph(text: string) {
     return `
-    <p class="text-neutral-800 dark:text-neutral-50">${text}</p>
+    <p class="text-neutral-800 dark:text-neutral-50 leading-relaxed">${text}</p>
   `;
   },
-  heading(text, level, raw, slugger) {
+  heading(text: string, level: string, raw, slugger) {
     return `
     <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
   `;
@@ -334,22 +204,22 @@ const renderer = {
     <hr class="my-4 border-neutral-200 dark:border-neutral-700"/>
   `;
   },
-  blockquote(quote) {
+  blockquote(quote: string) {
     return `
     <blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${quote}</blockquote>
   `;
   },
-  image(href, title, text) {
+  image(href: string, title: string, text: string) {
     return `
     <img src="${href}" alt="${text}" title="${title}" class="w-full"/>
   `;
   },
-  strong(text) {
+  strong(text: string) {
     return `
     <strong class="font-poppins-semi-bold my-1 text-base">${text}</strong>
   `;
   },
-  codespan(code) {
+  codespan(code: string) {
     // return `
     //   <pre><div class="mockup-code"><div class="px-4"><code>${code}</code></div></div></pre>
     // `;
@@ -359,72 +229,18 @@ const renderer = {
     <code class="font-poppins-semi-bold my-1">&acute;${code}&acute;</code>
   `;
   },
-  descriptionList(body) {
+  descriptionList(body: string) {
     return `
     <dl>${body}</dl>
   `;
   },
-  description(dt, dd) {
+  description(dt: string, dd: string) {
     return `
     <dt>${dt}</dt>
     <dd>${dd}</dd>
   `;
   }
 };
-
-// const walkTokens = (token) => {
-//   let html = '';
-//
-//   // tokens.forEach((token) => {
-//   if (token.type === 'text') {
-//     html += token.text;
-//   } else if (token.type === 'paragraph') {
-//     html += `<p class="text-neutral-800 dark:text-neutral-50">${walkTokens(token.tokens)}</p>`;
-//   } else if (token.type === 'strong') {
-//     html += `<strong class="font-poppins-bold my-1">${walkTokens(token.tokens)}</strong>`;
-//   } else if (token.type === 'codespan') {
-//     html += `<code class="font-poppins-semi-bold my-1">${token.text}</code>`;
-//   } else if (token.type === 'code') {
-//     html += `<pre><div class="mockup-code my-3"><div class="px-4"><code class="language-${token.lang}">${token.text}</code></div></div></pre>`;
-//   } else if (token.type === 'blockquote') {
-//     html += `<blockquote class="my-4 border-l-4 border-neutral-200 dark:border-neutral-700 pl-4">${walkTokens(token.tokens)}</blockquote>`;
-//   } else if (token.type === 'list') {
-//     html += `<${token.ordered ? 'ol' : 'ul'} class="${token.ordered ? 'list-decimal' : 'list-disc'} list-inside my-2 py-2 gap-2">${walkTokens(token.tokens)}</${token.ordered ? 'ol' : 'ul'}>`;
-//   } else if (token.type === 'list_item') {
-//     html += `<li>${walkTokens(token.tokens)}</li>`;
-//   } else if (token.type === 'table') {
-//     html += `
-//         <div class="overflow-x-auto py-4">
-//             <table class="table table-zebra">
-//             <thead>
-//                 ${walkTokens(token.tokens.header)}
-//             </thead>
-//             <tbody>
-//                 ${walkTokens(token.tokens.body)}
-//             </tbody>
-//         </table>
-//         </div>
-//       `;
-//   } else if (token.type === 'table_row') {
-//     html += `<tr>${walkTokens(token.tokens)}</tr>`;
-//   } else if (token.type === 'table_cell') {
-//     html += `<td>${walkTokens(token.tokens)}</td>`;
-//   } else if (token.type === 'link') {
-//     html += `<a target="_blank" class="link link-primary" href="${token.href}" title="${token.title}">${token.text}</a>`;
-//   } else if (token.type === 'image') {
-//     html += `<img src="${token.href}" alt="${token.text}" title="${token.title}" class="w-full"/>`;
-//   } else if (token.type === 'heading') {
-//     html += `<h${token.depth} class="text-2xl font-bold text-neutral-800 dark:text-neutral-50">${walkTokens(token.tokens)}</h${token.depth}>`;
-//   } else if (token.type === 'hr') {
-//     html += `<hr class="my-4 border-neutral-200 dark:border-neutral-700"/>`;
-//   } else {
-//     html += token.text;
-//   }
-//   // });
-//
-//   return html;
-// };
-
 
 // create a custom description list renderer
 
@@ -477,31 +293,23 @@ const description = {
   childTokens: ['dt', 'dd'],                 // Any child tokens to be visited by walkTokens
 };
 
-// function walkTokens(token) {                        // Post-processing on the completed token tree
-//   if (token.type === 'strong') {
-//     token.text += ' walked';
-//     token.tokens = this.Lexer.lexInline(token.text)
-//   } else if (token.type === 'code') {
-//     token.text += ' walked';
-//     token.tokens = this.Lexer.lexInline(token.text)
-//   }
-// }
-
 // marked.use({extensions: [descriptionList, description]});
 
 marked.use({
   renderer,
   breaks: true,
   gfm: true,
-  // walkTokens,
-  // extensions: [descriptionList, description],
 });
 
 // Function to find the difference between two strings
 const lastKnownText = ref('');
 const currentText = ref('');
+const blinkingCursor = ref(`
+    <div id="blinking-cursor" class="text-blue-950 text-xs">
+`)
 
 const handleUserInput = (_value: string, formatted: string) => {
+
   // add the user's response to the conversation
   // scroll to the bottom of the conversation
   scrollToBottom();
@@ -510,7 +318,7 @@ const handleUserInput = (_value: string, formatted: string) => {
 
   conversation.value.push(userMessage);
 
-  const aiMessage = ref<Conversation>({message: '', isUser: false, uniqueId: _.uniqueId('ai-')});
+  const aiMessage = ref<Conversation>({message: '', isUser: false, isTyping: true, uniqueId: _.uniqueId('ai-')});
 
   isGeneratingResponse.value = true;
 
@@ -518,172 +326,46 @@ const handleUserInput = (_value: string, formatted: string) => {
     conversation.value.push(aiMessage);
   }, 500);
 
-  const debouncedUpdateResponse = _.throttle((newMessage) => {
-    aiResponses.value.push(newMessage);
-    aiMessage.value.message = newMessage;
+  try {
+    // send the user's response to the server
+    // and wait for the server to send the AI's response
+    chatbot.establishConnection(pageId.value, formatted).then((responseStream: Response) => {
 
-    // Scroll to the bottom after adding new data
-    scrollToBottom();
-  }, 100);
+      // create a new reader
+      const reader2 = responseStream.body?.getReader();
 
-  // send the user's response to the server
-  // and wait for the server to send the AI's response
-  chatbot.establishConnection(pageId.value, formatted).then((responseStream: Response) => {
+      // read the stream
+      return reader2?.read().then((result) => {
 
-    // create a new reader
-    const reader2 = responseStream.body?.getReader();
+        // convert the stream to a string
+        const decoder = new TextDecoder();
 
-    // read the stream
-    reader2?.read().then((result) => {
+        let newMessage = decoder.decode(result.value);
 
-      // convert the stream to a string
-      const decoder = new TextDecoder();
-
-      let newMessage = decoder.decode(result.value);
-
-      console.log(newMessage);
-
-      // const isCompleteMessage = newMessage.endsWith('~~~NEWLINE~~~');
-      //
-      // if (isCompleteMessage) {
-      //
-      //   const newText = buffer + newMessage;
-      //   const difference = findDifference(lastKnownText.value, newText);
-      //
-      //   aiMessage.value.message += difference;
-      //   lastKnownText.value = newText; // Update the last known text
-      //   buffer = ''; // Clear the buffer
-      // } else {
-      //   buffer += newMessage;
-      // }
-
-      const lastKnownTextTokens = lastKnownText.value.split('~~~NEWLINE~~~');
-      const currentTextTokens = currentText.value.split('~~~NEWLINE~~~');
-      const newMessageTokens = newMessage.split('~~~NEWLINE~~~');
-
-      const newTokens = newMessageTokens.filter((token) => {
-        return !lastKnownTextTokens.includes(token);
-      });
-
-      // newMessage = newTokens.join('~~~NEWLINE~~~');
-
-      // for each token in the new message
-      newTokens.forEach((token) => {
-
-        console.log(token)
-        // if the token is not in the last known text
-        if (!lastKnownTextTokens.includes(token)) {
-          // add the token to the last known text
-          // lastKnownTextTokens.push(token);
-          // add the token to the ai message
-          // aiMessage.value.message = token;
-          // const previousToken = aiMessage.value.message;
-          const previousToken = currentText.value;
-
-          if (previousToken.length <= token.length) {
-            // add the token to the AI message
-            aiMessage.value.message = marked.parse(token);
-            currentText.value = token;
-
-            // add the token to the last known text
-            lastKnownTextTokens.push(token);
-          }
-        } else {
-          // add the token to the last known text
-          lastKnownTextTokens.push(token);
-
-          console.log(lastKnownTextTokens)
-        }
-      });
-
-      // lastKnownText.value = newMessage;
-
-      // console.log(newMessage);
-
-      // convert the string to html
-      // newMessage = aiResponseHtmlConverter(newMessage);
-
-      // convert the html to code
-      // newMessage = aiResponseCodeConverter(newMessage);
-      // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
-
-      // newMessage = tableProcessor(newMessage);
-
-      // push the result to the string array
-
-      // aiMessage.value.message = decoder.decode(result.value);
-      // aiMessage.value.message = newMessage
-      // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
-
-      // const newAiMessageLength = newMessage.length;
-      // const previousAiMessageLength = aiMessage.value.message.length;
-
-      // if (newAiMessageLength > previousAiMessageLength) {
-      //
-      // newMessage = marked.parse(newMessage);
-      aiResponses.value.push(newMessage);
-      //
-      // aiMessage.value.message = '';
-      // aiMessage.value.message = newMessage;
-      // }
-
-      // debouncedUpdateResponse(newMessage);
-
-      // listen for new data
-      reader2.read().then(function processText({done, value}) {
-        // Result objects contain two properties:
-        // done  - true if the stream has already given you all its data.
-        // value - some data. Always undefined when done is true.
-        if (done) {
-          console.log("Stream complete");
-
-          console.log(aiResponses.value)
-
-          isGeneratingResponse.value = false;
-
-          lastKnownText.value = '';
-
-          currentText.value = '';
-          return;
-        }
-        newMessage = decoder.decode(value);
-
-        // value for fetch streams is a Uint8Array
-        console.log("Received", newMessage);
-
-        // const isCompleteMessage = newMessage.endsWith('\n');
-        // const isCompleteMessage = newMessage.includes('~~~NEWLINE~~~');
-        //
-        // if (isCompleteMessage) {
-        //   const newText = buffer + newMessage;
-        //   // const difference = findDifference(lastKnownText.value, newText);
-        //
-        //   aiMessage.value.message += difference;
-        //   lastKnownText.value = newText; // Update the last known text
-        //   buffer = ''; // Clear the buffer
-        // } else {
-        //   buffer += newMessage;
-        // }
+        // console.log(newMessage);
+        console.log('Start');
 
         const lastKnownTextTokens = lastKnownText.value.split('~~~NEWLINE~~~');
+        // const currentTextTokens = currentText.value.split('~~~NEWLINE~~~');
         const newMessageTokens = newMessage.split('~~~NEWLINE~~~');
 
         const newTokens = newMessageTokens.filter((token) => {
           return !lastKnownTextTokens.includes(token);
         });
 
+        // for each token in the new message
         newTokens.forEach((token) => {
 
-          console.log(token)
+          // console.log(token)
           // if the token is not in the last known text
           if (!lastKnownTextTokens.includes(token)) {
-            // add the token to the ai message
-            // const previousToken = aiMessage.value.message;
+
             const previousToken = currentText.value;
 
             if (previousToken.length <= token.length) {
-              // add the token to the ai message
+              // add the token to the AI message
               aiMessage.value.message = marked.parse(token);
+              // + blinkingCursor.value;
               currentText.value = token;
 
               // add the token to the last known text
@@ -697,44 +379,98 @@ const handleUserInput = (_value: string, formatted: string) => {
           }
         });
 
-        // newMessage = aiResponseHtmlConverter(newMessage);
+        aiResponses.value.push(newMessage);
 
-        // newMessage = useTextProcessor(newMessage, '```', '<pre><div class="mockup-code"><div class="px-4"><code>', '</code></div></div></pre>').output.value;
+        // listen for new data
+        return reader2.read().then(function processText({done, value}) {
+          // Result objects contain two properties:
+          // done  - true if the stream has already given you all its data.
+          // value - some data. Always undefined when done is true.
+          if (done) {
+            console.log("Stream complete");
 
-        // newMessage = tableProcessor(newMessage);
+            console.log(aiResponses.value)
 
-        // newMessage = marked.parse(newMessage);
+            isGeneratingResponse.value = false;
 
-        // aiResponses.value.push(newMessage);
-        // aiMessage.value.message = decoder.decode(value);
-        // aiMessage.value.message = newMessage
-        // aiMessage.value.message = aiResponses.value[aiResponses.value.length - 1];
+            aiMessage.value.isTyping = false;
 
-        // aiMessage.value.message += findDifference(aiMessage.value.message, newMessage);
+            lastKnownText.value = '';
 
-        // const newAiMessageLength = newMessage.length;
-        // const previousAiMessageLength = aiMessage.value.message.length;
+            currentText.value = '';
+            return;
+          }
 
-        // if (newAiMessageLength > previousAiMessageLength) {
-        // aiResponses.value.push(newMessage);
-        //
-        // newMessage = marked.parse(newMessage);
-        //
-        // aiMessage.value.message = '';
-        // aiMessage.value.message = newMessage;
-        // }
+          newMessage = decoder.decode(value);
 
-        // debouncedUpdateResponse(newMessage);
-        console.log(aiMessage.value.message)
+          // value for fetch streams is a Uint8Array
 
-        scrollToBottom();
-        // responseString.value = decoder.decode(value);
-        // stringArray.value.push(decoder.decode(value));
-        // Read some more, and call this function again
-        return reader2.read().then(processText);
-      });
-    })
-  }).catch((error) => {
+          const lastKnownTextTokens = lastKnownText.value.split('~~~NEWLINE~~~');
+          const newMessageTokens = newMessage.split('~~~NEWLINE~~~');
+
+          const newTokens = newMessageTokens.filter((token) => {
+            return !lastKnownTextTokens.includes(token);
+          });
+
+          newTokens.forEach((token) => {
+
+            // console.log(token)
+            // if the token is not in the last known text
+            if (!lastKnownTextTokens.includes(token)) {
+              // add the token to the ai message
+              // const previousToken = aiMessage.value.message;
+              const previousToken = currentText.value;
+
+              if (previousToken.length <= token.length) {
+                // add the token to the ai message
+                aiMessage.value.message = marked.parse(token)
+                // + blinkingCursor.value;
+                currentText.value = token;
+
+                // add the token to the last known text
+                lastKnownTextTokens.push(token);
+              }
+            } else {
+              // add the token to the last known text
+              lastKnownTextTokens.push(token);
+
+              console.log(lastKnownTextTokens)
+            }
+          });
+
+          // debouncedUpdateResponse(newMessage);
+          // console.log(aiMessage.value.message)
+
+          scrollToBottom();
+          // Read some more, and call this function again
+          return reader2.read().then(processText);
+        });
+      })
+    }).catch((error: Error) => {
+      console.log(error);
+
+      scrollToBottom();
+
+      aiMessage.value.hasError = true;
+      aiMessage.value.message += `
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative text-sm" role="alert">
+            <strong class="font-bold">Oops!</strong>
+            <span class="block sm:inline">Something went wrong. Please try again.</span>
+        </div>
+    `;
+      aiMessage.value.isTyping = false;
+
+      isGeneratingResponse.value = false;
+
+      notificationsStore.addNotification('Oops! Something went wrong. Please try again.', 'error');
+
+    }).finally(() => {
+      // console.log('finally')
+      aiMessage.value.isTyping = false;
+
+      isGeneratingResponse.value = false;
+    });
+  } catch (error) {
     console.log(error);
 
     scrollToBottom();
@@ -746,11 +482,12 @@ const handleUserInput = (_value: string, formatted: string) => {
             <span class="block sm:inline">Something went wrong. Please try again.</span>
         </div>
     `;
+    aiMessage.value.isTyping = false;
 
     isGeneratingResponse.value = false;
 
     notificationsStore.addNotification('Oops! Something went wrong. Please try again.', 'error');
-  });
+  }
 };
 
 const aiResponseHtmlConverter = (message: string) => {
@@ -855,8 +592,8 @@ watch(conversation.value, () => {
         <div class="pt-10 md:pt-20">
           <!-- Simulate a conversation loop -->
           <div ref="conversationContainerRef" class="grid grid-cols-1 gap-7 w-9/12 mx-auto mb-10">
-            <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
-                           :chatbot-name="chatbotName"/>
+            <ChatbotBubble :key="1" :chatbot-message="staticGreeting" :chatbot-name="chatbotName"
+                           :is-typing="false"/>
 
             <div v-for="(message, index) in conversation" :key="index">
               <UserBubble v-if="message.value.isUser && message.value.message && message.value.message.length > 0"
@@ -865,8 +602,11 @@ watch(conversation.value, () => {
                   v-else-if="!message.value.isUser"
                   :key="message.value.uniqueId" :chatbot-message="message.value.message"
                   :chatbot-name="chatbotName"
+                  :disclosure-message="pageContent?.closureMessage"
+                  :has-disclosure-message="pageContent?.displayClosureMessage"
                   :has-error="message.value?.hasError"
-                  :is-copyable="index !== 0"/>
+                  :is-copyable="index !== 0"
+                  :is-typing="message.value?.isTyping"/>
             </div>
           </div>
         </div>
@@ -940,5 +680,22 @@ watch(conversation.value, () => {
 .message-leave-to {
   opacity: 0;
   transform: translateX(20px);
+}
+
+#blinking-cursor {
+  width: 2px; /* Adjust the width of the cursor */
+  height: 24px; /* Adjust the height of the cursor */
+  background-color: black; /* Cursor color */
+  animation: blink 0.65s step-end infinite; /* Blinking animation */
+}
+
+/* Define the blinking animation */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1; /* Cursor visible */
+  }
+  50% {
+    opacity: 0; /* Cursor hidden */
+  }
 }
 </style>

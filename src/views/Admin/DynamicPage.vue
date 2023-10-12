@@ -162,12 +162,17 @@ const handleSidebarDataChanged = (value: boolean) => {
                  @click="toggleSidebarData" @mouseleave="onMainContainerMouseLeave"
                  @mouseover="onMainContainerMouseOver">
               <div class="grid grid-cols-1 gap-7 w-9/12 mx-auto">
-                <ChatbotBubble :key="1" :chatbot-message="staticGreeting"
-                               :chatbot-name="chatbotName"/>
+                <ChatbotBubble :key="1" :chatbot-message="staticGreeting" :chatbot-name="chatbotName"
+                               :disclosure-message="pageContent?.closureMessage"
+                               :has-disclosure-message="pageContent?.displayClosureMessage"
+                               :is-typing="false"/>
                 <UserBubble :user-message="`What is this?`" user-name="John Doe"/>
                 <ChatbotBubble :key="2"
                                :chatbot-message="`Sorry! I can't help you with that at the moment. Please try again later.`"
                                :chatbot-name="chatbotName"
+                               :disclosure-message="pageContent?.closureMessage"
+                               :has-disclosure-message="pageContent?.displayClosureMessage"
+                               :is-typing="false"
                                is-copyable/>
 
                 <UserInput :prompt-placeholder="promptPlaceholder" disabled user-input=""/>

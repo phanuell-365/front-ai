@@ -1,15 +1,20 @@
 <script lang="ts" setup>
-import {computed, ref} from "vue";
+import {computed, onMounted, Ref, ref, watch} from "vue";
 
 interface ChatbotBubble {
   chatbotName: string;
   chatbotMessage: string;
+  isTyping: boolean;
   isCopyable?: boolean;
+  hasDisclosureMessage?: boolean;
+  disclosureMessage?: string;
   hasError?: boolean;
 }
 
 const props = withDefaults(defineProps<ChatbotBubble>(), {
-  isCopyable: false
+  isTyping: false,
+  isCopyable: false,
+  hasDisclosureMessage: false,
 });
 
 const hasCopyButton = computed(() => {
@@ -19,6 +24,22 @@ const hasCopyButton = computed(() => {
 const hasText = computed(() => {
   return props.chatbotMessage.length > 0;
 });
+
+const chatbotMsgRef: Ref<HTMLElement | null> = ref(null);
+
+onMounted(() => {
+  if (chatbotMsgRef.value) {
+    cursorLeftOffset.value = chatbotMsgRef.value.offsetWidth;
+  }
+});
+
+watch(() => props.chatbotMessage, () => {
+  if (chatbotMsgRef.value) {
+    cursorLeftOffset.value = chatbotMsgRef.value.offsetWidth;
+  }
+});
+
+const cursorLeftOffset = ref(0);
 
 // const chatbotName = ref(props.chatbotName);
 // const chatbotMessage = ref(props.chatbotMessage);
@@ -47,16 +68,22 @@ const onCopyTextMouseLeave = () => {
 </script>
 
 <template>
-  <div class="w-[98%] mr-auto chatbot-pop">
-    <div v-if="!hasError" class="px-4 py-5 bg-blue-100 rounded-xl shadow-lg shadow-blue-400/10">
+  <div :class="{'border-blue-300 shadow-blue-400/10': !hasError, 'border-red-300 shadow-red-400/10': hasError}"
+       class="w-[98%] mr-auto chatbot-pop border border-blue-300 rounded-xl shadow-lg shadow-blue-400/10 "
+  >
+    <div v-if="!hasError" class="px-4 md:px-6 py-5 bg-blue-100 rounded-xl shadow-lg shadow-blue-400/10 relative">
       <div class="text-sm font-poppins-semi-bold mb-2 tracking-wide leading-tight">
         {{ props.chatbotName }}
       </div>
       <template v-if="hasText">
         <div :class="{'mb-3': props.isCopyable}"
-             class="text-sm text-blue-950 flex-1 overflow-hidden">
-          <div class="h-full w-full overflow-auto">
-            <div class="" v-html="props.chatbotMessage"></div>
+             class="text-sm text-blue-950 px-3 md:px-4 py-1 md:py-2">
+          <div class="h-full w-full  inline-flex flex-wrap relative overflow-hidden">
+            <div ref="chatbotMsgRef" :class="{'cursor-after': isTyping}"
+                 class="space-y-1.5 md:space-y-2 lg:space-y-3 inline overflow-auto"
+                 v-html="props.chatbotMessage"></div>
+            <!--            <div v-if="isTyping" id="blinking-cursor" :style="{left: cursorLeftOffset + 'px'}"-->
+            <!--                 class="inline bg-blue-950 text-xs absolute"></div>-->
             <!--            <div>-->
             <!--              {{ chatbotMessage }}-->
             <!--            </div>-->
@@ -65,7 +92,8 @@ const onCopyTextMouseLeave = () => {
         <!-- have the copy button here -->
         <button v-if="hasCopyButton"
                 :class="!isTextCopied ? 'bg-blue-400 hover:bg-blue-500 text-blue-950 hover:text-blue-950': 'bg-blue-300 hover:bg-blue-400 text-blue-700 hover:text-blue-950'"
-                class="btn btn-xs btn-ghost normal-case gap-1" type="button"
+                class="btn btn-xs btn-ghost normal-case gap-1 absolute top-4 right-4"
+                type="button"
                 @click="onCopyClick"
                 @mouseleave="onCopyTextMouseLeave">
           <svg v-if="!isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -83,6 +111,13 @@ const onCopyTextMouseLeave = () => {
           </svg>
           <span v-if="isTextCopied" class="text-xs font-poppins-semi-bold">Copied</span>
         </button>
+
+        <!-- The disclosure message -->
+        <div v-if="props.hasDisclosureMessage && !isTyping"
+             class="text-xs text-blue-950 flex flex-row items-center scroll-px-0.5">
+          <span class="material-icons-round mr-1">info</span>
+          <span class="font-poppins-semi-bold pr-1">Disclosure:</span> {{ disclosureMessage }}
+        </div>
       </template>
       <template v-else-if="!hasText">
         <!-- We get here while we're waiting for the chatbot to respond -->
@@ -135,6 +170,29 @@ const onCopyTextMouseLeave = () => {
   }
   100% {
     transform: scale(1);
+  }
+}
+
+#blinking-cursor {
+  width: 2px; /* Adjust the width of the cursor */
+  height: 24px; /* Adjust the height of the cursor */
+  animation: blink 0.65s step-end infinite; /* Blinking animation */
+}
+
+.cursor-after::after {
+  content: '<span class="material-icons-round">keyboard_arrow_right</span>';
+  width: 2px; /* Adjust the width of the cursor */
+  height: 24px; /* Adjust the height of the cursor */
+  animation: blink 0.65s steps(1) infinite; /* Blinking animation */
+}
+
+/* Define the blinking animation */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1; /* Cursor visible */
+  }
+  50% {
+    opacity: 0; /* Cursor hidden */
   }
 }
 </style>

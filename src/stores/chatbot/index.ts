@@ -63,7 +63,7 @@ export const useChatbotStore = defineStore('chatbot', () => {
                     // The following function handles each data chunk
                     function push() {
                         // "done" is a Boolean and value a "Uint8Array"
-                        reader.read().then(({done, value}) => {
+                        reader?.read().then(({done, value}) => {
                             // Is there no more data to read?
                             if (done) {
                                 // Tell the browser that we have finished sending data
@@ -116,7 +116,7 @@ export const useChatbotStore = defineStore('chatbot', () => {
         } catch (e) {
             console.error(e);
 
-            notificationStore.addNotification('An error occurred while fetching the chatbot response', 'error');
+            notificationsStore.addNotification('An error occurred while fetching the chatbot response', 'error');
 
             throw e;
         }
