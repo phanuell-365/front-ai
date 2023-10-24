@@ -54,9 +54,10 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             pageContent.chatbotName = `${pageContent.chatbotName} copy`;
         }
         const page = {
-            id: pages.value.length + 1,
+            id: String(pages.value.length + 1),
             name: pageContent.chatbotName,
-            path: pageContent.chatbotId.toLowerCase().replace(' ', '-'),
+            // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+            path: pageContent?.chatbotId.toLowerCase().replace(' ', '-'),
             title: pageContent.chatbotName,
         };
         pages.value.push(page);
@@ -64,6 +65,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         return page;
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function addPage(page: any) {
         pages.value.push(page);
     }
@@ -155,7 +157,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function setPages(pagesArr: any) {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         pages.value = pagesArr.map((page: any) => {
             return {
                 id: page.pageId,
@@ -166,6 +170,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function updatePageOptions(rawPage: any) {
         // const page = {
         //     id: rawPage.pageId,
@@ -190,6 +195,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         return page;
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function removePage(page: any) {
         pages.value.splice(pages.value.indexOf(page), 1);
     }

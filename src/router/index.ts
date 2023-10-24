@@ -34,7 +34,7 @@ const routes = [
                         path: ":tab",
                         name: "AdminSettingsTab",
                         component: () => import("../views/Admin/SettingsTab.vue"),
-                        props: (route: object) => {
+                        props: (route: any) => {
                             return {
                                 tab: route.params.tab,
                             };
@@ -51,7 +51,7 @@ const routes = [
                 path: ":page",
                 name: "DynamicPage",
                 component: () => import("../views/Admin/DynamicPage.vue"),
-                props: (route: object) => {
+                props: (route: any) => {
                     return {
                         page: route.params.page,
                         pageId: route.query.pageId,
@@ -69,7 +69,7 @@ const routes = [
                 path: ":chatbotId",
                 name: "ChatbotPage",
                 component: () => import("../views/Chats/ChatbotPage.vue"),
-                props: (route: object) => {
+                props: (route: any) => {
                     return {
                         chatbotId: route.params.chatbotId,
                     };
@@ -83,11 +83,13 @@ const routes = [
         name: "not-found",
         component: () => import("../views/errors/NotFound.vue"),
     },
-];
+] as any[];
 
 const router = createRouter({
     history: createWebHistory(),
+    // @ts-ignore
+    base: process.env.VITE_APP_BASE_URL || '/',
     routes,
-});
+} as any);
 
 export default router;

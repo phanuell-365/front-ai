@@ -78,12 +78,12 @@ const onCopyTextMouseLeave = () => {
       <template v-if="hasText">
         <div :class="{'mb-3': props.isCopyable}"
              class="text-sm text-blue-950 px-3 md:px-4 py-1 md:py-2">
-          <div class="h-full w-full  inline-flex flex-wrap relative overflow-hidden">
-            <div ref="chatbotMsgRef" :class="{'cursor-after': isTyping}"
+          <div class="h-full w-full inline-flex flex-col relative overflow-hidden">
+            <!--            <div ref="chatbotMsgRef" :class="{'cursor-after': isTyping}"-->
+            <div ref="chatbotMsgRef"
                  class="space-y-1.5 md:space-y-2 lg:space-y-3 inline overflow-auto"
                  v-html="props.chatbotMessage"></div>
-            <!--            <div v-if="isTyping" id="blinking-cursor" :style="{left: cursorLeftOffset + 'px'}"-->
-            <!--                 class="inline bg-blue-950 text-xs absolute"></div>-->
+            <span v-if="isTyping" class="loading loading-ring loading-md"></span>
             <!--            <div>-->
             <!--              {{ chatbotMessage }}-->
             <!--            </div>-->

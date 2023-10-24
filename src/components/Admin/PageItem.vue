@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {useRouter} from "vue-router";
-import {useTabsStore} from "@/stores/admin/tabs.ts";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
+import {useTabsStore} from "../../stores/admin/tabs.ts";
+import {useAdminHomeStore} from "../../stores/admin/home.ts";
 
 interface PageItem {
   name: string;
@@ -51,7 +51,10 @@ const dropdownItems = [
   },
 ];
 
-const onDropdownItemClick = (_e: Event, item: { name: string; path: string }) => {
+const onDropdownItemClick = (_e: Event, item: {
+  name: string;
+  path: string
+}) => {
   console.log(item);
 
   if (item.name === "Edit") {
@@ -82,7 +85,7 @@ const handleDeleteClick = () => {
       <img
           alt="template-image"
           class="rounded-t-lg w-20 drop-shadow-lg"
-          src="@/assets/imgs/template.png"/>
+          src="../../assets/imgs/template.png"/>
     </div>
     <div class="py-3 px-4 flex flex-row w-full justify-between items-center">
       <h6

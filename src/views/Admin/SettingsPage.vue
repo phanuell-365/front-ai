@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {useTabsStore} from "@/stores/admin/tabs.ts";
+import {useTabsStore} from "../../stores/admin/tabs.ts";
 import {onMounted} from "vue";
-import {useSettingsTabStore} from "@/stores/settings";
-import SideItem from "@/components/Settings/SideItem.vue";
+import {useSettingsTabStore} from "../../stores/settings";
+import SideItem from "../../components/Settings/SideItem.vue";
 
 onMounted(() => {
   tabsStore.setActiveTabByPageName('settings');

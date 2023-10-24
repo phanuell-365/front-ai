@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import PageItem from "@/components/Admin/PageItem.vue";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
+import PageItem from "../../components/Admin/PageItem.vue";
+import {useAdminHomeStore} from "../../stores/admin/home.ts";
 import {onBeforeMount, ref} from "vue";
-import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import LoadingOverlay from "../../components/LoadingOverlay.vue";
 
 const adminHome = useAdminHomeStore();
 

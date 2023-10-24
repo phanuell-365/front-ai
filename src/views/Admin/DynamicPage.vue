@@ -1,15 +1,15 @@
 <script lang="ts" setup>
-import {useTabsStore} from "@/stores/admin/tabs.ts";
+import {useTabsStore} from "../../stores/admin/tabs.ts";
 import {computed, onBeforeMount, ref} from "vue";
-import LinkBar from "@/components/Admin/LinkBar.vue";
+import LinkBar from "../../components/Admin/LinkBar.vue";
 import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
-import SidebarData from "@/components/Admin/SidebarData.vue";
-import {PageContent, PageOptions, usePageContentStore} from "@/stores/admin/page-data.ts";
-import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
-import UserBubble from "@/components/Chat/UserBubble.vue";
-import UserInput from "@/components/Chat/UserInput.vue";
-import {Page, useAdminHomeStore} from "@/stores/admin/home.ts";
-import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import SidebarData from "../../components/Admin/SidebarData.vue";
+import {PageContent, PageOptions, usePageContentStore} from "../../stores/admin/page-data.ts";
+import ChatbotBubble from "../../components/Chat/ChatbotBubble.vue";
+import UserBubble from "../../components/Chat/UserBubble.vue";
+import UserInput from "../../components/Chat/UserInput.vue";
+import {Page, useAdminHomeStore} from "../../stores/admin/home.ts";
+import LoadingOverlay from "../../components/LoadingOverlay.vue";
 
 interface DynamicPageProps {
   page?: string;
@@ -57,9 +57,13 @@ onBeforeMount(() => {
   pageContentStore.fetchPageContentItems().then(() => {
     adminHomeStore.fetchPages().then(() => {
       tabsStore.fetchTabs().then(() => {
-        pageContentStore.setActivePageContentItem(page.value);
+        if (typeof page.value === "string") {
+          pageContentStore.setActivePageContentItem(page.value);
+        }
 
-        tabsStore.setActiveTabByPageName(page.value);
+        if (typeof page.value === "string") {
+          tabsStore.setActiveTabByPageName(page.value);
+        }
 
         currentPage.value = adminHomeStore.getPageById(pageId.value);
 
@@ -74,7 +78,7 @@ onBeforeMount(() => {
         promptPlaceholder.value = pageContent.value?.promptPlaceholder;
         staticGreeting.value = pageContent.value?.staticGreeting;
 
-        tab.value = tabsStore.getTabByTo(page.value);
+        tab.value = tabsStore.getTabByTo(page.value as string);
 
         url.value = `${import.meta.env.VITE_APP_BASE_URL}/chat/${currentPage.value?.path}?pageId=${currentPage.value.id}`;
 
@@ -90,8 +94,10 @@ onBeforeMount(() => {
   })
 });
 
-onBeforeRouteUpdate(async (to, _from, next) => {
-  await tabsStore.updateActiveTab(page.value);
+onBeforeRouteUpdate(async (_to, _from, next) => {
+  if (typeof page.value === "string") {
+    await tabsStore.updateActiveTab(page.value);
+  }
 
   // page.value = to.params.page;
   next();
@@ -112,7 +118,7 @@ const onMainContainerMouseLeave = () => {
 };
 
 const handleSavePageOptions = async (pageOptions: PageOptions) => {
-  const newOption = await adminHomeStore.updatePage(pageOptions);
+  const newOption = await adminHomeStore.updatePage(pageOptions as any as Page);
   console.log(newOption)
   await tabsStore.fetchTabs();
   tabsStore.setActiveTabByPageName(newOption.path);

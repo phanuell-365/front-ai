@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import UserBubble from "@/components/Chat/UserBubble.vue";
-import UserInput from "@/components/Chat/UserInput.vue";
-import ChatbotBubble from "@/components/Chat/ChatbotBubble.vue";
+import UserBubble from "../../components/Chat/UserBubble.vue";
+import UserInput from "../../components/Chat/UserInput.vue";
+import ChatbotBubble from "../../components/Chat/ChatbotBubble.vue";
 import {computed, onBeforeMount, onMounted, Ref, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import {PageContent, usePageContentStore} from "@/stores/admin/page-data.ts";
-import {useChatbotStore} from "@/stores/chatbot";
+import {PageContent, usePageContentStore} from "../../stores/admin/page-data.ts";
+import {useChatbotStore} from "../../stores/chatbot";
 import {marked} from "marked";
-import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import LoadingOverlay from "../../components/LoadingOverlay.vue";
 import _ from 'lodash';
 import hljs from 'highlight.js';
-import {useNotificationsStore} from "@/stores/notifications.ts";
+import {useNotificationsStore} from "../../stores/notifications.ts";
 
 const notificationsStore = useNotificationsStore();
 
@@ -21,7 +21,7 @@ const router = useRouter();
 
 const appIsFetching = ref(true);
 
-const page = ref(route.params.chatbotId);
+// const page = ref(route.params.chatbotId);
 const pageId = ref(route.query.pageId as string);
 const pageContent = ref<PageContent | null>(null);
 
@@ -112,7 +112,7 @@ const scrollToBottom = () => {
   });
 };
 
-const renderer = {
+const renderer: any = {
   link(href: string, title: string, text: string) {
     return `<a target="_blank" class="link link-primary" href="${href}" title="${title}">${text}</a>`;
   },
@@ -194,7 +194,7 @@ const renderer = {
     <p class="text-neutral-800 dark:text-neutral-50 leading-relaxed">${text}</p>
   `;
   },
-  heading(text: string, level: string, raw, slugger) {
+  heading(text: string, level: string) {
     return `
     <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
   `;
@@ -244,54 +244,54 @@ const renderer = {
 
 // create a custom description list renderer
 
-const descriptionList = {
-  name: 'descriptionList',
-  level: 'block',                                     // Is this a block-level or inline-level tokenizer?
-  start(src) {
-    return src.match(/:[^:\n]/)?.index;
-  }, // Hint to Marked.js to stop and check for a match
-  tokenizer(src, tokens) {
-    const rule = /^(?::[^:\n]+:[^:\n]*(?:\n|$))+/;    // Regex for the complete token, anchor to string start
-    const match = rule.exec(src);
-    if (match) {
-      const token = {                                 // Token to generate
-        type: 'descriptionList',                      // Should match "name" above
-        raw: match[0],                                // Text to consume from the source
-        text: match[0].trim(),                        // Additional custom properties
-        tokens: []                                    // Array where child inline tokens will be generated
-      };
-      this.lexer.inline(token.text, token.tokens);    // Queue this data to be processed for inline tokens
-      return token;
-    }
-  },
-  renderer(token) {
-    return `<dl>${this.parser.parseInline(token.tokens)}\n</dl>`; // parseInline to turn child tokens into HTML
-  }
-};
+// const descriptionList = {
+//   name: 'descriptionList',
+//   level: 'block',                                     // Is this a block-level or inline-level tokenizer?
+//   start(src) {
+//     return src.match(/:[^:\n]/)?.index;
+//   }, // Hint to Marked.js to stop and check for a match
+//   tokenizer(src, tokens) {
+//     const rule = /^(?::[^:\n]+:[^:\n]*(?:\n|$))+/;    // Regex for the complete token, anchor to string start
+//     const match = rule.exec(src);
+//     if (match) {
+//       const token = {                                 // Token to generate
+//         type: 'descriptionList',                      // Should match "name" above
+//         raw: match[0],                                // Text to consume from the source
+//         text: match[0].trim(),                        // Additional custom properties
+//         tokens: []                                    // Array where child inline tokens will be generated
+//       };
+//       this.lexer.inline(token.text, token.tokens);    // Queue this data to be processed for inline tokens
+//       return token;
+//     }
+//   },
+//   renderer(token) {
+//     return `<dl>${this.parser.parseInline(token.tokens)}\n</dl>`; // parseInline to turn child tokens into HTML
+//   }
+// };
 
-const description = {
-  name: 'description',
-  level: 'inline',                                 // Is this a block-level or inline-level tokenizer?
-  start(src) {
-    return src.match(/:/)?.index;
-  },    // Hint to Marked.js to stop and check for a match
-  tokenizer(src, tokens) {
-    const rule = /^:([^:\n]+):([^:\n]*)(?:\n|$)/;  // Regex for the complete token, anchor to string start
-    const match = rule.exec(src);
-    if (match) {
-      return {                                         // Token to generate
-        type: 'description',                           // Should match "name" above
-        raw: match[0],                                 // Text to consume from the source
-        dt: this.lexer.inlineTokens(match[1].trim()),  // Additional custom properties, including
-        dd: this.lexer.inlineTokens(match[2].trim())   //   any further-nested inline tokens
-      };
-    }
-  },
-  renderer(token) {
-    return `\n<dt>${this.parser.parseInline(token.dt)}</dt><dd>${this.parser.parseInline(token.dd)}</dd>`;
-  },
-  childTokens: ['dt', 'dd'],                 // Any child tokens to be visited by walkTokens
-};
+// const description = {
+//   name: 'description',
+//   level: 'inline',                                 // Is this a block-level or inline-level tokenizer?
+//   start(src) {
+//     return src.match(/:/)?.index;
+//   },    // Hint to Marked.js to stop and check for a match
+//   tokenizer(src) {
+//     const rule = /^:([^:\n]+):([^:\n]*)(?:\n|$)/;  // Regex for the complete token, anchor to string start
+//     const match = rule.exec(src);
+//     if (match) {
+//       return {                                         // Token to generate
+//         type: 'description',                           // Should match "name" above
+//         raw: match[0],                                 // Text to consume from the source
+//         dt: this.lexer.inlineTokens(match[1].trim()),  // Additional custom properties, including
+//         dd: this.lexer.inlineTokens(match[2].trim())   //   any further-nested inline tokens
+//       };
+//     }
+//   },
+//   renderer(token) {
+//     return `\n<dt>${this.parser.parseInline(token.dt)}</dt><dd>${this.parser.parseInline(token.dd)}</dd>`;
+//   },
+//   childTokens: ['dt', 'dd'],                 // Any child tokens to be visited by walkTokens
+// };
 
 // marked.use({extensions: [descriptionList, description]});
 
@@ -304,9 +304,9 @@ marked.use({
 // Function to find the difference between two strings
 const lastKnownText = ref('');
 const currentText = ref('');
-const blinkingCursor = ref(`
-    <div id="blinking-cursor" class="text-blue-950 text-xs">
-`)
+// const blinkingCursor = ref(`
+//     <div id="blinking-cursor" class="text-blue-950 text-xs">
+// `)
 
 const handleUserInput = (_value: string, formatted: string) => {
 
@@ -490,54 +490,54 @@ const handleUserInput = (_value: string, formatted: string) => {
   }
 };
 
-const aiResponseHtmlConverter = (message: string) => {
-  return message.replace(/(?:\r\n|\r|\n)/g, '<br>');
-};
+// const aiResponseHtmlConverter = (message: string) => {
+//   return message.replace(/(?:\r\n|\r|\n)/g, '<br>');
+// };
 
 // convert '```' to '<pre><code>' and '```' to '</code></pre>'
-const aiResponseCodeConverter = (message: string) => {
-  const regex = /```/g;
-  const subst = `<pre><div class="mockup-code"><code>`;
+// const aiResponseCodeConverter = (message: string) => {
+//   const regex = /```/g;
+//   const subst = `<pre><div class="mockup-code"><code>`;
+//
+//   // The substituted value will be contained in the result variable
+//   let result = message.replace(regex, subst);
+//
+//   const regex2 = /```/g;
+//   const subst2 = `</code></div></pre>`;
+//
+//   // The substituted value will be contained in the result variable
+//   result = result.replace(regex2, subst2);
+//
+//   return result;
+// };
 
-  // The substituted value will be contained in the result variable
-  let result = message.replace(regex, subst);
-
-  const regex2 = /```/g;
-  const subst2 = `</code></div></pre>`;
-
-  // The substituted value will be contained in the result variable
-  result = result.replace(regex2, subst2);
-
-  return result;
-};
-
-const tableProcessor = (inputText: string) => {
-  const rows = inputText.trim().split('\n').map(row => row.split('|').map(cell => cell.trim()));
-  // if (rows.length < 3) {
-  //   // Not enough rows to form a table
-  //   return '';
-  // }
-
-  const headerRow = rows[0];
-  const headerCells = headerRow.map(cell => `<th>${cell}</th>`).join('');
-
-  const bodyRows = rows.slice(2).map(row => {
-    const bodyCells = row.map(cell => `<td>${cell}</td>`).join('');
-    return `<tr>${bodyCells}</tr>`;
-  }).join('');
-
-  return `<div class="overflow-x-auto">
-        <table class="table table-zebra">
-        <thead>
-            <tr>${headerCells}</tr>
-        </thead>
-        <tbody>
-            ${bodyRows}
-        </tbody>
-    </table>
-    </div>`;
-}
-
+// const tableProcessor = (inputText: string) => {
+//   const rows = inputText.trim().split('\n').map(row => row.split('|').map(cell => cell.trim()));
+//   // if (rows.length < 3) {
+//   //   // Not enough rows to form a table
+//   //   return '';
+//   // }
+//
+//   const headerRow = rows[0];
+//   const headerCells = headerRow.map(cell => `<th>${cell}</th>`).join('');
+//
+//   const bodyRows = rows.slice(2).map(row => {
+//     const bodyCells = row.map(cell => `<td>${cell}</td>`).join('');
+//     return `<tr>${bodyCells}</tr>`;
+//   }).join('');
+//
+//   return `<div class="overflow-x-auto">
+//         <table class="table table-zebra">
+//         <thead>
+//             <tr>${headerCells}</tr>
+//         </thead>
+//         <tbody>
+//             ${bodyRows}
+//         </tbody>
+//     </table>
+//     </div>`;
+// }
+//
 // handle openAI tables
 
 // Create a variable for toggling the relative and the sticky position

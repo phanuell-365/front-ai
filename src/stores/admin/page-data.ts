@@ -5,6 +5,8 @@ import {useAppHomeStore} from "../home";
 import {useNotificationsStore} from "../notifications.ts";
 
 export interface PageContent {
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    chatbotId?: any;
     pageId: string;
     chatbotName: string;
     pageSlug: string;
@@ -18,6 +20,8 @@ export interface PageContent {
     creativity: number;
     displayClosureMessage: boolean;
     closureMessage: string;
+    scope: string;
+    context: string;
 }
 
 export interface PageOptions {
@@ -44,6 +48,8 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         creativity: 0,
         displayClosureMessage: false,
         closureMessage: 'This is an AI generated response. The response may not be accurate. Please consult a professional for advice.',
+        scope: 'global',
+        context: 'global',
     });
 
     const pageContentItems = ref<PageContent[]>([]);
@@ -96,8 +102,9 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function setPageContentItems(rawPageOptions: any[], rawPageContentItems: object[]) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         pageContentItems.value = rawPageContentItems.map((rawPageContentItem: any, index: number) => {
             return {
                 pageId: rawPageOptions[index]['pageId'] as string,
@@ -113,10 +120,13 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 creativity: rawPageContentItem['chatbotCreativity'] * 10,
                 displayClosureMessage: rawPageContentItem['displayClosureMessage'] === 1,
                 closureMessage: rawPageContentItem['closureMessage'] as string,
+                scope: rawPageContentItem['scope'] as string,
+                context: rawPageContentItem['context'] as string,
             } as PageContent;
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function addNewPageContentItem(rawPageOptions: any, rawPageContentItem: any) {
         const newPageContent = {
             pageId: rawPageOptions['pageId'] as string,
@@ -132,12 +142,15 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             creativity: rawPageContentItem['chatbotCreativity'] * 10,
             displayClosureMessage: rawPageContentItem['displayClosureMessage'] === 1,
             closureMessage: rawPageContentItem['closureMessage'] as string,
+            scope: rawPageContentItem['scope'] as string,
+            context: rawPageContentItem['context'] as string,
         } as PageContent
         pageContentItems.value.push(newPageContent);
 
         return newPageContent;
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function updatePageContentItem(rawPageOptions: any, rawPageContentItem) {
         // we'll find and replace the page content item
         const pageContentItem = pageContentItems.value.find(pageContentItem => pageContentItem.pageId === rawPageOptions['pageId']);
@@ -154,11 +167,14 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             pageContentItem.creativity = rawPageContentItem['chatbotCreativity'] * 10;
             pageContentItem.displayClosureMessage = rawPageContentItem['displayClosureMessage'] === 1;
             pageContentItem.closureMessage = rawPageContentItem['closureMessage'] as string;
+            pageContentItem.scope = rawPageContentItem['scope'] as string;
+            pageContentItem.context = rawPageContentItem['context'] as string;
         }
 
         return pageContentItem;
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     function updatePageOptions(rawPageOptions: any) {
         // we'll find and replace the page content item
         const pageContentItem = pageContentItems.value.find(pageContentItem => pageContentItem.pageId === rawPageOptions['pageId']);

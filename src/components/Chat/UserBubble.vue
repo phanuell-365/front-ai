@@ -6,7 +6,7 @@ interface UserBubbleProps {
 
 const props = defineProps<UserBubbleProps>();
 
-const userName = props.userName;
+// const userName = props.userName;
 
 </script>
 

@@ -2,7 +2,7 @@
 
 import {useRouter} from "vue-router";
 import {ref} from "vue";
-import {Tab, useTabsStore} from "@/stores/admin/tabs.ts";
+import {Tab, useTabsStore} from "../../stores/admin/tabs.ts";
 
 const router = useRouter();
 const tabsStore = useTabsStore();
@@ -16,7 +16,7 @@ const onGoBackHomeClick = async () => {
 
 <template>
   <div class="flex-1 flex flex-col justify-center items-center h-screen">
-    <img alt="404 error" class="w-1/4" src="@/assets/imgs/404-error.png"/>
+    <img alt="404 error" class="w-1/4" src="../../assets/imgs/404-error.png"/>
 
     <div class="text-center">
       <h1 class="text-3xl font-bold text-neutral-900">Page not found</h1>

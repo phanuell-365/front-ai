@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import {computed, onBeforeMount, onMounted, ref} from "vue";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
-import PageItem from "@/components/Admin/PageItem.vue";
-import {useTabsStore} from "@/stores/admin/tabs.ts";
+import {useAdminHomeStore} from "../../stores/admin/home.ts";
+import PageItem from "../../components/Admin/PageItem.vue";
+import {useTabsStore} from "../../stores/admin/tabs.ts";
 import {useRouter} from "vue-router";
-import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import LoadingOverlay from "../../components/LoadingOverlay.vue";
 
 onMounted(() => {
   tabsStore.setActiveTabByPageName('home');

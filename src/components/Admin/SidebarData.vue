@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import anime from "animejs";
-import MyListBox from "@/components/form/MyListBox.vue";
-import {usePageContentStore} from "@/stores/admin/page-data.ts";
+import MyListBox from "../../components/form/MyListBox.vue";
+import {usePageContentStore} from "../../stores/admin/page-data.ts";
 import {useField} from "vee-validate";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
+import {useAdminHomeStore} from "../../stores/admin/home.ts";
 
 interface PageContent {
   pageId: string;
@@ -19,6 +19,8 @@ interface PageContent {
   creativity: number;
   displayClosureMessage: boolean;
   closureMessage: string;
+  scope: string;
+  context: string;
 }
 
 interface Page {
@@ -114,6 +116,8 @@ const thisPageContentItem = reactive<PageContent>(<PageContent>{
   creativity: activePageContentItem.value.creativity,
   displayClosureMessage: activePageContentItem.value.displayClosureMessage,
   closureMessage: activePageContentItem.value.closureMessage,
+  scope: activePageContentItem.value.scope,
+  context: activePageContentItem.value.context,
 });
 
 const pageContentItemOrgClone = reactive<PageContent>(<PageContent>{
@@ -129,6 +133,8 @@ const pageContentItemOrgClone = reactive<PageContent>(<PageContent>{
   creativity: activePageContentItem.value.creativity,
   displayClosureMessage: activePageContentItem.value.displayClosureMessage,
   closureMessage: activePageContentItem.value.closureMessage,
+  scope: activePageContentItem.value.scope,
+  context: activePageContentItem.value.context,
 });
 
 const savePageContentBtnIsActive = ref(false);
@@ -163,6 +169,8 @@ onMounted(() => {
   thisPageContentItem.creativity = activePageContentItem.value.creativity;
   thisPageContentItem.displayClosureMessage = activePageContentItem.value.displayClosureMessage;
   thisPageContentItem.closureMessage = activePageContentItem.value.closureMessage;
+  thisPageContentItem.scope = activePageContentItem.value.scope;
+  thisPageContentItem.context = activePageContentItem.value.context;
 
   if (activePageContentItem.value.greetingType === 'static') {
     newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
@@ -196,6 +204,8 @@ watch(() => pageContentStore.activePageContentItem, (newVal) => {
   thisPageContentItem.maxResponseLength = activePageContentItem.value.maxResponseLength;
   thisPageContentItem.creativity = activePageContentItem.value.creativity;
   thisPageContentItem.displayClosureMessage = activePageContentItem.value.displayClosureMessage;
+  thisPageContentItem.scope = activePageContentItem.value.scope;
+  thisPageContentItem.context = activePageContentItem.value.context;
 
   if (activePageContentItem.value.greetingType === 'static') {
     newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
@@ -610,22 +620,78 @@ watch(() => thisPageContentItem.closureMessage, (newVal) => {
   closureMessage.value = newVal;
 });
 
+// validation for scope
+
+const scopeValidator = (value: string) => {
+  if (!value) {
+    return "Scope is required";
+  }
+
+  if (value.length < 3) {
+    return "Scope must be at least 3 characters long";
+  }
+
+  if (value.length > 350) {
+    return "Scope must not exceed 350 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: scope,
+  errorMessage: scopeErrorMessage,
+  meta: scopeMeta,
+} = useField("scope", scopeValidator);
+
+watch(() => thisPageContentItem.scope, (newVal) => {
+  scope.value = newVal;
+});
+
+// validation for context
+
+const contextValidator = (value: string) => {
+  if (!value) {
+    return "Context is required";
+  }
+
+  if (value.length < 3) {
+    return "Context must be at least 3 characters long";
+  }
+
+  if (value.length > 350) {
+    return "Context must not exceed 350 characters";
+  }
+
+  return true;
+}
+
+const {
+  value: context,
+  errorMessage: contextErrorMessage,
+  meta: contextMeta,
+} = useField("context", contextValidator);
+
+watch(() => thisPageContentItem.context, (newVal) => {
+  context.value = newVal;
+});
+
 // ----------------------------- end of page content validation -----------------------------
-
-const pageContentsAreValid = computed(() => {
-  return chatbotNameMeta.valid
-      && promptPlaceholderMeta.valid
-      && staticGreetingMeta.valid
-      && directiveMeta.valid
-      && modelMeta.valid
-      && closureMessageMeta.valid && closureMessageMeta.validated;
-});
-
-const pageOptionsAreValid = computed(() => {
-  return pageNameMeta.valid && pageNameMeta.validated
-      && pageUrlMeta.valid && pageUrlMeta.validated
-      && pageTitleMeta.valid && pageTitleMeta.validated;
-});
+//
+// const pageContentsAreValid = computed(() => {
+//   return chatbotNameMeta.valid
+//       && promptPlaceholderMeta.valid
+//       && staticGreetingMeta.valid
+//       && directiveMeta.valid
+//       && modelMeta.valid
+//       && closureMessageMeta.valid && closureMessageMeta.validated;
+// });
+//
+// const pageOptionsAreValid = computed(() => {
+//   return pageNameMeta.valid && pageNameMeta.validated
+//       && pageUrlMeta.valid && pageUrlMeta.validated
+//       && pageTitleMeta.valid && pageTitleMeta.validated;
+// });
 
 // Handle the data tab
 
@@ -848,6 +914,40 @@ const onUploadData = () => {
                   This is the directive that will be used to generate the chatbot's response.
                 </small>
               </div>
+              <div class="flex flex-col space-y-2">
+                <label class="label text-xs font-semibold" for="directive">
+                  Scope
+                </label>
+                <textarea
+                    v-model="thisPageContentItem.scope"
+                    :class="{'textarea-error': scopeMeta.validated && !scopeMeta.valid, 'textarea-primary': scopeMeta.validated && scopeMeta.valid}"
+                    class="textarea textarea-primary w-full resize-y" placeholder="Add new scope..."></textarea>
+                <small v-if="scopeMeta.validated && !scopeMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ scopeErrorMessage }}
+                </small>
+                <small class="text-xs text-gray-500">
+                  This is the scope that will be used to generate the chatbot's response.
+                </small>
+              </div>
+
+              <div class="flex flex-col space-y-2">
+                <label class="label text-xs font-semibold" for="directive">
+                  Context
+                </label>
+                <textarea
+                    v-model="thisPageContentItem.context"
+                    :class="{'textarea-error': contextMeta.validated && !contextMeta.valid, 'textarea-primary': contextMeta.validated && contextMeta.valid}"
+                    class="textarea textarea-primary w-full resize-y" placeholder="Add new context..."></textarea>
+                <small v-if="contextMeta.validated && !contextMeta.valid"
+                       class="text-xs text-rose-500">
+                  {{ contextErrorMessage }}
+                </small>
+                <small class="text-xs text-gray-500">
+                  This is the context that will be used to generate the chatbot's response.
+                </small>
+              </div>
+              <hr class="my-3 h-0.5"/>
               <div>
                 <label class="label text-xs font-semibold" for="creativity">
                   Creativity

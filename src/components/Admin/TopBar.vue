@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {Tab, useTabsStore} from "@/stores/admin/tabs.ts";
-import BarItem from "@/components/Admin/BarItem.vue";
+import {Tab, useTabsStore} from "../..//stores/admin/tabs.ts";
+import BarItem from "../../components/Admin/BarItem.vue";
 import {onUpdated, ref} from "vue";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
+import {useAdminHomeStore} from "../../stores/admin/home.ts";
 
 const tabsStore = useTabsStore();
 const homeStore = useAdminHomeStore();
@@ -10,7 +10,7 @@ const homeStore = useAdminHomeStore();
 const homeTab = ref();
 const settingsTab = ref();
 
-const openTabs = ref<Tab[] | null>();
+// const openTabs = ref<Tab[] | null>();
 
 homeTab.value = tabsStore.getTabs.find((tab: Tab) => tab.name === "Home");
 settingsTab.value = tabsStore.getTabs.find((tab: Tab) => tab.name === "Settings");
@@ -43,8 +43,8 @@ const openModal = () => {
     <div class="flex flex-row w-8/12 overflow-auto">
       <template v-for="(tab) in tabsStore.getOpenTabs">
         <BarItem v-if="tab.name !== 'Settings' && tab.name !== 'Home'" :key="tab.name" :active="tab.active"
-                 :icon="tab.icon" :name="tab.name"
-                 :page-id="tab.pageId" :title="tab.title" :to="tab.to"/>
+                 :name="tab.name" :page-id="tab.pageId"
+                 :title="tab.title" :to="tab.to" icon="home"/>
       </template>
     </div>
     <div class="flex flex-row items-center justify-start bg-neutral-100 grow border-y border-l">

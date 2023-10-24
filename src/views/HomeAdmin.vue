@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import TopBar from "@/components/Admin/TopBar.vue";
-import {useAdminHomeStore} from "@/stores/admin/home.ts";
-import DialogModal from "@/components/DialogModal.vue";
+import TopBar from "../components/Admin/TopBar.vue";
+import {useAdminHomeStore} from "../stores/admin/home.ts";
+import DialogModal from "../components/DialogModal.vue";
 import {useRouter} from "vue-router";
-import {useTabsStore} from "@/stores/admin/tabs.ts";
-import {usePageContentStore} from "@/stores/admin/page-data.ts";
+import {useTabsStore} from "../stores/admin/tabs.ts";
+import {usePageContentStore} from "../stores/admin/page-data.ts";
 import {useField} from "vee-validate";
-import ToastContainer from "@/views/Admin/toasts/ToastContainer.vue";
-import ToastAlert from "@/views/Admin/toasts/ToastAlert.vue";
-import {useNotificationsStore} from "@/stores/notifications.ts";
+import ToastContainer from "../views/Admin/toasts/ToastContainer.vue";
+import ToastAlert from "../views/Admin/toasts/ToastAlert.vue";
+import {useNotificationsStore} from "../stores/notifications.ts";
 
 const router = useRouter();
 const tabsStore = useTabsStore();
@@ -61,7 +61,7 @@ const closeDeleteModal = () => {
 const createPage = async () => {
   if (pageNameMeta.valid) {
 
-    const page = await homeStore.createNewPage(pageName.value);
+    const page = await homeStore.createNewPage(pageName.value) as any;
 
     console.log(page);
 
@@ -85,7 +85,7 @@ const createPage = async () => {
 }
 
 const deletePage = async () => {
-  const page = await homeStore.deletePage();
+  const page = await homeStore.deletePage() as any;
 
   if (page) {
     homeStore.closeDeleteDialog();

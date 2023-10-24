@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {RouterView} from "vue-router";
-import {useAppHomeStore} from "@/stores/home";
+import {useAppHomeStore} from "./stores/home";
 
 const appHomeStore = useAppHomeStore();
 

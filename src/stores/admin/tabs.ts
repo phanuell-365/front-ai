@@ -194,25 +194,25 @@ export const useTabsStore = defineStore('tabsStore', () => {
         });
     }
 
-    function addNewOpenTab(rawTab: any) {
-        const newTab = {
-            name: rawTab['PageName'],
-            title: rawTab['PageName'],
-            to: rawTab['PageName'].toLowerCase().replace(' ', '-'),
-            active: false,
-            id: rawTab['tabId'],
-            pageId: rawTab['PageId'],
-        } as Tab;
-
-        // add the tab to the tabs
-        openTabs.value.push(newTab);
-
-        // set the active tab
-        setActiveTab(newTab.name);
-
-        // update the local storage
-        return newTab;
-    }
+    // function addNewOpenTab(rawTab: any) {
+    //     const newTab = {
+    //         name: rawTab['PageName'],
+    //         title: rawTab['PageName'],
+    //         to: rawTab['PageName'].toLowerCase().replace(' ', '-'),
+    //         active: false,
+    //         id: rawTab['tabId'],
+    //         pageId: rawTab['PageId'],
+    //     } as Tab;
+    //
+    //     // add the tab to the tabs
+    //     openTabs.value.push(newTab);
+    //
+    //     // set the active tab
+    //     setActiveTab(newTab.name);
+    //
+    //     // update the local storage
+    //     return newTab;
+    // }
 
     async function setActiveTab(tab_name: string) {
         // get the tab by id
@@ -263,7 +263,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
             // if it's not the 'home' or 'settings' tab
             if (tab.name !== 'Home' && tab.name !== 'Settings') {
                 const appHomeStore = useAppHomeStore();
-                const notificationStore = useNotificationsStore();
+                // const notificationStore = useNotificationsStore();
 
                 appHomeStore.setIsAppFetching(true);
 
@@ -287,7 +287,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
                 } catch (error) {
                     console.error(error);
 
-                    notificationStore.addNotification('An error occurred while updating the active tab', 'error');
+                    // notificationStore.addNotification('An error occurred while updating the active tab', 'error');
                 } finally {
                     // appHomeStore.setIsAppFetching(false);
 
