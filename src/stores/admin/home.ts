@@ -22,6 +22,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     const createDialog = ref({
         isOpen: false,
     });
+    const searchDialog = ref({
+        isOpen: false,
+    });
     const enabledCreateDialogBtn = ref<boolean>(true);
     const deleteDialog = ref({
         isOpen: false,
@@ -316,6 +319,14 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         deleteDialog.value.isOpen = false;
     }
 
+    function openSearchDialog() {
+        searchDialog.value.isOpen = true;
+    }
+
+    function closeSearchDialog() {
+        searchDialog.value.isOpen = false;
+    }
+
     function setPageToDelete(pageId: string) {
         pageIdToDelete.value = pageId;
     }
@@ -324,6 +335,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         pages,
         createDialog,
         deleteDialog,
+        searchDialog,
         pageIdToDelete,
         enabledCreateDialogBtn,
         enabledDeleteDialogBtn,
@@ -341,6 +353,8 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
         closeCreateDialog,
         openDeleteDialog,
         closeDeleteDialog,
+        openSearchDialog,
+        closeSearchDialog,
         setPageToDelete,
         deletePage,
     }

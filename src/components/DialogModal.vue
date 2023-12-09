@@ -3,9 +3,15 @@ import {Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot,} from
 
 interface DialogModalProps {
   isOpen: boolean;
+  maxWidth?: string;
 }
 
-const props = defineProps<DialogModalProps>();
+// const props = defineProps<DialogModalProps>();
+
+const props = withDefaults(defineProps<DialogModalProps>(), {
+  isOpen: false,
+  maxWidth: 'max-w-md',
+});
 
 const emits = defineEmits<{
   (event: 'closeModal'): void
@@ -47,7 +53,7 @@ const closeModal = () => {
               leave-to="opacity-0 scale-95"
           >
             <DialogPanel
-                class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
+                class="w-full transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all" :class="[props.maxWidth]"
             >
               <DialogTitle
                   as="h3"
@@ -66,12 +72,12 @@ const closeModal = () => {
 
               <div class="mt-4">
                 <slot name="footer">
-                  <button
-                      class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
-                      type="button"
-                      @click="closeModal"
-                  >
-                  </button>
+<!--                  <button-->
+<!--                      class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"-->
+<!--                      type="button"-->
+<!--                      @click="closeModal"-->
+<!--                  >-->
+<!--                  </button>-->
                 </slot>
               </div>
             </DialogPanel>

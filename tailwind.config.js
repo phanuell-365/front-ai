@@ -21,6 +21,30 @@ export default {
             },
             fontSize: {
                 'xxs': '.65rem',
+            },
+            animation: {
+                "scale-up-center": "scale-up-center 0.6s cubic-bezier(0.390, 0.575, 0.565, 1.000)   both",
+                "slide-right": "slide-right 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940)   both"
+            },
+            keyframes: {
+                "scale-up-center": {
+                    "0%": {
+                        transform: "scale(.5)"
+                    },
+                    to: {
+                        transform: "scale(1)"
+                    }
+                },
+                "slide-right": {
+                    "0%": {
+                        transform: "translateX(-100px)",
+                        opacity: "0"
+                    },
+                    to: {
+                        transform: "translateX(0px)",
+                        opacity: "1"
+                    }
+                }
             }
         },
     },

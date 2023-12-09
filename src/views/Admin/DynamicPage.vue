@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {useTabsStore} from "../../stores/admin/tabs.ts";
-import {computed, onBeforeMount, ref} from "vue";
+import {computed, onBeforeMount, onMounted, ref} from "vue";
 import LinkBar from "../../components/Admin/LinkBar.vue";
 import {onBeforeRouteUpdate, useRoute, useRouter} from "vue-router";
 import SidebarData from "../../components/Admin/SidebarData.vue";
@@ -53,7 +53,7 @@ const sidebarDataChanged = ref(false);
 
 const url = ref<string | null>(null);
 
-onBeforeMount(() => {
+onMounted(() => {
   pageContentStore.fetchPageContentItems().then(() => {
     adminHomeStore.fetchPages().then(() => {
       tabsStore.fetchTabs().then(() => {
@@ -152,7 +152,7 @@ const handleSidebarDataChanged = (value: boolean) => {
   <Transition mode="out-in" name="slide-in">
     <template v-if="!appIsFetching">
       <div class="flex-1 overflow-hidden">
-        <LinkBar :name="currentPage?.name" :text="`chat/${currentPage?.path}`" :url="url"/>
+        <LinkBar :name="currentPage?.name" :text="`https://chat/${currentPage?.path}`" :url="url"/>
         <div class="relative flex flex-col h-full">
           <div class="flex-1 overflow-auto h-screen">
             <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-content="pageContent"

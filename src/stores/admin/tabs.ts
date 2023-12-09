@@ -130,7 +130,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
         tabs.value = [...tabs.value, ...newUniqueTabs];
     }
 
-    function addNewTab(rawTab: any) {
+    async function addNewTab(rawTab: any) {
         const newTab = {
             name: rawTab['PageName'],
             title: rawTab['PageName'],
@@ -144,10 +144,10 @@ export const useTabsStore = defineStore('tabsStore', () => {
         tabs.value.push(newTab);
 
         // set the active tab
-        setActiveTab(newTab.name);
-
-        // update the local storage
-        return newTab;
+        return setActiveTab(newTab.name)
+            .then(() => {
+                return newTab;
+            });
     }
 
     /**
@@ -267,34 +267,36 @@ export const useTabsStore = defineStore('tabsStore', () => {
 
                 appHomeStore.setIsAppFetching(true);
 
-                try {
-                    const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}/`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({
-                            msg: 'hello'
-                        }),
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
+                await setActiveTab(tab.name);
 
-                    const res = await response.json();
-
-                    if (res.data === 'success') {
-                        // set the active tab
-                        await setActiveTab(tab.name);
-                    }
-                } catch (error) {
-                    console.error(error);
-
-                    // notificationStore.addNotification('An error occurred while updating the active tab', 'error');
-                } finally {
-                    // appHomeStore.setIsAppFetching(false);
-
-                    setTimeout(() => {
-                        appHomeStore.setIsAppFetching(false);
-                    }, 400);
-                }
+                // try {
+                //     const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}/`, {
+                //         method: 'PATCH',
+                //         body: JSON.stringify({
+                //             msg: 'hello'
+                //         }),
+                //         headers: {
+                //             'Content-Type': 'application/json'
+                //         }
+                //     });
+                //
+                //     const res = await response.json();
+                //
+                //     if (res.data === 'success') {
+                //         // set the active tab
+                //         await setActiveTab(tab.name);
+                //     }
+                // } catch (error) {
+                //     console.error(error);
+                //
+                //     // notificationStore.addNotification('An error occurred while updating the active tab', 'error');
+                // } finally {
+                //     // appHomeStore.setIsAppFetching(false);
+                //
+                //     setTimeout(() => {
+                //         appHomeStore.setIsAppFetching(false);
+                //     }, 400);
+                // }
             } else {
                 // set the active tab
                 setActiveTab(tab.name);

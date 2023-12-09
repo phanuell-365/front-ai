@@ -10,12 +10,12 @@ const props = defineProps<LinkBar>();
 
 <template>
   <div class="z-30 px-3 py-4 bg-white flex flex-row w-full !space-x-4 border-b">
-    <div class="flex flex-row">
-      <h6 class="text-base font-semibold">
-        {{ props.name }}
+    <div class="flex flex-col">
+      <h6 class="text-sm font-poppins-semi-bold">
+        Click the link below to start using {{ props.name }}!
       </h6>
 
-      <div class="text-sm text-neutral-400 ml-2 flex flex-row items-center justify-center">
+      <div class="text-sm text-neutral-400 ml-2 flex flex-row items-center">
         <i class="material-icons !text-sm transition transform rotate-[135deg]">link</i>
 
         <a :href="props.url" target="_blank"
