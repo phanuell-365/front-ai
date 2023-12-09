@@ -7,9 +7,31 @@ const routes = [
         redirect: "/admin",
     },
     {
-        path: "/login",
-        name: "Login",
-        component: () => import("../views/LoginPage.vue"),
+        path: "/auth",
+        name: "auth",
+        component: () => import("../views/Auth/RootPage.vue"),
+        children: [
+            {
+                path: "signup",
+                name: "Signup",
+                component: () => import("../views/Auth/SignupPage.vue"),
+            },
+            {
+                path: "login",
+                name: "Login",
+                component: () => import("../views/Auth/LoginPage.vue"),
+            },
+            {
+                path: "forgot-password",
+                name: "ForgotPassword",
+                component: () => import("../views/Auth/ForgotPasswordPage.vue"),
+            },
+            {
+                path: "reset-password",
+                name: "ResetPassword",
+                component: () => import("../views/Auth/ResetPasswordPage.vue"),
+            },
+        ],
     },
     {
         path: "/admin",
