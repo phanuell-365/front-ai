@@ -9,6 +9,7 @@ interface ChatbotBubble {
   hasDisclosureMessage?: boolean;
   disclosureMessage?: string;
   hasError?: boolean;
+  originalMessage?: string;
 }
 
 const props = withDefaults(defineProps<ChatbotBubble>(), {
@@ -23,6 +24,20 @@ const hasCopyButton = computed(() => {
 
 const hasText = computed(() => {
   return props.chatbotMessage.length > 0;
+});
+
+const smallChatbotName = computed(() => {
+  if (props.chatbotName.length > 2) {
+    // return props.chatbotName.substring(0, 2).toUpperCase();
+    if (props.chatbotName.includes(" ")) {
+      const split = props.chatbotName.split(" ");
+      return split[0].substring(0, 1).toUpperCase() + split[1].substring(0, 1).toUpperCase();
+    } else {
+      return props.chatbotName.substring(0, 2).toUpperCase();
+    }
+  } else {
+    return props.chatbotName.toUpperCase();
+  }
 });
 
 const chatbotMsgRef: Ref<HTMLElement | null> = ref(null);
@@ -58,8 +73,12 @@ const onCopyClick = () => {
     alert("Your browser does not support this feature. Please use a different browser.");
     return;
   }
-  navigator.clipboard.writeText(props.chatbotMessage);
+  navigator.clipboard.writeText(props?.originalMessage as string);
   isTextCopied.value = true;
+
+  setTimeout(() => {
+    isTextCopied.value = false;
+  }, 2000);
 };
 
 const onCopyTextMouseLeave = () => {
@@ -68,77 +87,80 @@ const onCopyTextMouseLeave = () => {
 </script>
 
 <template>
-  <div :class="{'border-blue-300 shadow-blue-400/10': !hasError, 'border-red-300 shadow-red-400/10': hasError}"
-       class="w-[98%] mr-auto chatbot-pop border border-blue-300 rounded-xl shadow-lg shadow-blue-400/10 "
-  >
-    <div v-if="!hasError" class="px-4 md:px-6 py-5 bg-blue-100 rounded-xl shadow-lg shadow-blue-400/10 relative">
-      <div class="text-sm font-poppins-semi-bold mb-2 tracking-wide leading-tight">
-        {{ props.chatbotName }}
-      </div>
-      <template v-if="hasText">
-        <div :class="{'mb-3': props.isCopyable}"
-             class="text-sm text-blue-950 px-3 md:px-4 py-1 md:py-2">
-          <div class="h-full w-full inline-flex flex-col relative overflow-hidden">
-            <!--            <div ref="chatbotMsgRef" :class="{'cursor-after': isTyping}"-->
-            <div ref="chatbotMsgRef"
-                 class="space-y-1.5 md:space-y-2 lg:space-y-3 inline overflow-auto"
-                 v-html="props.chatbotMessage"></div>
-            <span v-if="isTyping" class="loading loading-ring loading-md"></span>
-            <!--            <div>-->
-            <!--              {{ chatbotMessage }}-->
-            <!--            </div>-->
-          </div>
-        </div>
-        <!-- have the copy button here -->
-        <button v-if="hasCopyButton"
-                :class="!isTextCopied ? 'bg-blue-400 hover:bg-blue-500 text-blue-950 hover:text-blue-950': 'bg-blue-300 hover:bg-blue-400 text-blue-700 hover:text-blue-950'"
-                class="btn btn-xs btn-ghost normal-case gap-1 absolute top-4 right-4"
-                type="button"
-                @click="onCopyClick"
-                @mouseleave="onCopyTextMouseLeave">
-          <svg v-if="!isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5"
-               viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path
-                d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-                stroke-linecap="round"
-                stroke-linejoin="round"/>
-          </svg>
-          <span v-if="!isTextCopied" class="text-xs font-poppins-semi-bold">Copy</span>
-
-          <svg v-else-if="isTextCopied" class="w-4 h-4" fill="none" stroke="currentColor"
-               stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span v-if="isTextCopied" class="text-xs font-poppins-semi-bold">Copied</span>
-        </button>
-
-        <!-- The disclosure message -->
-        <div v-if="props.hasDisclosureMessage && !isTyping"
-             class="text-xs text-blue-950 flex flex-row items-center scroll-px-0.5">
-          <span class="material-icons-round mr-1">info</span>
-          <span class="font-poppins-semi-bold pr-1">Disclosure:</span> {{ disclosureMessage }}
-        </div>
-      </template>
-      <template v-else-if="!hasText">
-        <!-- We get here while we're waiting for the chatbot to respond -->
-        <!-- Basically, we could say it's 'typing' -->
-        <div class="flex flex-row items-center justify-start pr-3">
-          <!--          <p class="text-xs text-blue-950">Typing -->
-          <span class="loading loading-dots w-8 loader"></span>
-          <!--          </p>-->
-        </div>
-      </template>
+  <li class="max-w-4xl py-2 px-4 sm:px-6 lg:px-8 mx-auto flex gap-x-2 sm:gap-x-4">
+    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary inline-flex items-center justify-center">
+      <span class="text-lg font-poppins-semi-bold text-white leading-none">{{ smallChatbotName }}</span>
+      <!--      <img src="/min-icon.png" alt="Bot Icon" class="w-full h-full">-->
     </div>
-    <div v-else>
-      <div class="px-4 py-5 bg-red-100 rounded-xl shadow-lg shadow-red-400/10">
+
+    <div class="flex flex-col space-y-3 items-start w-full">
+      <div class="flex-shrink-0 h-10 rounded-full flex items-center">
         <div class="text-sm font-poppins-semi-bold mb-2 tracking-wide leading-tight">
           {{ props.chatbotName }}
         </div>
-        <div class="" v-html="props.chatbotMessage">
+      </div>
+      <div class="space-y-3 text-sm">
+        <div class="h-full w-full inline-flex flex-col relative overflow-hidden">
+          <template v-if="hasText">
+            <div ref="chatbotMsgRef"
+                 class="space-y-1.5 font-medium md:space-y-2 lg:space-y-3 inline overflow-auto"
+                 v-html="props.chatbotMessage"></div>
+            <span v-if="isTyping" class="loading loading-ring loading-md"></span>
+          </template>
+          <template v-else>
+            <span class="loading loading-ball loading-sm"></span>
+          </template>
+        </div>
+      </div>
+      <div class="flex w-full" v-if="hasText && !props.hasError">
+        <div v-if="hasText && hasCopyButton" class="flex flex-row items-center justify-between grow">
+          <div class="">
+            <div class="inline-flex border border-gray-200 rounded-full p-0.5 space-x-0.5 dark:border-gray-700">
+              <button type="button"
+                      class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 rounded-full text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-blue-900 dark:hover:text-blue-200 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
+                <span class="sr-only">Like</span>
+                <span class="material-icons-outlined !text-base">thumb_up</span>
+              </button>
+              <button type="button"
+                      class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 rounded-full text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-blue-900 dark:hover:text-blue-200 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
+                <span class="sr-only">Dislike</span>
+                <span class="material-icons-outlined !text-base">thumb_down</span>
+              </button>
+            </div>
+            <button type="button" v-if="hasCopyButton" @click="onCopyClick"
+                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm rounded-full border border-transparent text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none hover:text-primary active:scale-95 transition duration-300">
+              <span v-if="!isTextCopied" class="material-icons-round !text-xl">content_copy</span>
+              <span v-else class="material-icons-round !text-xl">check</span>
+              <span v-if="!isTextCopied" class="font-poppins-semi-bold text-xs">
+                Copy
+              </span>
+              <span v-else class="font-poppins-semi-bold text-xs">
+                Copied
+              </span>
+            </button>
+            <!--            <button type="button"-->
+            <!--                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm rounded-full border border-transparent text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none hover:text-green-500 active:scale-95 transition duration-300">-->
+            <!--              <span class="material-icons-round !text-xl">share</span>-->
+            <!--              <span class="font-poppins-semi-bold text-xs">-->
+            <!--                Share-->
+            <!--              </span>-->
+            <!--            </button>-->
+          </div>
+
+          <div class="mt-1 sm:mt-0 self-end">
+            <button type="button"
+                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm rounded-full border border-transparent text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none hover:text-red-500 active:scale-95 transition duration-300">
+              <span class="material-icons-round !text-xl">restart_alt</span>
+              <span class="font-poppins-semi-bold text-xs">
+              New answer
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </li>
+
 </template>
 
 <style scoped>
