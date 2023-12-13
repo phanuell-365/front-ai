@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {PageContent, PageOptions, usePageContentStore} from "./page-data.ts";
 import {computed, ref} from "vue";
 import {useTabsStore} from "./tabs.ts";
+import {useAuthStore} from "../auth.ts";
 import {useAppHomeStore} from "../home";
 import {useNotificationsStore} from "../notifications.ts";
 
@@ -76,6 +77,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     async function fetchPages() {
         const appHomeStore = useAppHomeStore();
         const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -83,7 +85,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
             const response = await fetch(`${BASE_URL}/pages/`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `${authStore.token}`,
+                    'mode': 'cors',
                 }
             });
             const res = await response.json();

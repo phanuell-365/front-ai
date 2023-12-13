@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import {useAppHomeStore} from "../home";
 import {useNotificationsStore} from "../notifications.ts";
+import {useAuthStore} from "../auth.ts";
 
 export interface Tab {
     name: string;
@@ -75,6 +76,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
     async function fetchTabs() {
         const appHomeStore = useAppHomeStore();
         const notificationsStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -82,7 +84,9 @@ export const useTabsStore = defineStore('tabsStore', () => {
             const response = await fetch(`${BASE_URL}/pages/tabs/`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `${authStore.token}`,
+                    'mode': 'cors',
                 }
             });
 
@@ -345,6 +349,7 @@ export const useTabsStore = defineStore('tabsStore', () => {
 
             const appHomeStore = useAppHomeStore();
             const notificationStore = useNotificationsStore();
+            const authStore = useAuthStore();
 
             try {
                 const response = await fetch(`${BASE_URL}/pages/tabs/${tab.id}/`, {
@@ -353,7 +358,8 @@ export const useTabsStore = defineStore('tabsStore', () => {
                         msg: 'hello'
                     }),
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `${authStore.token}`,
                     }
                 });
 

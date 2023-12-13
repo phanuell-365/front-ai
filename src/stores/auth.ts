@@ -2,14 +2,15 @@ import {defineStore} from "pinia";
 import {computed, Ref, ref} from "vue";
 import {useStorage} from "@vueuse/core";
 import moment from "moment";
-// import {jwtDecode} from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
+
 // import {ResetPasswordPayload} from "../views/auth/ResetPasswordPage.vue";
 
-export interface CreateProfilePayload {
-    name: string;
-    names?: string;
-    phone: string;
+export interface UserInfo {
+    name?: string;
+    phone?: string;
     email?: string;
+    role?: string;
 }
 
 export interface CreateAccountPayload {
@@ -21,8 +22,14 @@ export interface CreateAccountPayload {
 }
 
 export interface LoginPayload {
-    phone: string;
+    email: string;
     password: string;
+}
+
+export interface UserLoginPayload {
+    email: string;
+    password: string;
+    pageId: string;
 }
 
 // const BASE_URL = import.meta.env.VITE_API_URL as string;
@@ -36,7 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
     // state
 
     const isLoggedIn = ref(false);
-    const user: Ref<CreateProfilePayload | null> = ref(null);
+    const user: Ref<UserInfo | null> = ref(null);
     const dummyUser = ref({
         username: USERNAME,
         password: PASSWORD,
@@ -72,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // actions
 
-    async function createProfile(profileData: CreateProfilePayload) {
+    async function createProfile(profileData: UserInfo) {
         const response = await fetch(`${BASE_URL}/create_profile`, {
             method: 'POST',
             headers: {
@@ -93,9 +100,9 @@ export const useAuthStore = defineStore('auth', () => {
         if (result === 'ok' && profile === false) {
             createProfilePhone.value = profileData.phone;
 
-            if (!profile) {
-
-            }
+            // if (!profile) {
+            //
+            // }
 
             return {
                 success: true,
@@ -160,16 +167,16 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function login(loginPayload: LoginPayload) {
+    async function adminLogin(loginPayload: LoginPayload) {
         try {
-            const response = await fetch(`${BASE_URL}/login`, {
+            const response = await fetch(`${BASE_URL}/login/admin/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 mode: 'cors',
                 body: JSON.stringify({
-                    username: loginPayload.phone,
+                    email: loginPayload.email,
                     password: loginPayload.password,
                 }),
             });
@@ -198,6 +205,45 @@ export const useAuthStore = defineStore('auth', () => {
 
             return false;
         }
+    }
+
+
+    async function userLogin(loginPayload: UserLoginPayload) {
+        try {
+            const response = await fetch(`${BASE_URL}/login/user/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors',
+                body: JSON.stringify(loginPayload),
+            });
+
+            const data = await response.json();
+
+            const {result} = data;
+
+            if (result === 'ok') {
+                const {token, exp} = data;
+
+                setToken(token);
+
+                tokenExpiry.value = exp;
+
+                setUserInfo();
+
+                hasEverLoggedIn.value = true;
+
+                return true;
+            }
+
+            return false;
+        } catch (e) {
+            console.log('error logging in', e);
+
+            return false;
+        }
+
     }
 
     async function forgotPassword(phone: string) {
@@ -230,54 +276,72 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function resetPassword(resetPasswordPayload: ResetPasswordPayload) {
-        const response = await fetch(`${BASE_URL}/change_password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            mode: 'cors',
-            body: JSON.stringify({
-                phone: createProfilePhone.value,
-                password: resetPasswordPayload.newPassword,
-                new_password: resetPasswordPayload.confirmPassword,
-            }),
-        });
-
-        const data = await response.json();
-
-        const {result, message} = data;
-        if (result === 'ok') {
-            return {
-                success: true,
-                error: null,
-            }
-        } else {
-            return {
-                error: message,
-                success: false,
-            }
-        }
-    }
+    // async function resetPassword(resetPasswordPayload: ResetPasswordPayload) {
+    //     const response = await fetch(`${BASE_URL}/change_password`, {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         mode: 'cors',
+    //         body: JSON.stringify({
+    //             phone: createProfilePhone.value,
+    //             password: resetPasswordPayload.newPassword,
+    //             new_password: resetPasswordPayload.confirmPassword,
+    //         }),
+    //     });
+    //
+    //     const data = await response.json();
+    //
+    //     const {result, message} = data;
+    //     if (result === 'ok') {
+    //         return {
+    //             success: true,
+    //             error: null,
+    //         }
+    //     } else {
+    //         return {
+    //             error: message,
+    //             success: false,
+    //         }
+    //     }
+    // }
 
     function setUserInfo() {
         const decode = jwtDecode(token.value);
 
-        const {phone, names: name} = decode as CreateProfilePayload;
+        console.log('decode', decode);
 
-        setUser({name: name ?? '', phone});
+        const {email, name, role, phone} = decode as UserInfo;
+
+        setUser({name: name ?? '', phone, email, role});
     }
 
     function getUserInfo() {
         if (userIsLoggedIn.value()) {
             const decode = jwtDecode(token.value);
 
-            const {phone, names: name} = decode as CreateProfilePayload;
+            const {phone, name, email, role} = decode as UserInfo;
 
-            return {name: name ?? '', phone};
+            return {name: name ?? '', phone: phone ?? '', email: email ?? '', role: role ?? ''};
         } else {
             return null;
         }
+    }
+
+    function getUserRole() {
+        if (userIsLoggedIn.value()) {
+            const decode = jwtDecode(token.value);
+
+            const {role} = decode as UserInfo;
+
+            return parseInt(role ?? '0') === 0 ? 'admin' : 'user';
+        } else {
+            return null;
+        }
+    }
+
+    function userIsAdmin() {
+        return getUserRole() === 'admin';
     }
 
     function setIsLoggedIn(value: boolean) {
@@ -310,6 +374,8 @@ export const useAuthStore = defineStore('auth', () => {
         getUser,
         token,
         getToken,
+        getUserRole,
+        userIsAdmin,
         setIsLoggedIn,
         setUser,
         logout,
@@ -319,11 +385,11 @@ export const useAuthStore = defineStore('auth', () => {
         getDummyUser,
         createProfile,
         createAccount,
-        login,
+        adminLogin,
         userIsLoggedIn,
         hasEverLoggedIn,
         getUserInfo,
         forgotPassword,
-        resetPassword,
+        // resetPassword,
     }
 });

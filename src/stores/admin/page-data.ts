@@ -3,6 +3,7 @@ import {computed, ref} from "vue";
 import {Page, useAdminHomeStore} from "./home.ts";
 import {useAppHomeStore} from "../home";
 import {useNotificationsStore} from "../notifications.ts";
+import {useAuthStore} from "../auth.ts";
 
 export interface PageContent {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -74,6 +75,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
     async function fetchPageContentItems() {
         const appHomeStore = useAppHomeStore();
         const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -82,7 +84,8 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             const response = await fetch(`${BASE_URL}/pages/`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `${authStore.token}`,
                 }
             });
 
@@ -197,6 +200,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
         const appHomeStore = useAppHomeStore();
         const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -204,7 +208,8 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             const response = await fetch(`${BASE_URL}/pages/${newPageOptions.pageId}/options/`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `${authStore.token}`,
                 },
                 body: JSON.stringify(newPageOptions),
             });
@@ -244,6 +249,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
         const appHomeStore = useAppHomeStore();
         const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -251,7 +257,8 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
             const response = await fetch(`${BASE_URL}/pages/${pageContentBody.pageId}/content/`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `${authStore.token}`,
                 },
                 body: JSON.stringify(pageContentBody),
             });
@@ -337,12 +344,16 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
 
         const appHomeStore = useAppHomeStore();
         const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
         try {
             const response = await fetch(`${BASE_URL}/pages/${pageId}/data/`, {
                 method: 'POST',
+                headers: {
+                    'Authorization': `${authStore.token}`,
+                },
                 body: formData,
             });
 

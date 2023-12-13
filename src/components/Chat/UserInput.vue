@@ -248,8 +248,8 @@ const stopListening = () => {
   mediaRecorder.value?.addEventListener("stop", () => {
     const audioBlob = new Blob(audioChunks.value, {type: 'audio/ogg'});
     const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-    audio.play();
+    // const audio = new Audio(audioUrl);
+    // audio.play();
     console.log(audioChunks.value);
 
     // send the audio to the OpenAI API

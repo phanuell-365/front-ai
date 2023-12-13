@@ -15,7 +15,7 @@ const openSearchModal = () => {
 <template>
   <!-- Sidebar -->
   <div id="application-sidebar"
-       class="-translate-x-full transition-all duration-300 transform z-30 hidden absolute top-0 start-0 bottom-0 w-64 bg-white border-e border-gray-200 pb-10 overflow-y-auto md:block lg:translate-x-0 lg:end-auto lg:bottom-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
+       class="-translate-x-full transition-all duration-300 transform z-30 hidden absolute top-0 start-0 bottom-0 w-64 bg-white border-e border-gray-200 pb-10 overflow-y-auto md:block md:translate-x-0 md:end-auto md::bottom-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
 <!--    <div class="px-6">-->
 <!--      <p class="flex-none text-xl font-semibold dark:text-white" aria-label="Pages">-->
 <!--        Pages-->
