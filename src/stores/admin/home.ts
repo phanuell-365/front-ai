@@ -112,6 +112,7 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
     async function createNewPage(pageName: string) {
         const appHomeStore = useAppHomeStore();
         const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
 
         appHomeStore.setIsAppFetching(true);
 
@@ -125,7 +126,9 @@ export const useAdminHomeStore = defineStore('adminHomeStore', () => {
                     pageName,
                 }),
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `${authStore.token}`,
+                    'mode': 'cors',
                 }
             });
 

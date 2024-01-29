@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import {Tab, useTabsStore} from "../..//stores/admin/tabs.ts";
-import BarItem from "../../components/Admin/BarItem.vue";
 import {onUpdated, ref} from "vue";
 import {useAdminHomeStore} from "../../stores/admin/home.ts";
 import {useRouter} from "vue-router";

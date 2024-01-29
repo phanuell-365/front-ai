@@ -12,6 +12,6 @@ createApp(App)
     .use(createPinia())
     .use(vue3GoogleLogin, {
         clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
-        clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string,
+        // clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string,
     })
     .mount('#app')

@@ -37,6 +37,13 @@ const pageNameValidator = (value: string) => {
     return "Page name must not exceed 50 characters";
   }
 
+  // allow only alphanumeric characters
+  const pageNameRegex = /^[a-zA-Z0-9]+$/;
+
+  if (!pageNameRegex.test(value)) {
+    return "Page name must only contain alphanumeric characters";
+  }
+
   if (allPageNames.includes(value.toLowerCase())) {
     return "Page name already exists";
   }

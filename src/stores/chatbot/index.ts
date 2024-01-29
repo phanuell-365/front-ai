@@ -63,17 +63,18 @@ export const useChatbotStore = defineStore('chatbot', () => {
                     // The following function handles each data chunk
                     function push() {
                         // "done" is a Boolean and value a "Uint8Array"
-                        reader?.read().then(({done, value}) => {
-                            // Is there no more data to read?
-                            if (done) {
-                                // Tell the browser that we have finished sending data
-                                controller.close();
-                                return;
-                            }
-                            // Get the data and send it to the browser via the controller
-                            controller.enqueue(value);
-                            push();
-                        });
+                        reader?.read()
+                            .then(({done, value}) => {
+                                // Is there no more data to read?
+                                if (done) {
+                                    // Tell the browser that we have finished sending data
+                                    controller.close();
+                                    return;
+                                }
+                                // Get the data and send it to the browser via the controller
+                                controller.enqueue(value);
+                                push();
+                            });
                     }
 
                     push();

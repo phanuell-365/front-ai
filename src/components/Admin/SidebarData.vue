@@ -34,6 +34,7 @@ interface SidebarDataProps {
   pageContent: PageContent;
   currentPage: Page;
   isOpen: boolean;
+  fileUploadBtnEnabled: boolean;
 }
 
 interface Option {
@@ -229,6 +230,7 @@ const emit = defineEmits<{
   (event: 'greeting-change', value: string): void;
   (event: 'prompt-placeholder-change', value: string): void;
   (event: 'sidebar-data-changed', value: boolean): void;
+  (event: 'enable-upload-btn', value: boolean): void;
   (event: 'file-upload', value: File, pageId: string): void;
 }>();
 
@@ -696,9 +698,19 @@ watch(() => thisPageContentItem.context, (newVal) => {
 // Handle the data tab
 
 
-const uploadDataBtnIsActive = ref(false);
+// const uploadDataBtnIsActive = ref(false);
 
 const uploadedFile = ref<File | null>(null);
+const dataFileEl = ref<HTMLInputElement | null>(null);
+
+watch(() => props.fileUploadBtnEnabled, (newVal) => {
+  if (!newVal) {
+    // clear the file input
+    if (dataFileEl.value) {
+      dataFileEl.value.value = '';
+    }
+  }
+});
 
 const onFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement;
@@ -706,14 +718,15 @@ const onFileChange = (e: Event) => {
 
   if (files.length > 0) {
     uploadedFile.value = files[0];
-    uploadDataBtnIsActive.value = true;
+    // uploadDataBtnIsActive.value = true;
+    emit('enable-upload-btn', true);
 
     // TODO: validate the file type
   }
 };
 
 const onUploadData = () => {
-  uploadDataBtnIsActive.value = false;
+  // uploadDataBtnIsActive.value = false;
 
   emit('file-upload', uploadedFile.value as File, thisPage.id);
 };
@@ -1047,6 +1060,7 @@ const onUploadData = () => {
                 </label>
                 <!-- Accept .txt, .pdf, .docx, .csv -->
                 <input id="data-file"
+                       ref="dataFileEl"
                        accept=".csv, .txt, .pdf, .docx"
                        class="file-input file-input-ghost w-full max-w-xs"
                        type="file" @change="onFileChange">
@@ -1054,8 +1068,9 @@ const onUploadData = () => {
                   chatbot.</small>
               </div>
               <div class="bg-white w-full px-4 md:px-6 basis-10/12">
+<!--                :disabled="!uploadDataBtnIsActive"-->
                 <button
-                    :disabled="!uploadDataBtnIsActive"
+                    :disabled="!fileUploadBtnEnabled"
                     class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full"
                     @click="onUploadData">
                   Upload Data

@@ -78,7 +78,7 @@ const onViewAllPagesClick = () => {
           <div class="flex-1 overflow-auto h-full">
             <div aria-labelledby="pages" class="my-3 bg-stone-50 rounded-xl py-5 px-6">
               <h1 id="pages" class="text-2xl font-extrabold text-neutral-800 dark:text-neutral-300">
-                Pages
+                Bots
               </h1>
 
               <div
@@ -89,7 +89,7 @@ const onViewAllPagesClick = () => {
                   Created pages will appear here
                 </p>
               </div>
-              <ul v-else class="my-4 p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <ul v-else class="my-4 p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <PageItem v-for="(page) in pageItems" :key="page.id" :page="page"/>
               </ul>
 

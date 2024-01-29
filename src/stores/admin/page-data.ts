@@ -357,13 +357,11 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 body: formData,
             });
 
-            const {data} = await response.json();
+            const data = await response.json();
 
-            const {file: uploadedFile} = data;
+            const {file} = data;
 
-            notificationStore.addNotification('File uploaded successfully.', 'success');
-
-            return uploadedFile;
+            return file;
         } catch (error) {
             console.error(error);
 

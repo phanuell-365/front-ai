@@ -2,7 +2,7 @@
 import {useField} from "vee-validate";
 import {useRouter} from "vue-router";
 import {reactive, watch, ref} from "vue";
-import {googleTokenLogin, decodeCredential} from "vue3-google-login"
+import {googleTokenLogin} from "vue3-google-login"
 import {useAuthStore} from "../../stores/auth.ts";
 
 const router = useRouter();

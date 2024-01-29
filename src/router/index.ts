@@ -124,6 +124,10 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
     const authStore = useAuthStore();
 
+    const userInfo = authStore.getUserInfo();
+
+    console.log(userInfo)
+
     const excludedRoutes = [
         'landing',
         'admin-login',

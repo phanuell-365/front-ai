@@ -99,14 +99,6 @@ const onLoginClick = () => {
       <div class="p-4 sm:p-7">
         <div class="text-center">
           <h1 class="block text-2xl font-bold text-gray-800 dark:text-white">Login</h1>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account yet?
-            <router-link
-                class="text-blue-600 decoration-2 hover:underline font-medium dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
-                to="signup">
-              Create account
-            </router-link>
-          </p>
         </div>
 
         <div class="mt-5">
@@ -117,10 +109,10 @@ const onLoginClick = () => {
                   <label class="label font-semibold text-sm" for="email">
                     Email
                   </label>
-                  <router-link
-                      class="text-sm text-blue-600 decoration-2 hover:underline font-medium dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
-                      to="forgot-password">Forgot password?
-                  </router-link>
+<!--                  <router-link-->
+<!--                      class="text-sm text-blue-600 decoration-2 hover:underline font-medium dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"-->
+<!--                      to="forgot-password">Forgot password?-->
+<!--                  </router-link>-->
                 </div>
                 <input
                     id="email"

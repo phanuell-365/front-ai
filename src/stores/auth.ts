@@ -169,7 +169,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function adminLogin(loginPayload: LoginPayload) {
         try {
-            const response = await fetch(`${BASE_URL}/login/admin/`, {
+            const response = await fetch(`${BASE_URL}/login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -208,43 +208,43 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
 
-    async function userLogin(loginPayload: UserLoginPayload) {
-        try {
-            const response = await fetch(`${BASE_URL}/login/user/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                mode: 'cors',
-                body: JSON.stringify(loginPayload),
-            });
-
-            const data = await response.json();
-
-            const {result} = data;
-
-            if (result === 'ok') {
-                const {token, exp} = data;
-
-                setToken(token);
-
-                tokenExpiry.value = exp;
-
-                setUserInfo();
-
-                hasEverLoggedIn.value = true;
-
-                return true;
-            }
-
-            return false;
-        } catch (e) {
-            console.log('error logging in', e);
-
-            return false;
-        }
-
-    }
+    // async function userLogin(loginPayload: UserLoginPayload) {
+    //     try {
+    //         const response = await fetch(`${BASE_URL}/login/user/`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             mode: 'cors',
+    //             body: JSON.stringify(loginPayload),
+    //         });
+    //
+    //         const data = await response.json();
+    //
+    //         const {result} = data;
+    //
+    //         if (result === 'ok') {
+    //             const {token, exp} = data;
+    //
+    //             setToken(token);
+    //
+    //             tokenExpiry.value = exp;
+    //
+    //             setUserInfo();
+    //
+    //             hasEverLoggedIn.value = true;
+    //
+    //             return true;
+    //         }
+    //
+    //         return false;
+    //     } catch (e) {
+    //         console.log('error logging in', e);
+    //
+    //         return false;
+    //     }
+    //
+    // }
 
     async function forgotPassword(phone: string) {
         const response = await fetch(`${BASE_URL}/forgot`, {

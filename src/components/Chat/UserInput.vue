@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, reactive, Ref, ref, watch} from "vue";
 import DOMPurify from "dompurify";
+// import RecordRtc from "recordrtc";
 import {useNotificationsStore} from "../../stores/notifications.ts";
 
 interface UserInputProps {
@@ -115,7 +116,7 @@ const sendButtonClicked = (audioData?: {
     return;
   }
 
-  console.log('send-btn-clicked -> audioData', audioData);
+  // console.log('send-btn-clicked -> audioData', audioData);
 
   // emit the user input
   emits('userInput', userInput.value, formattedUserInput.value, audioData);
@@ -137,157 +138,665 @@ const addFocus = () => {
 
 // handle the mic button
 
-const mediaRecorder = ref<MediaRecorder | null>(null);
-const audioChunks = ref<Array<Blob>>([]);
-const isListening = ref(false);
+// mic control
+const micIsListening = ref(false);
+const micIsStopped = ref(false);
+
+const audioIsPlaying = ref(false);
+
 const promptPlaceholderText = computed(() => {
-  if (isListening.value) {
+  if (micIsListening.value) {
     return "Listening...";
   } else {
     return props.promptPlaceholder;
   }
 });
 
+const onAudioControlClick = (data: string) => {
+  if (data === 'play') {
+    audioIsPlaying.value = true;
+    playAudio().then((isEnded) => {
+      if (isEnded) {
+        audioIsPlaying.value = false;
+      }
+    });
+  } else if (data === 'pause') {
+    audioIsPlaying.value = false;
+    pauseAudio();
+  }
+}
+
+const onRecordAudioControlClick = (data: string) => {
+
+  console.log(data);
+  // event.stopPropagation();
+
+  // alert(action);
+
+  // isListening.value = audioControls.value.find(control => control.action === action)?.val;
+  if (data === "start") {
+    // startListening();
+    micIsListening.value = true;
+    micIsStopped.value = false;
+    startAudioRecording();
+    // animateMicPulse();
+  } else if (data === "stop") {
+    // stopListening();
+    micIsListening.value = false;
+    micIsStopped.value = true;
+    stopAudioRecording()
+        .catch(error => {
+          //Error handling structure
+          switch (error.name) {
+            case 'InvalidStateError': //error from the MediaRecorder.stop
+              console.log("An InvalidStateError has occurred.");
+              break;
+            default:
+              console.log("An error occurred with the error name " + error.name);
+          }
+        });
+    // } else if (data === "paused") {
+    //   console.log('Pausing... ');
+    //   micIsStopped.value = true;
+    //   pauseAudioRecording();
+  } else if (data === "delete") {
+    // delete the audio
+    micIsListening.value = false;
+    micIsStopped.value = false;
+    deleteAudio()
+  } else if (data === "send") {
+    // send the audio
+    micIsListening.value = false;
+    micIsStopped.value = false;
+    stopAudioRecording()
+        .then((audioAsBlob: Blob) => {
+          return transcribeWithOpenAI(audioAsBlob)
+
+        })
+        .then(() => {
+          // sendButtonClicked({
+          //   audioBlob: audioRecorder.audioBlobs[0],
+          //   audioUrl: recordedAudioURL.value,
+          //   // audio: recordedAudio.value,
+          // });
+        })
+        .catch(error => {
+          //Error handling structure
+          switch (error.name) {
+            case 'InvalidStateError': //error from the MediaRecorder.stop
+              console.log("An InvalidStateError has occurred.");
+              break;
+            default:
+              console.log("An error occurred with the error name ", error);
+          }
+        });
+  }
+
+  audioIsPlaying.value = false;
+};
+
 // audio context
 
-const audioCtx = new AudioContext();
-let analyser = null;
-let dataArray = null;
-let micScale = ref(1.0);
-let animationFrameId = null;
+// const audioCtx = new AudioContext();
+// let analyser = null;
+// let dataArray = null;
+// let micScale = ref(1.0);
+// let animationFrameId = null;
 const micPulse = ref(null);
 
-const onMicClick = (data, event) => {
-  event.stopPropagation();
-  console.log(data);
-  if (data === "start") {
-    startListening();
+// const audioElement: Ref<HTMLAudioElement | null> = ref(null);
+// const audioElementSource: Ref<HTMLSourceElement | null> = ref(null);
+// const audioReader = ref(new FileReader());
+const seekBar: Ref<HTMLInputElement | null> = ref(null);
+const recordedAudio: Ref<HTMLAudioElement | null> = ref(null);
+const recordedAudioURL = ref('');
+const audioIsLoadingDuration = ref(false);
+const audioDuration = ref('00:00');
+const hasAudioRecording = ref(false);
 
-    animateMicPulse();
-  } else if (data === "stop") {
-    stopListening();
+//Controller
+
+/** Stores the actual start time when an audio recording begins to take place to ensure elapsed time start time is accurate*/
+const audioRecordStartTime = ref<Date>();
+
+/** Stores the maximum recording time in hours to stop recording once maximum recording hour has been reached */
+const maximumRecordingTimeInHours = ref(1);
+
+/** Stores the reference of the setInterval function that controls the timer in audio recording*/
+const elapsedTimeTimer = ref(0);
+
+const elapsedDuration = ref('');
+
+const audioRecorder = reactive({
+  audioBlobs: [],
+  mediaRecorder: null,
+  recorder: null,
+  streamBeingCaptured: null,
+  start: async function () {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      //Feature is not supported in browser
+      //return a custom error
+      return Promise.reject(new Error('mediaDevices API or getUserMedia method is not supported in this browser.'));
+    } else {
+      //Feature is supported in browser
+
+      //create an audio stream
+      return navigator.mediaDevices.getUserMedia({audio: true}/*of type MediaStreamConstraints*/)
+          //returns a promise that resolves to the audio stream
+          .then(stream /*of type MediaStream*/ => {
+
+            console.log('stream', stream)
+
+            //save the reference of the stream to be able to stop it when necessary
+            audioRecorder.streamBeingCaptured = stream;
+
+            //create a media recorder instance by passing that stream into the MediaRecorder constructor
+            audioRecorder.mediaRecorder = new MediaRecorder(stream); /*the MediaRecorder interface of the MediaStream Recording
+                    API provides functionality to easily record media*/
+
+            //clear previously saved audio Blobs, if any
+            audioRecorder.audioBlobs = [];
+
+            // console.log('audioRecorder.mediaRecorder', audioRecorder.mediaRecorder);
+            audioRecorder.mediaRecorder.start();
+
+            //add a dataavailable event listener in order to store the audio data Blobs when recording
+            audioRecorder.mediaRecorder.addEventListener("dataavailable", event => {
+              console.log('data available event');
+              //store audio Blob object
+              audioRecorder.audioBlobs.push(event.data);
+
+              console.log('audioRecorder.audioBlobs', audioRecorder.audioBlobs);
+            });
+
+            //start the recording by calling the start method on the media recorder
+
+            // audioRecorder.recorder = new RecordRTCPromisesHandler(stream, {
+            //
+            // });
+          }).catch((error) => {
+            console.error('Error getting user media:', error);
+          });
+
+      /* errors are not handled in the API because if its handled and the promise is chained, the .then after the catch will be executed*/
+    }
+  },
+  pause: function () {
+    //pause the recording feature
+    return new Promise((resolve: (value: Blob) => void) => {
+      //save audio type to pass to set the Blob type
+      let mimeType = audioRecorder.mediaRecorder.mimeType;
+
+      //listen to the pause event in order to create & return a single Blob object
+      audioRecorder.mediaRecorder.addEventListener("pause", () => {
+        console.log('pause media event');
+        //create a single blob object, as we might have gathered a few Blob objects that needs to be joined as one
+        let audioBlob = new Blob(audioRecorder.audioBlobs, {type: mimeType});
+
+        //resolve promise with the single audio blob representing the recorded audio
+        resolve(audioBlob);
+      });
+
+      audioRecorder.mediaRecorder.pause();
+    });
+  },
+  resume: function () {
+    //resume the recording feature
+    return new Promise((resolve: (value: null) => void) => {
+      //listen to the resume event in order to resume the recording
+      audioRecorder.mediaRecorder.addEventListener("resume", () => {
+        console.log('resume media event');
+        //resolve promise
+        resolve(null);
+      });
+      audioRecorder.mediaRecorder.resume();
+    });
+  },
+  stop: function () {
+    //return a promise that would return the blob or URL of the recording
+    return new Promise((resolve: (value: Blob) => void) => {
+      if (audioRecorder.mediaRecorder) {
+        //save audio type to pass to set the Blob type
+        let mimeType = audioRecorder.mediaRecorder.mimeType;
+        console.log('mimeType', mimeType);
+
+        //listen to the stop event in order to create & return a single Blob object
+        audioRecorder.mediaRecorder.addEventListener("stop", () => {
+          console.log('stop media event')
+          //create a single blob object, as we might have gathered a few Blob objects that needs to be joined as one
+          // let audioBlob = new Blob(audioRecorder.audioBlobs, {type: mimeType});
+          let audioBlob = new Blob(audioRecorder.audioBlobs, {type: 'audio/ogg'});
+
+          audioRecorder.tempAudioBlob = audioBlob;
+
+          //resolve promise with the single audio blob representing the recorded audio
+          resolve(audioBlob);
+        });
+
+        audioRecorder.cancel();
+      } else {
+        resolve(audioRecorder.tempAudioBlob)
+      }
+    });
+  },
+  cancel: function () {
+    //stop the recording feature
+    audioRecorder.mediaRecorder.stop();
+
+    //stop all the tracks on the active stream in order to stop the stream
+    audioRecorder.stopStream();
+
+    //reset API properties for next recording
+    audioRecorder.resetRecordingProperties();
+  },
+  stopStream: function () {
+    //stopping the capturing request by stopping all the tracks on the active stream
+    audioRecorder.streamBeingCaptured.getTracks() //get all tracks from the stream
+        .forEach(track /*of type MediaStreamTrack*/ => track.stop()); //stop each one
+  },
+  /** Reset all the recording properties including the media recorder and stream being captured*/
+  resetRecordingProperties: function () {
+    audioRecorder.mediaRecorder = null;
+    audioRecorder.streamBeingCaptured = null;
+  },
+  tempAudioBlob: null,
+} as {
+  audioBlobs: Blob[],
+  mediaRecorder: MediaRecorder | null,
+  streamBeingCaptured: MediaStream | null,
+  start: () => Promise<void>,
+  pause: () => Promise<Blob>,
+  resume: () => Promise<void>,
+  stop: () => Promise<Blob>,
+  cancel: () => void,
+  stopStream: () => void,
+  resetRecordingProperties: () => void
+  tempAudioBlob: Blob | null
+});
+
+/** Starts the audio recording*/
+function startAudioRecording() {
+  // check if there's an existing audio, if so we clear it
+  if (hasAudioRecording.value) {
+    pauseAudio();
+    deleteAudio();
   }
-};
 
-const animateMicPulse = () => {
-  // Get the analyser data and update micScale based on the audio level
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  dataArray = new Uint8Array(analyser.frequencyBinCount);
+  //start recording using the audio recording API
+  audioRecorder.start()
+      .then(() => { //on success
 
-  const draw = () => {
-    analyser.getByteFrequencyData(dataArray);
+        //store the recording start time to display the elapsed time according to it
+        audioRecordStartTime.value = new Date();
 
-    // Calculate the average amplitude of the audio data
-    const averageAmplitude = dataArray.reduce((acc, value) => acc + value, 0) / dataArray.length;
+        //display control buttons to offer the functionality of stop and cancel
+        handleDisplayingRecordingControlButtons();
 
-    // Map the average amplitude to a scale factor for mic animation
-    micScale.value = 1.0 + averageAmplitude / 128;
+        hasAudioRecording.value = true;
+      })
+      .catch(error => { //on error
+        //No Browser Support Error
+        if (error.message.includes("mediaDevices API or getUserMedia method is not supported in this browser.")) {
+          console.log("To record audio, use browsers like Chrome and Firefox.");
+          // displayBrowserNotSupportedOverlay();
+        }
 
-    console.log('micScale', micScale.value);
+        //Error handling structure
+        switch (error.name) {
+          case 'AbortError': //error from navigator.mediaDevices.getUserMedia
+            console.log("An AbortError has occured.");
+            break;
+          case 'NotAllowedError': //error from navigator.mediaDevices.getUserMedia
+            console.log("A NotAllowedError has occured. User might have denied permission.");
+            break;
+          case 'NotFoundError': //error from navigator.mediaDevices.getUserMedia
+            console.log("A NotFoundError has occured.");
+            break;
+          case 'NotReadableError': //error from navigator.mediaDevices.getUserMedia
+            console.log("A NotReadableError has occured.");
+            break;
+          case 'SecurityError': //error from navigator.mediaDevices.getUserMedia or from the MediaRecorder.start
+            console.log("A SecurityError has occured.");
+            break;
+          case 'TypeError': //error from navigator.mediaDevices.getUserMedia
+            console.log("A TypeError has occured.");
+            break;
+          case 'InvalidStateError': //error from the MediaRecorder.start
+            console.log("An InvalidStateError has occured.");
+            break;
+          case 'UnknownError': //error from the MediaRecorder.start
+            console.log("An UnknownError has occured.");
+            break;
+          default:
+            console.log("An error occured with the error name " + error.name);
+        }
+      });
+}
 
-    // Update the mic pulse visualization
-    micPulse.value.style.transform = `scale(${micScale.value})`;
+/** Displays recording control buttons */
+function handleDisplayingRecordingControlButtons() {
 
-    // Continue the animation loop
-    animationFrameId = requestAnimationFrame(draw);
-  };
+  //Handle the displaying of the elapsed recording time
+  handleElapsedRecordingTime();
+}
 
-  // Start the animation loop
-  draw();
-};
+function handleElapsedRecordingTime() {
+  //display inital time when recording begins
+  displayElapsedTimeDuringAudioRecording("00:00");
 
-const startListening = () => {
-  navigator.mediaDevices.getUserMedia({audio: true})
-      .then((stream) => {
-        console.log(stream);
+  //create an interval that compute & displays elapsed time, as well as, animate red dot - every second
+  elapsedTimeTimer.value = setInterval(() => {
+    //compute the elapsed time every second
+    let elapsedTime = computeElapsedTime(audioRecordStartTime.value.getTime()); //pass the actual record start time
+    //display the elapsed time
+    displayElapsedTimeDuringAudioRecording(elapsedTime);
+  }, 1000); //every second
+}
 
-        const sourceNode = audioCtx.createMediaStreamSource(stream);
-        sourceNode.connect(analyser);
-        analyser.connect(audioCtx.destination);
+function displayElapsedTimeDuringAudioRecording(elapsedTime) {
+  //1. display the passed elapsed time as the elapsed time in the elapsedTime HTML element
+  elapsedDuration.value = elapsedTime;
 
-        // clear the audio chunks
-        audioChunks.value = [];
+  // console.log(elapsedTime)
 
-        // const mediaRecorder = new MediaRecorder(stream);
-        // const options = {
-        //   mimeType: 'audio/webm',
-        // };
-
-        // mediaRecorder.value = new MediaRecorder(stream, options);
-        mediaRecorder.value = new MediaRecorder(stream);
-        mediaRecorder.value.start();
-        isListening.value = true;
-        // const audioChunks = [];
-        mediaRecorder.value?.addEventListener("dataavailable", (e) => {
-          console.log(e.data);
-          audioChunks.value.push(e.data);
+  //2. Stop the recording when the max number of hours is reached
+  if (elapsedTimeReachedMaximumNumberOfHours(elapsedTime)) {
+    stopAudioRecording()
+        .catch(error => {
+          //Error handling structure
+          switch (error.name) {
+            case 'InvalidStateError': //error from the MediaRecorder.stop
+              console.log("An InvalidStateError has occurred.");
+              break;
+            default:
+              console.log("An error occurred with the error name " + error.name);
+          }
         });
-        mediaRecorder.value?.addEventListener("stop", () => {
-          console.log(mediaRecorder.value?.state);
+  }
+}
 
-          // const tracks = stream.getTracks();
-          // tracks.forEach(track => track.stop());
+/** Hide the displayed recording control buttons */
+function handleHidingRecordingControlButtons() {
+  //Display the microphone button that starts audio recording
 
-        });
-      }).catch((err) => {
+  console.log('elapsedTimeTimer.value', elapsedTimeTimer.value)
+  //stop interval that handles both time elapsed and the red dot
+  clearInterval(elapsedTimeTimer.value);
+}
+
+function elapsedTimeReachedMaximumNumberOfHours(elapsedTime) {
+  //Split the elapsed time by the symbo :
+  let elapsedTimeSplitted = elapsedTime.split(":");
+
+  //Turn the maximum recording time in hours to a string and pad it with zero if less than 10
+  let maximumRecordingTimeInHoursAsString = maximumRecordingTimeInHours.value < 10 ? "0" + maximumRecordingTimeInHours.value : maximumRecordingTimeInHours.value.toString();
+
+  //if it the elapsed time reach hours and also reach the maximum recording time in hours return true
+  return elapsedTimeSplitted.length === 3 && elapsedTimeSplitted[0] === maximumRecordingTimeInHoursAsString;
+}
+
+function computeElapsedTime(startTime: number) {
+  console.log('startTime', startTime);
+  //record end time
+  let endTime = new Date().getTime();
+
+  //time difference in ms
+  let timeDiff = endTime - startTime;
+
+  //convert time difference from ms to seconds
+  timeDiff = timeDiff / 1000;
+
+  //extract integer seconds that dont form a minute using %
+  let seconds: number | string = Math.floor(timeDiff % 60); //ignoring uncomplete seconds (floor)
+
+  //pad seconds with a zero if neccessary
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+
+  //convert time difference from seconds to minutes using %
+  timeDiff = Math.floor(timeDiff / 60);
+
+  //extract integer minutes that don't form an hour using %
+  let minutes: number | string = timeDiff % 60; //no need to floor possible incomplete minutes, becase they've been handled as seconds
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+
+  //convert time difference from minutes to hours
+  timeDiff = Math.floor(timeDiff / 60);
+
+  //extract integer hours that don't form a day using %
+  let hours = timeDiff % 24; //no need to floor possible incomplete hours, becase they've been handled as seconds
+
+  //convert time difference from hours to days
+  timeDiff = Math.floor(timeDiff / 24);
+
+  // the rest of timeDiff is number of days
+  let days = timeDiff; //add days to hours
+
+  let totalHours: number | string = hours + (days * 24);
+  totalHours = totalHours < 10 ? "0" + totalHours : totalHours;
+
+  if (totalHours === "00") {
+    return minutes + ":" + seconds;
+  } else {
+    return totalHours + ":" + minutes + ":" + seconds;
+  }
+}
+
+function updateTimer() {
+  let duration = recordedAudio.value?.duration || 0;
+  let currentTime = recordedAudio.value?.currentTime || 0;
+  let remainingTime = duration - currentTime;
+
+  audioDuration.value = formatTime(remainingTime);
+}
+
+function formatTime(seconds: number) {
+  let minutes = Math.floor(seconds / 60);
+  let remainingSeconds = Math.floor(seconds % 60);
+
+// Ensure each component has two digits
+  minutes = padZero(minutes);
+  remainingSeconds = padZero(remainingSeconds);
+
+  return `${minutes}:${remainingSeconds}`;
+}
+
+function padZero(value) {
+  return value < 10 ? `0${value}` : value;
+}
+
+async function stopAudioRecording() {
+
+  audioIsLoadingDuration.value = true;
+
+  //stop the recording using the audio recording API
+  return audioRecorder.stop()
+      .then(audioAsBlob => {
+        //Play recorder audio
+
+        return storeAudio(audioAsBlob);
+      })
+      .then((audioAsBlob) => {
+        audioIsLoadingDuration.value = false;
+
+        handleHidingRecordingControlButtons();
+
+        return audioAsBlob;
+      })
+
+}
+
+// store the audio
+
+function storeAudio(recorderAudioAsBlob: Blob) {
+  //read content of files (Blobs) asynchronously
+  // let reader = new FileReader();
+
+  return new Promise((resolve) => {
+
+    recordedAudioURL.value = URL.createObjectURL(recorderAudioAsBlob);
+
+    // console.log(recordedAudio);
+
+    recordedAudio.value = new Audio(recordedAudioURL.value);
+    recordedAudio.value.volume = 0;
+    recordedAudio.value.playbackRate = 4.0;
+
+    recordedAudio.value.addEventListener('loadedmetadata', function () {
+      // Access the duration once the metadata is loaded
+      console.log('Audio duration:', recordedAudio.value.duration);
+
+      // You can now perform any actions that require the duration
+      // For example, display it in the UI or use it in your logic
+    });
+
+    recordedAudio.value.addEventListener('ended', function () {
+      console.log('Audio playback ended. Duration now available:', recordedAudio.value.duration);
+      // You can now use the duration or perform any other actions
+
+      seekBar.value.max = recordedAudio.value.duration.toString();
+      recordedAudio.value.currentTime = 0;
+      seekBar.value.value = recordedAudio.value.currentTime.toString();
+
+      resolve(recorderAudioAsBlob);
+    });
+
+    recordedAudio.value.play();
+  })
+
+}
+
+// playing the audio
+
+function playAudio() {
+  //play the audio after successfully setting new src and type that corresponds to the recorded audio
+
+  return new Promise((resolve) => {
+    recordedAudio.value.playbackRate = 1.0
+    recordedAudio.value.volume = 1.0
+
+    //on seek bar change update the audio current time
+    seekBar.value!.onchange = () => {
+      // audioElement.value.currentTime = Number(seekBar.value!.value);
+      recordedAudio.value.currentTime = Number(seekBar.value!.value);
+    };
+
+    //on audio time update, update the seek bar current time
+    // audioElement.value!.ontimeupdate = () => {
+    recordedAudio.value!.ontimeupdate = () => {
+      if (recordedAudio.value) {
+        if (recordedAudio.value!.currentTime.toString() === recordedAudio.value!.duration.toString()) {
+          // audioElement.value!.pause();
+          recordedAudio.value!.pause();
+          audioIsPlaying.value = false;
+        }
+
+        seekBar.value!.value = recordedAudio.value!.currentTime.toString();
+      }
+
+      updateTimer();
+    };
+
+    // audioElement.value.play();
+    recordedAudio.value.play();
+
+    recordedAudio.value.addEventListener('ended', function () {
+      resolve(true);
+    });
+
+  })
+}
+
+function pauseAudioRecording() {
+  return new Promise((resolve) => {
+    recordedAudio.value.addEventListener('pause', function () {
+      // pause the audio
+      resolve(true);
+    });
+    recordedAudio.value.pause();
+  })
+}
+
+function pauseAudio() {
+  console.log("Pausing audio...");
+  pauseAudioRecording().then(() => {
+    audioIsPlaying.value = false;
+  });
+}
+
+function deleteAudio() {
+  console.log("Deleting audio...");
+  recordedAudio.value.pause();
+  recordedAudio.value.currentTime = 0;
+  recordedAudioURL.value = "";
+  recordedAudio.value = null;
+  seekBar.value.value = "0";
+  seekBar.value.max = "0";
+  hasAudioRecording.value = false;
+  audioIsPlaying.value = false;
+  audioIsLoadingDuration.value = false;
+  handleHidingRecordingControlButtons();
+}
+
+function transcribeWithOpenAI(audioAsBlob: Blob) {
+  // send the audio to the OpenAI API
+  const formData = new FormData();
+
+  formData.append("file", audioAsBlob);
+  formData.append("model", "whisper-1");
+  formData.append("language", "en");
+
+  fetch("https://api.openai.com/v1/audio/transcriptions", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + import.meta.env.VITE_APP_OPENAI_API_KEY,
+    },
+    body: formData,
+  }).then((response) => {
+    return response.json();
+  }).then((data) => {
+    if (data.error) {
+      notificationsStore.addNotification(data.error.message, 'error');
+      return;
+    }
+    userInput.value = data.text;
+    sendButtonClicked({
+      audioBlob: {...audioRecorder.audioBlobs[0]},
+      audioUrl: recordedAudioURL.value,
+      // audio: audio,
+    });
+    deleteAudio();
+  }).catch((err) => {
     console.log(err);
   });
 }
 
-const stopListening = () => {
-  mediaRecorder.value?.stop();
-  isListening.value = false;
-  console.log(mediaRecorder.value?.state);
-  console.log("recorder stopped");
-
-  mediaRecorder.value?.stream.getTracks().forEach(track => track.stop());
-
-  cancelAnimationFrame(animationFrameId);
-
-  mediaRecorder.value?.addEventListener("stop", () => {
-    const audioBlob = new Blob(audioChunks.value, {type: 'audio/ogg'});
-    const audioUrl = URL.createObjectURL(audioBlob);
-    // const audio = new Audio(audioUrl);
-    // audio.play();
-    console.log(audioChunks.value);
-
-    // send the audio to the OpenAI API
-    const formData = new FormData();
-
-    formData.append("file", audioBlob);
-    formData.append("model", "whisper-1");
-    formData.append("language", "en");
-
-    fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + import.meta.env.VITE_APP_OPENAI_API_KEY,
-      },
-      body: formData,
-    }).then((response) => {
-      return response.json();
-    }).then((data) => {
-      if (data.error) {
-        notificationsStore.addNotification(data.error.message, 'error');
-        return;
-      }
-      userInput.value = data.text;
-      sendButtonClicked({
-        audioBlob: audioBlob,
-        audioUrl: audioUrl,
-        // audio: audio,
-      });
-    }).catch((err) => {
-      console.log(err);
-    });
-  });
-
-  mediaRecorder.value = null;
-  analyser = null;
-
-  // navigator.mediaDevices.getUserMedia({audio: false});
-}
+// const animateMicPulse = () => {
+//   // Get the analyser data and update micScale based on the audio level
+//   analyser = audioCtx.createAnalyser();
+//   analyser.fftSize = 256;
+//   dataArray = new Uint8Array(analyser.frequencyBinCount);
+//
+//   const draw = () => {
+//     analyser.getByteFrequencyData(dataArray);
+//
+//     // Calculate the average amplitude of the audio data
+//     const averageAmplitude = dataArray.reduce((acc, value) => acc + value, 0) / dataArray.length;
+//
+//     // Map the average amplitude to a scale factor for mic animation
+//     micScale.value = 1.0 + averageAmplitude / 128;
+//
+//     console.log('micScale', micScale.value);
+//
+//     // Update the mic pulse visualization
+//     micPulse.value.style.transform = `scale(${micScale.value})`;
+//
+//     // Continue the animation loop
+//     animationFrameId = requestAnimationFrame(draw);
+//   };
+//
+//   // Start the animation loop
+//   draw();
+// };
 
 onMounted(() => {
   micPulse.value = document.getElementById('micPulse');
@@ -296,13 +805,13 @@ onMounted(() => {
 
 onUnmounted(() => {
   // Cleanup logic, e.g., stop audio context, disconnect nodes
-  if (isListening.value) {
+  if (micIsListening.value) {
     // Stop the mediaRecorder, disconnect it from audio nodes
-    stopListening();
+    // stopListening();
   }
 
   // Stop the animation loop
-  cancelAnimationFrame(animationFrameId);
+  // cancelAnimationFrame(animationFrameId);
 });
 
 </script>
@@ -313,13 +822,13 @@ onUnmounted(() => {
        @click.stop="addFocus">
     <textarea ref="textareaRef"
               v-model="userInput"
-              :disabled="props.disabled" :placeholder="promptPlaceholderText"
+              :disabled="props.disabled || micIsListening" :placeholder="promptPlaceholderText"
               class="w-full border-none resize-none focus:outline-none bg-transparent h-6 text-sm grow transition duration-150 my-1.5"
               rows="1" @blur="inputHasFocus = false" @focus="inputHasFocus = true" @keydown="onEnterKey"
     ></textarea>
 
     <Transition name="slide-fade-y">
-      <button v-if="isListening" type="button"
+      <button v-if="micIsListening" type="button"
               class="absolute right-1/2 -top-12 py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium bg-primary text-white shadow-sm align-middle text-sm">
         <svg class="flex-shrink-0 w-3 h-3" viewBox="0 0 12 12" fill="currentColor">
           <circle cx="6" cy="6" r="6"/>
@@ -329,48 +838,140 @@ onUnmounted(() => {
     </Transition>
 
     <div class="absolute bottom-px inset-x-px pt-4 px-4 pb-4 rounded-b-md">
-      <div class="flex justify-between items-center">
+      <div class="flex justify-end items-center">
         <!-- Button Group -->
-        <div class="flex items-center">
+        <!--        <div class="flex items-center">-->
 
-          <!-- Attach Button -->
-          <button type="button"
-                  class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center" disabled>
-            <span class="material-icons-round animate-rotate-45-cw !text-2xl">
-              attach_file
-            </span>
-          </button>
-          <!-- End Attach Button -->
-        </div>
+        <!--          &lt;!&ndash; Attach Button &ndash;&gt;-->
+        <!--          <button type="button"-->
+        <!--                  class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center" disabled>-->
+        <!--            <span class="material-icons-round animate-rotate-45-cw !text-2xl">-->
+        <!--              attach_file-->
+        <!--            </span>-->
+        <!--          </button>-->
+        <!--          &lt;!&ndash; End Attach Button &ndash;&gt;-->
+        <!--        </div>-->
         <!-- End Button Group -->
 
         <!-- Button Group -->
         <div class="flex items-center space-x-2">
-          <!-- Mic Button -->
-          <button :disabled="isGenerating && !isListening" type="button" @click.prevent="onMicClick(!isListening ? 'start' : 'stop',$event)"
-                  class="relative btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center">
-            <span v-if="!isListening" class="material-icons-round !text-2xl">
-              mic_none
-            </span>
-            <span v-else class="material-icons-round !text-4xl">
-              mic
-            </span>
-            <span v-show="isListening" ref="micPulse"
-                  class="absolute inset-x-0 -left-4 h-16 w-16 rounded-full bg-neutral-500 opacity-50"
-                  :style="{ transform: `scale(${micScale})` }"></span>
-          </button>
+          <div class="flex items-center space-x-2">
 
-          <!-- End Mic Button -->
+            <div
+                class="flex items-center space-x-2">
 
-          <!-- Send Button -->
-          <button :disabled="!hasText || props.isGenerating"
-                  class="btn btn-sm btn-square btn-ghost normal-case flex items-center justify-center" type="button"
-                  @click.stop="sendButtonClicked(undefined)">
-            <span :class="hasText && !props.isGenerating ? 'text-primary' : 'text-neutral-400'"
-                  class="material-icons-round !text-2xl">
+              <!-- Delete Button -->
+              <button type="button"
+                      v-if="micIsListening || micIsStopped"
+                      class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center"
+                      @click.prevent="onRecordAudioControlClick('delete')">
+                <span class="material-icons-round !text-2xl">
+                  delete
+                </span>
+              </button>
+              <!-- End Delete Button -->
+
+              <div v-if="micIsListening" class="flex items-center self-center space-x-2">
+                <span class="text-base font-poppins-semi-bold text-neutral-700 dark:text-neutral-300">
+                  {{ elapsedDuration }}
+                </span>
+              </div>
+
+              <div
+                  v-show="micIsStopped && !audioIsLoadingDuration"
+                  class="flex items-center space-x-2">
+                <!-- Play Button -->
+                <button type="button"
+                        v-if="!audioIsPlaying"
+                        class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center"
+                        @click.prevent="onAudioControlClick('play')">
+                              <span class="material-icons-round !text-2xl">
+                                play_arrow
+                              </span>
+                </button>
+                <button v-else type="button"
+                        class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center"
+                        @click.prevent="onAudioControlClick('pause')">
+                  <span class="material-icons-round !text-2xl">
+                    pause
+                  </span>
+                </button>
+                <!-- End Play Button -->
+
+
+                <!-- Audio slider -->
+                <div class="space-x-2 p-2 rounded-full bg-neutral-200">
+                  <input ref="seekBar" type="range" class="w-32 h-2 bg-neutral-200 cursor-pointer rounded-lg"
+                         min="0" max="" value="">
+                </div>
+
+                <!-- End Audio slider -->
+
+                <!-- Elapsed Time -->
+                <div class="flex items-center self-center space-x-2">
+                <span class="text-base font-poppins-semi-bold text-neutral-700 dark:text-neutral-300">
+                  {{ audioDuration }}
+                </span>
+                </div>
+              </div>
+              <div v-show="audioIsLoadingDuration" class="flex items-center self-center space-x-2">
+                <span class="loading loading-dots loading-sm"></span>
+                <span
+                    class="text-sm font-poppins-semi-bold text-neutral-700 dark:text-neutral-300 animate-pulse">
+                  Processing audio...
+                </span>
+              </div>
+            </div>
+
+            <!-- Mic Button -->
+            <button :disabled="hasText || isGenerating" type="button"
+                    @click.prevent="onRecordAudioControlClick('start')"
+                    class="relative btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center"
+                    v-if="!micIsListening || micIsStopped">
+                  <span class="material-icons-round !text-2xl">
+                    mic_none
+                  </span>
+              <!--                                  <span v-else class="material-icons-round !text-2xl">-->
+              <!--                                mic-->
+              <!--                              </span>-->
+              <!--                                  <span v-show="isListening === 1" ref="micPulse"-->
+              <!--                                        class="absolute inset-x-0 -left-4 h-16 w-16 rounded-full bg-neutral-500 opacity-50"-->
+              <!--                                        :style="{ transform: `scale(${micScale})` }"></span>-->
+            </button>
+
+            <!-- Pause Button -->
+            <button type="button"
+                    v-if="micIsListening && !micIsStopped"
+                    class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center"
+                    @click.prevent="onRecordAudioControlClick('stop')">
+              <span class="material-icons-round !text-2xl text-red-500">
+                stop
+              </span>
+            </button>
+            <!-- End Pause Button -->
+
+            <!-- Send Button -->
+            <button
+                :disabled="props.isGenerating || (!hasText && !hasAudioRecording)"
+                class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center" type="button"
+                @click.prevent="onRecordAudioControlClick('send')">
+              <!--                @click.stop="sendButtonClicked(undefined)">-->
+              <span
+                  :class="props.isGenerating || (!hasText && !hasAudioRecording ? 'text-neutral-400' : 'text-primary')"
+                  class="material-icons-round !text-xl">
               send
             </span>
-          </button>
+            </button>
+
+            <!--            <button v-else type="button"-->
+            <!--                    class="btn btn-sm btn-circle btn-ghost normal-case flex items-center justify-center text-primary"-->
+            <!--                    @click.prevent="onAudioControlClick('stop',$event)">-->
+            <!--              <span class="material-icons-round !text-xl">-->
+            <!--                send-->
+            <!--              </span>-->
+            <!--            </button>-->
+          </div>
+
           <!-- End Send Button -->
         </div>
         <!-- End Button Group -->
@@ -378,6 +979,10 @@ onUnmounted(() => {
     </div>
 
   </div>
+
+  <audio ref="audioElement" controls class="hidden">
+    Your browser does not support the audio element.
+  </audio>
 </template>
 
 <style scoped>

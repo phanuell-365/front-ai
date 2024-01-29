@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import {useField} from "vee-validate";
-import {useRouter} from "vue-router";
 import {computed, reactive, ref, watch} from "vue";
 import {useAuthStore} from "../../stores/auth.ts";
 
 const authStore = useAuthStore();
-const router = useRouter();
+// const router = useRouter();
 
 const signUpData = reactive({
   name: '',
   email: '',
   phone: '',
-  password: '',
+  newPassword: '',
   confirmPassword: '',
 });
 
@@ -118,7 +117,7 @@ const {
   meta: passwordMeta,
 } = useField('password', passwordValidator);
 
-watch(() => signUpData.password, (value) => {
+watch(() => signUpData.newPassword, (value) => {
   password.value = value;
 });
 
@@ -275,7 +274,7 @@ const onSubmit = () => {
                 </label>
                 <input
                     id="password"
-                    v-model="signUpData.password"
+                    v-model="signUpData.newPassword"
                     :class="{'input-error': (passwordMeta.validated && !passwordMeta.valid), 'input-primary': passwordMeta.validated && passwordMeta.valid}"
                     class="input input-primary input-bordered w-full text-sm" placeholder="Password" type="password"/>
                 <small v-if="(passwordMeta.validated && !passwordMeta.valid)"

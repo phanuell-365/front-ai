@@ -40,26 +40,26 @@ const onClick = () => {
   }, 300);
 };
 
-const onCloseTabClick = async (e: Event) => {
-  e.stopPropagation();
-  await tabsStore.closeTab(props.name);
-
-  // get the new active tab
-  const newActiveTab = tabsStore.getActiveTab;
-
-  // if the new active tab is the home tab, navigate to the home page
-  if (newActiveTab.name === "Home") {
-    await router.replace({name: "AdminHome"});
-    return;
-  } else if (newActiveTab.name === "Settings") {
-    await router.replace({name: "AdminSettings"});
-    return;
-  } else {
-    // otherwise, navigate to the new active tab
-    await router.replace({name: "DynamicPage", params: {page: newActiveTab.to}});
-    return;
-  }
-};
+// const onCloseTabClick = async (e: Event) => {
+//   e.stopPropagation();
+//   await tabsStore.closeTab(props.name);
+//
+//   // get the new active tab
+//   const newActiveTab = tabsStore.getActiveTab;
+//
+//   // if the new active tab is the home tab, navigate to the home page
+//   if (newActiveTab.name === "Home") {
+//     await router.replace({name: "AdminHome"});
+//     return;
+//   } else if (newActiveTab.name === "Settings") {
+//     await router.replace({name: "AdminSettings"});
+//     return;
+//   } else {
+//     // otherwise, navigate to the new active tab
+//     await router.replace({name: "DynamicPage", params: {page: newActiveTab.to}});
+//     return;
+//   }
+// };
 
 </script>
 

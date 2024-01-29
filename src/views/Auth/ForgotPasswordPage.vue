@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {useField} from "vee-validate";
-import {useRouter} from "vue-router";
 import {reactive, watch} from "vue";
 
 // const router = useRouter();
