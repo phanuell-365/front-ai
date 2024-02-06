@@ -23,6 +23,9 @@ export interface PageContent {
     closureMessage: string;
     scope: string;
     context: string;
+    iconName?: string;
+    micAccess?: boolean;
+    imageUploadAccess?: boolean;
 }
 
 export interface PageOptions {
@@ -51,6 +54,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         closureMessage: 'This is an AI generated response. The response may not be accurate. Please consult a professional for advice.',
         scope: 'global',
         context: 'global',
+        iconName: 'chat',
     });
 
     const pageContentItems = ref<PageContent[]>([]);
@@ -125,6 +129,7 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
                 closureMessage: rawPageContentItem['closureMessage'] as string,
                 scope: rawPageContentItem['scope'] as string,
                 context: rawPageContentItem['context'] as string,
+                iconName: rawPageContentItem['iconName'] as string,
             } as PageContent;
         });
     }
@@ -375,6 +380,43 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         }
     }
 
+    async function uploadImg(file: File, pageId: string) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const appHomeStore = useAppHomeStore();
+        const notificationStore = useNotificationsStore();
+        const authStore = useAuthStore();
+
+        appHomeStore.setIsAppFetching(true);
+
+        try {
+            const response = await fetch(`${BASE_URL}/pages/${pageId}/icon/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `${authStore.token}`,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            const {file} = data;
+
+            return file;
+        } catch (error) {
+            console.error(error);
+
+            notificationStore.addNotification('An error occurred while uploading the file.', 'error');
+        } finally {
+            // appHomeStore.setIsAppFetching(false);
+
+            setTimeout(() => {
+                appHomeStore.setIsAppFetching(false);
+            }, 500);
+        }
+    }
+
     return {
         newItem,
         pageContentItems,
@@ -395,5 +437,6 @@ export const usePageContentStore = defineStore('pageContentStore', () => {
         updatePageContentItem,
         setActivePageContentItem,
         uploadFile,
+        uploadImg,
     };
 });

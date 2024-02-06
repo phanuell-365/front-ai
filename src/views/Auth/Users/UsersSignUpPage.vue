@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import {useField} from "vee-validate";
 import {computed, reactive, ref, watch} from "vue";
-import {useAuthStore} from "../../stores/auth.ts";
+import {CreateAccountPayload, useAuthStore} from "../../../stores/auth.ts";
+import {useField} from "vee-validate";
+import {useRouter} from "vue-router";
+
+interface UserSignPageProps {
+  pageId: string;
+  chatbotId: string
+}
 
 const authStore = useAuthStore();
-// const router = useRouter();
+const props = defineProps<UserSignPageProps>();
+const router = useRouter();
 
-const signUpData = reactive({
+const signUpData = reactive<CreateAccountPayload>({
   name: '',
   email: '',
   phone: '',
   newPassword: '',
   confirmPassword: '',
+  pageId: props.pageId
 });
 
 const nameValidator = (value: string) => {
@@ -155,8 +163,10 @@ const onSubmit = () => {
   if (everythingIsValid.value) {
     authStore.createAccount(signUpData)
         .then((res) => {
-          // router.push({name: 'otp'});
           console.log(res);
+          if (res.success) {
+            router.push({name: 'chatbot-page', params: {pageId: props.pageId, chatbotId: props.chatbotId}});
+          }
         })
         .catch((err) => {
           console.error(err);
@@ -166,7 +176,6 @@ const onSubmit = () => {
     isLoadingResource.value = false;
   }
 };
-
 </script>
 
 <template>
@@ -276,21 +285,6 @@ const onSubmit = () => {
                   {{ confirmPasswordErrorMessage }}
                 </small>
               </div>
-
-              <!-- Checkbox -->
-              <!--              <div class="flex items-center">-->
-              <!--                <div class="flex">-->
-              <!--                  <input id="remember-me" name="remember-me" type="checkbox"-->
-              <!--                         class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 pointer-events-none focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800">-->
-              <!--                </div>-->
-              <!--                <div class="ms-3">-->
-              <!--                  <label for="remember-me" class="text-sm dark:text-white">I accept the <a-->
-              <!--                      class="text-blue-600 decoration-2 hover:underline font-medium dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"-->
-              <!--                      href="#">Terms and Conditions</a></label>-->
-              <!--                </div>-->
-              <!--              </div>-->
-              <!-- End Checkbox -->
-
               <button type="submit"
                       class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
                 Sign up

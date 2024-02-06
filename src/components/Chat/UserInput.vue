@@ -9,6 +9,9 @@ interface UserInputProps {
   promptPlaceholder: string;
   disabled: boolean;
   isGenerating?: boolean;
+  ringColor?: string;
+  inputBtnColor?: string;
+  hasBgImg?: boolean;
 }
 
 const props = defineProps<UserInputProps>();
@@ -205,31 +208,35 @@ const onRecordAudioControlClick = (data: string) => {
     micIsStopped.value = false;
     deleteAudio()
   } else if (data === "send") {
-    // send the audio
-    micIsListening.value = false;
-    micIsStopped.value = false;
-    stopAudioRecording()
-        .then((audioAsBlob: Blob) => {
-          return transcribeWithOpenAI(audioAsBlob)
+    if (micIsListening.value) {
+      // send the audio
+      micIsListening.value = false;
+      micIsStopped.value = false;
+      stopAudioRecording()
+          .then((audioAsBlob: Blob) => {
+            return transcribeWithOpenAI(audioAsBlob)
 
-        })
-        .then(() => {
-          // sendButtonClicked({
-          //   audioBlob: audioRecorder.audioBlobs[0],
-          //   audioUrl: recordedAudioURL.value,
-          //   // audio: recordedAudio.value,
-          // });
-        })
-        .catch(error => {
-          //Error handling structure
-          switch (error.name) {
-            case 'InvalidStateError': //error from the MediaRecorder.stop
-              console.log("An InvalidStateError has occurred.");
-              break;
-            default:
-              console.log("An error occurred with the error name ", error);
-          }
-        });
+          })
+          .then(() => {
+            // sendButtonClicked({
+            //   audioBlob: audioRecorder.audioBlobs[0],
+            //   audioUrl: recordedAudioURL.value,
+            //   // audio: recordedAudio.value,
+            // });
+          })
+          .catch(error => {
+            //Error handling structure
+            switch (error.name) {
+              case 'InvalidStateError': //error from the MediaRecorder.stop
+                console.log("An InvalidStateError has occurred.");
+                break;
+              default:
+                console.log("An error occurred with the error name ", error);
+            }
+          });
+    } else {
+      sendButtonClicked();
+    }
   }
 
   audioIsPlaying.value = false;
@@ -817,7 +824,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div :class="inputHasFocus ? 'ring-2 ring-primary ring-opacity-50' : ''"
+  <div :class="inputHasFocus ? `ring-2 ${ringColor} ring-opacity-50` : ''"
        class="relative text-sm bg-white rounded-xl shadow-lg shadow-slate-300/10 flex flex-row items-center m-0 p-4 pb-14"
        @click.stop="addFocus">
     <textarea ref="textareaRef"
@@ -957,7 +964,7 @@ onUnmounted(() => {
                 @click.prevent="onRecordAudioControlClick('send')">
               <!--                @click.stop="sendButtonClicked(undefined)">-->
               <span
-                  :class="props.isGenerating || (!hasText && !hasAudioRecording ? 'text-neutral-400' : 'text-primary')"
+                  :class="props.isGenerating || (!hasText && !hasAudioRecording ? 'text-neutral-400' : `${inputBtnColor}`)"
                   class="material-icons-round !text-xl">
               send
             </span>

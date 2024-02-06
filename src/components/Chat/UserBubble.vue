@@ -8,6 +8,7 @@ interface UserBubbleProps {
     audioUrl: string;
     audioBlob: Blob;
   };
+  chatTextColor?: string;
 }
 
 const props = defineProps<UserBubbleProps>();
@@ -73,7 +74,7 @@ const pauseAudio = () => {
             </div>
           </div>
           <div class="space-y-3 text-sm">
-            <div class="text-sm text-blue-950" v-html="props.userMessage">
+            <div class="text-sm" :class="chatTextColor" v-html="props.userMessage">
             </div>
             <div class="mt-3">
               <template v-if="hasAudio">

@@ -38,7 +38,7 @@ export const useChatbotStore = defineStore('chatbot', () => {
     // actions
 
     async function establishConnection(pageId: string, userQuery: string) {
-        console.log('establishConnection', pageId);
+        // console.log('establishConnection', pageId);
 
         const notificationsStore = useNotificationsStore();
 

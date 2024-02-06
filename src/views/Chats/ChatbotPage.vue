@@ -22,18 +22,30 @@ const router = useRouter();
 const appIsFetching = ref(true);
 
 // const page = ref(route.params.chatbotId);
-const pageId = ref(route.query.pageId as string);
+const pageId = ref(route.params.pageId as string);
 const pageContent = ref<PageContent | null>(null);
 
 const chatbotName = ref<string | null>(null);
 const promptPlaceholder = ref<string | null>(null);
 const staticGreeting = ref<string | null>(null);
 
+// color customization
+
+// const baseBgColor = ref('bg-requested-color');
+// const baseTextColor = ref('text-requested-color');
+const chatTextColor = ref('text-neutral-800');
+const titleTextColor = ref('text-gray-800');
+const inputRingColor = ref('ring-primary');
+const inputBtnColor = ref('text-primary');
+const inputBg = ref('bg-requested-color')
+
+const bgImg = ref(null);
+
 onBeforeMount(() => {
   pageContentStore.fetchPageContentItems().then(() => {
 
     pageContent.value = pageContentStore.getPageContentByPageId(pageId.value);
-
+    console.log('pageContent', pageContent.value);
     if (!pageContent.value) {
       router.replace({name: "not-found"});
     }
@@ -43,6 +55,17 @@ onBeforeMount(() => {
     staticGreeting.value = pageContent.value.staticGreeting;
 
     window.document.title = pageContent.value.chatbotName;
+
+    if (pageContent.value.pageSlug === 'gilbert') {
+      titleTextColor.value = 'text-[#A42035]';
+      chatTextColor.value = 'text-[#650B10]';
+      inputRingColor.value = 'ring-[#B61D3A]'
+      inputBtnColor.value = 'text-[#B61D3A]'
+
+      // bgImg.value = '/Homepage_Grouse_Hero.png';
+      bgImg.value = 'url("/Homepage_Grouse_Hero.png")';
+      inputBg.value = 'bg-transparent'
+    }
 
     setTimeout(() => {
       appIsFetching.value = false;
@@ -155,17 +178,17 @@ const renderer: any = {
   },
   listitem(text: string) {
     return `
-    <li class="text-neutral-800 dark:text-neutral-50">${text}</li>
+    <li class="${chatTextColor.value}">${text}</li>
   `;
   },
   paragraph(text: string) {
     return `
-    <p class="text-neutral-800 dark:text-neutral-50 leading-relaxed">${text}</p>
+    <p class="${chatTextColor.value} leading-relaxed">${text}</p>
   `;
   },
   heading(text: string, level: string) {
     return `
-    <h${level} class="text-2xl font-poppins-bold text-neutral-800 dark:text-neutral-50">${text}</h${level}>
+    <h${level} class="text-2xl font-poppins-bold ${chatTextColor.value} dark:text-neutral-50">${text}</h${level}>
   `;
   },
   hr() {
@@ -212,57 +235,6 @@ const renderer: any = {
 };
 
 // create a custom description list renderer
-
-// const descriptionList = {
-//   name: 'descriptionList',
-//   level: 'block',                                     // Is this a block-level or inline-level tokenizer?
-//   start(src) {
-//     return src.match(/:[^:\n]/)?.index;
-//   }, // Hint to Marked.js to stop and check for a match
-//   tokenizer(src, tokens) {
-//     const rule = /^(?::[^:\n]+:[^:\n]*(?:\n|$))+/;    // Regex for the complete token, anchor to string start
-//     const match = rule.exec(src);
-//     if (match) {
-//       const token = {                                 // Token to generate
-//         type: 'descriptionList',                      // Should match "name" above
-//         raw: match[0],                                // Text to consume from the source
-//         text: match[0].trim(),                        // Additional custom properties
-//         tokens: []                                    // Array where child inline tokens will be generated
-//       };
-//       this.lexer.inline(token.text, token.tokens);    // Queue this data to be processed for inline tokens
-//       return token;
-//     }
-//   },
-//   renderer(token) {
-//     return `<dl>${this.parser.parseInline(token.tokens)}\n</dl>`; // parseInline to turn child tokens into HTML
-//   }
-// };
-
-// const description = {
-//   name: 'description',
-//   level: 'inline',                                 // Is this a block-level or inline-level tokenizer?
-//   start(src) {
-//     return src.match(/:/)?.index;
-//   },    // Hint to Marked.js to stop and check for a match
-//   tokenizer(src) {
-//     const rule = /^:([^:\n]+):([^:\n]*)(?:\n|$)/;  // Regex for the complete token, anchor to string start
-//     const match = rule.exec(src);
-//     if (match) {
-//       return {                                         // Token to generate
-//         type: 'description',                           // Should match "name" above
-//         raw: match[0],                                 // Text to consume from the source
-//         dt: this.lexer.inlineTokens(match[1].trim()),  // Additional custom properties, including
-//         dd: this.lexer.inlineTokens(match[2].trim())   //   any further-nested inline tokens
-//       };
-//     }
-//   },
-//   renderer(token) {
-//     return `\n<dt>${this.parser.parseInline(token.dt)}</dt><dd>${this.parser.parseInline(token.dd)}</dd>`;
-//   },
-//   childTokens: ['dt', 'dd'],                 // Any child tokens to be visited by walkTokens
-// };
-
-// marked.use({extensions: [descriptionList, description]});
 
 marked.use({
   renderer,
@@ -590,7 +562,7 @@ watch(conversation.value, () => {
 </script>
 
 <template>
-  <div class="bg-requested-color">
+  <div :class="[bgImg ? 'page-bg-color' : 'bg-requested-color', 'relative']">
 
     <!-- Sidebar -->
     <div id="application-sidebar"
@@ -606,7 +578,7 @@ watch(conversation.value, () => {
 
         <div class="h-full">
           <!-- List -->
-          <ul class="space-y-1.5 p-4">
+          <ul v-if="false" class="space-y-1.5 p-4">
             <li>
               <a class="flex items-center gap-x-3 py-2 px-3 text-sm text-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 dark:text-slate-400 dark:hover:text-slate-300 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
                  href="#">
@@ -624,28 +596,28 @@ watch(conversation.value, () => {
         </div>
 
         <!-- Footer -->
-        <div class="mt-auto">
-          <div class="py-2.5 px-7">
-            <p class="inline-flex items-center gap-x-2 text-xs text-green-600">
-              <span class="block w-1.5 h-1.5 rounded-full bg-green-600"></span>
-              Active 12,320 people
-            </p>
-          </div>
+<!--        <div class="mt-auto">-->
+<!--          <div class="py-2.5 px-7">-->
+<!--            <p class="inline-flex items-center gap-x-2 text-xs text-green-600">-->
+<!--              <span class="block w-1.5 h-1.5 rounded-full bg-green-600"></span>-->
+<!--              Active 12,320 people-->
+<!--            </p>-->
+<!--          </div>-->
 
-          <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-            <a class="flex justify-between items-center gap-x-3 py-2 px-3 text-sm text-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 dark:text-slate-400 dark:hover:text-slate-300 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
-               href="#">
-              Sign in
-              <svg class="flex-shrink-0 w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                   stroke-linejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <polyline points="10 17 15 12 10 7"/>
-                <line x1="15" x2="3" y1="12" y2="12"/>
-              </svg>
-            </a>
-          </div>
-        </div>
+<!--          <div class="p-4 border-t border-gray-200 dark:border-gray-700">-->
+<!--            <a class="flex justify-between items-center gap-x-3 py-2 px-3 text-sm text-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 dark:text-slate-400 dark:hover:text-slate-300 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"-->
+<!--               href="#">-->
+<!--              Sign in-->
+<!--              <svg class="flex-shrink-0 w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"-->
+<!--                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"-->
+<!--                   stroke-linejoin="round">-->
+<!--                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>-->
+<!--                <polyline points="10 17 15 12 10 7"/>-->
+<!--                <line x1="15" x2="3" y1="12" y2="12"/>-->
+<!--              </svg>-->
+<!--            </a>-->
+<!--          </div>-->
+<!--        </div>-->
         <!-- End Footer -->
       </nav>
     </div>
@@ -655,8 +627,8 @@ watch(conversation.value, () => {
       <div class="py-10 lg:py-14">
         <!-- Title -->
         <div class="max-w-4xl px-4 sm:px-6 lg:px-8 mx-auto text-center">
-          <h1 class="text-3xl font-bold text-gray-800 sm:text-4xl dark:text-white">
-            Welcome to {{ chatbotName }} AI
+          <h1 class="text-3xl font-bold sm:text-4xl" :class="titleTextColor">
+            {{ chatbotName }} AI
           </h1>
           <p class="mt-3 text-gray-600 dark:text-gray-400">
             <!--            Your AI-powered copilot for the web-->
@@ -668,7 +640,9 @@ watch(conversation.value, () => {
           <Transition mode="out-in" name="slide-in">
             <template v-if="!appIsFetching">
               <div class="">
-                <ChatbotBubble :key="1" :chatbot-message="staticGreeting" :chatbot-name="chatbotName"
+                <ChatbotBubble :icon-name="pageContent?.iconName" :key="1" :chatbot-message="staticGreeting"
+                               :chatbot-name="chatbotName"
+                               :chat-text-color="chatTextColor"
                                :is-typing="false"/>
 
                 <ul class="space-y-5">
@@ -677,8 +651,10 @@ watch(conversation.value, () => {
                         v-if="message.value.isUser && message.value.message && message.value.message.length > 0"
                         :key="message.value.uniqueId" :user-message="message.value.message"
                         :audio-data="message.value?.audioData"
+                        :chat-text-color="chatTextColor"
                         user-name="John Doe"/>
                     <ChatbotBubble
+                        :icon-name="pageContent?.iconName"
                         v-else-if="!message.value.isUser"
                         :key="message.value.uniqueId" :chatbot-message="message.value.message"
                         :chatbot-name="chatbotName"
@@ -687,6 +663,7 @@ watch(conversation.value, () => {
                         :has-error="message.value?.hasError"
                         :is-copyable="index !== 0"
                         :original-message="message.value?.originalMessage"
+                        :chat-text-color="chatTextColor"
                         :is-typing="message.value?.isTyping"/>
                   </template>
                 </ul>
@@ -710,12 +687,14 @@ watch(conversation.value, () => {
                     stroke-width="2"/>
             </svg>
           </button>
-          <div class="py-4 bg-gradient-to-t from-requested-color block"></div>
-          <div class="bg-requested-color w-full px-4 md:px-6 pb-8 flex-1">
+          <div v-if="isBottom" class="py-4 bg-gradient-to-t from-requested-color block"></div>
+          <div :class="!isBottom ? inputBg : 'bg-requested-color'" class="w-full px-4 md:px-6 pb-8 flex-1">
             <div class="grid grid-cols-1 w-11/12 md:w-10/12 mx-auto">
               <UserInput :disabled="false" :is-generating="isGeneratingResponse"
                          :prompt-placeholder="promptPlaceholder"
                          user-input=""
+                         :ring-color="inputRingColor"
+                         :input-btn-color="inputBtnColor"
                          @userInput="handleUserInput"/>
             </div>
           </div>
@@ -781,5 +760,22 @@ watch(conversation.value, () => {
   50% {
     opacity: 0; /* Cursor hidden */
   }
+}
+
+.page-bg-color {
+  background-image: v-bind("bgImg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.page-bg-color::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 </style>

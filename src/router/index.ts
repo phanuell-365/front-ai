@@ -23,9 +23,33 @@ const routes = [
                 component: () => import("../views/Auth/AdminLoginPage.vue"),
             },
             {
-                path: "users/login",
-                name: "user-login",
-                component: () => import("../views/Auth/UserLoginPage.vue"),
+                path: "users",
+                name: "users",
+                component: () => import("../views/Auth/Users/UsersPage.vue"),
+                children: [
+                    {
+                        path: ":chatbotId/:pageId/login",
+                        name: "user-login",
+                        component: () => import("../views/Auth/Users/UserLoginPage.vue"),
+                        props: (route: any) => {
+                            return {
+                                pageId: route.params.pageId,
+                                chatbotId: route.params.chatbotId
+                            };
+                        }
+                    },
+                    {
+                        path: ":chatbotId/:pageId/signup",
+                        name: "user-signup",
+                        component: () => import("../views/Auth/Users/UsersSignUpPage.vue"),
+                        props: (route: any) => {
+                            return {
+                                pageId: route.params.pageId,
+                                chatbotId: route.params.chatbotId
+                            };
+                        }
+                    }
+                ]
             },
             {
                 path: "forgot-password",
@@ -94,13 +118,32 @@ const routes = [
         component: () => import("../views/ChatPage.vue"),
         children: [
             {
-                path: ":chatbotId",
-                name: "ChatbotPage",
+                path: ":chatbotId/:pageId",
+                name: "chatbot-page",
                 component: () => import("../views/Chats/ChatbotPage.vue"),
                 props: (route: any) => {
                     return {
                         chatbotId: route.params.chatbotId,
+                        pageId: route.params.pageId,
                     };
+                },
+                beforeEnter: (to, _from, next) => {
+                    const chatbotId = to.params.chatbotId;
+                    const pageId = to.params.pageId;
+                    const authStore = useAuthStore();
+
+                    if (!chatbotId || !pageId) {
+                        next({name: 'not-found'});
+                    } else if (!authStore.userIsLoggedIn()) {
+                        if (authStore.userIsAdmin()) {
+                            next({name: 'admin-login'});
+                        } else {
+                            console.log('user-login', pageId, chatbotId);
+                            next({name: 'user-login', query: {pageId, chatbotId}});
+                        }
+                    } else {
+                        next();
+                    }
                 }
             },
         ],
@@ -126,12 +169,13 @@ router.beforeEach((to, _from, next) => {
 
     const userInfo = authStore.getUserInfo();
 
-    console.log(userInfo)
+    console.log('userInfo', userInfo);
 
     const excludedRoutes = [
         'landing',
         'admin-login',
         'user-login',
+        'user-signup',
         'otp',
         'not-found',
         'forgot-password',
@@ -149,7 +193,7 @@ router.beforeEach((to, _from, next) => {
             if (isAdminRoute) {
                 next({name: 'admin-login'});
             } else {
-                next({name: 'user-login'});
+                next({name: 'user-login', params: {pageId: to.params.pageId, chatbotId: to.params.chatbotId}});
             }
         } else {
             next();
@@ -163,7 +207,7 @@ router.beforeEach((to, _from, next) => {
                 if (authStore.userIsAdmin()) {
                     next({name: 'AdminHome'});
                 } else {
-                    next({name: 'ChatbotPage'});
+                    next({name: 'chatbot-page'});
                 }
             }
         } else {

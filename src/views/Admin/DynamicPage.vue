@@ -83,7 +83,7 @@ onMounted(() => {
 
         tab.value = tabsStore.getTabByTo(page.value as string);
 
-        url.value = `${import.meta.env.VITE_APP_BASE_URL}/chat/${currentPage.value?.path}?pageId=${currentPage.value.id}`;
+        url.value = `${import.meta.env.VITE_APP_BASE_URL}/chat/${currentPage.value?.path}/${currentPage.value?.id}`;
 
         if (!pageContent.value) {
           router.replace({name: "not-found"});
@@ -133,12 +133,18 @@ const handleSavePageContent = async (pageContentArg: PageContent) => {
 };
 
 const isUploadWaitModalOpen = ref(false);
+const isImgUploadWaitingModalOpen = ref(false);
 const uploadWaitModalTitle = ref('');
+const uploadImgWaitModalTitle = ref('');
 const uploadWaitModalDescription = ref('');
+const uploadImgWaitModalDescription = ref('');
 const fileToUpload = ref<File | null>(null);
+const imgToUpload = ref<File | null>(null);
 const pageIdUpload = ref('');
 const isUploadingFile = ref(false);
+const isUploadingImg = ref(false);
 const fileUploadBtnEnabled = ref(false);
+const imgUploadBtnEnabled = ref(false);
 
 const onOpenUploadWaitModal = (title: string, description: string) => {
   uploadWaitModalTitle.value = title;
@@ -146,8 +152,18 @@ const onOpenUploadWaitModal = (title: string, description: string) => {
   isUploadWaitModalOpen.value = true;
 };
 
+const onOpenImgUploadWaitModal = (title: string, description: string) => {
+  uploadImgWaitModalTitle.value = title;
+  uploadImgWaitModalDescription.value = description;
+  isImgUploadWaitingModalOpen.value = true;
+};
+
 const onCloseUploadWaitModal = () => {
   isUploadWaitModalOpen.value = false;
+};
+
+const onCloseImgUploadWaitModal = () => {
+  isImgUploadWaitingModalOpen.value = false;
 };
 
 const handleFileUpload = (file: File, pageId: string) => {
@@ -170,6 +186,20 @@ const handleFileUpload = (file: File, pageId: string) => {
     </div>
   `);
 };
+
+const handleImgUpload = (file: File, pageId: string) => {
+  imgToUpload.value = file;
+  pageIdUpload.value = pageId;
+  imgUploadBtnEnabled.value = false;
+
+  onOpenImgUploadWaitModal('Confirm Image Upload', `
+    <div class="flex flex-col space-y-2">
+      <div>Are you sure you want to upload this image?</div>
+      <div class="text-sm text-gray-500">File Name: ${file.name}</div>
+      <div class="text-sm text-gray-500">File Size: ${file.size} bytes</div>
+    </div>
+  `);
+}
 
 const onUploadFileClick = () => {
   onCloseUploadWaitModal();
@@ -206,8 +236,47 @@ const onUploadFileClick = () => {
       });
 };
 
+const onUploadImgClick = () => {
+  onCloseUploadWaitModal();
+
+  if (!imgToUpload.value) {
+    return;
+  }
+
+  // change the modal title and description
+
+  onOpenImgUploadWaitModal('Uploading Image', `
+    <div class="flex flex-col items-center justify-center space-y-3.5">
+      <progress class="progress w-56 my-4"></progress>
+      <div class="text-sm">Uploading ${imgToUpload.value.name}...</div>
+    </div>
+  `);
+
+  isUploadingImg.value = true;
+
+  pageContentStore
+      .uploadImg(imgToUpload.value, pageIdUpload.value)
+      .then((fileName) => {
+        notificationsStore.addNotification(`${fileName} uploaded successfully.`, 'success');
+
+        onCloseImgUploadWaitModal();
+      })
+      .catch((error) => {
+        notificationsStore.addNotification(error, 'error');
+        onCloseImgUploadWaitModal();
+      })
+      .finally(() => {
+        isUploadingImg.value = false;
+        // fileUploadBtnEnabled.value = true;
+      });
+};
+
 const handleEnableUploadBtn = () => {
   fileUploadBtnEnabled.value = true;
+};
+
+const handleEnableImgUploadBtn = () => {
+  imgUploadBtnEnabled.value = true;
 };
 
 const handleChatbotNameChange = (value) => {
@@ -229,11 +298,12 @@ const handleSidebarDataChanged = (value: boolean) => {
   <Transition mode="out-in" name="slide-in">
     <template v-if="!appIsFetching">
       <div class="flex-1 overflow-hidden">
-        <LinkBar :name="currentPage?.name" :text="`https://chat/${currentPage?.path}`" :url="url"/>
+        <LinkBar :name="currentPage?.name" :text="`/chat/${currentPage?.path}/${currentPage?.id}`" :url="url"/>
         <div class="relative flex flex-col h-full">
           <div class="flex-1 overflow-auto h-screen">
             <SidebarData :current-page="currentPage" :is-open="isSidebarDataOpen" :page-content="pageContent"
                          :file-upload-btn-enabled="fileUploadBtnEnabled"
+                         :img-upload-btn-enabled="imgUploadBtnEnabled"
                          @closeSidebarData="onCloseSidebarData" @chatbot-name-change="handleChatbotNameChange"
                          @prompt-placeholder-change="handlePromptPlaceholderChange"
                          @greeting-change="handleStaticGreetingChange" @save-page-options="handleSavePageOptions"
@@ -241,6 +311,8 @@ const handleSidebarDataChanged = (value: boolean) => {
                          @sidebar-data-changed="handleSidebarDataChanged"
                          @file-upload="handleFileUpload"
                          @enable-upload-btn="handleEnableUploadBtn"
+                         @img-upload="handleImgUpload"
+                         @enable-img-upload-btn="handleEnableImgUploadBtn"
             />
             <div :class="[showEditButton ? 'cursor-pointer': '']"
                  class="container mx-auto px-10 md:px-18 lg:px-24 py-14 flex flex-col items-center relative"
@@ -307,6 +379,43 @@ const handleSidebarDataChanged = (value: boolean) => {
                     class="grow btn btn-sm md:btn-md btn-ghost normal-case border border-1 border-gray-400"
                     :class="isUploadingFile ? 'hidden' : ''"
                     @click="onCloseUploadWaitModal"
+                >
+                  Cancel
+                </button>
+              </div>
+            </template>
+          </DialogModal>
+
+          <DialogModal
+              :is-open="isImgUploadWaitingModalOpen"
+              @closeModal="onCloseImgUploadWaitModal"
+          >
+            <template #title>
+          <span class="text-lg font-poppins-semi-bold">
+            {{ uploadImgWaitModalTitle }}
+          </span>
+            </template>
+            <template #body>
+              <div class="grid grid-cols-1 gap-3">
+                <div class="flex flex-col space-y-2">
+                  <div v-html="uploadImgWaitModalDescription"></div>
+                </div>
+              </div>
+            </template>
+            <template #footer>
+              <div class="flex flex-row items-center space-x-2 w-full">
+                <button
+                    :disabled="isUploadingImg"
+                    class="grow btn btn-sm md:btn-md btn-primary normal-case transition-all duration-500 delay-75"
+                    @click="onUploadImgClick"
+                >
+                  <span v-if="isUploadingImg" class="loading loading-md loading-spinner text-neutral-400"></span>
+                  Upload
+                </button>
+                <button
+                    class="grow btn btn-sm md:btn-md btn-ghost normal-case border border-1 border-gray-400"
+                    :class="isUploadingImg ? 'hidden' : ''"
+                    @click="onCloseImgUploadWaitModal"
                 >
                   Cancel
                 </button>

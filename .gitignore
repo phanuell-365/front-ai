@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+public/assets/*.js
+public/assets/*.css
+public/assets/*.svg
+public/assets/*.ttf
+public/assets/*.woff
+public/assets/*.woff2

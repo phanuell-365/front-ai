@@ -11,6 +11,8 @@ interface ChatbotBubble {
   disclosureMessage?: string;
   hasError?: boolean;
   originalMessage?: string;
+  chatTextColor?: string;
+  iconName?: string;
 }
 
 const props = withDefaults(defineProps<ChatbotBubble>(), {
@@ -51,10 +53,16 @@ const smallChatbotName = computed(() => {
 });
 
 const chatbotMsgRef: Ref<HTMLElement | null> = ref(null);
+const chatbotImgUrl = ref('');
 
 onMounted(() => {
   if (chatbotMsgRef.value) {
     cursorLeftOffset.value = chatbotMsgRef.value.offsetWidth;
+  }
+
+  if (props.iconName) {
+    console.log('iconName', props.iconName);
+    chatbotImgUrl.value = `${import.meta.env.VITE_IMG_BASE_URL}/${props.iconName}`;
   }
 });
 
@@ -98,35 +106,9 @@ const onCopyClick = () => {
 
 <template>
   <li class="max-w-4xl py-2 px-4 sm:px-6 lg:px-8 mx-auto flex gap-x-2 sm:gap-x-4">
-    <div class="flex-shrink-0 w-10 h-10 p-0.5 rounded-full inline-flex items-center justify-center" :class="[darkBgColor]">
-      <span class="text-lg font-poppins-semi-bold text-white leading-none">{{ smallChatbotName }}</span>
-<!--      <svg xmlns="http://www.w3.org/2000/svg" class="w-10/12 h-full text-white"-->
-<!--           width="512.000000pt" height="512.000000pt" viewBox="0 0 512.000000 512.000000"-->
-<!--           preserveAspectRatio="xMidYMid meet">-->
-<!--        <metadata>-->
-<!--          Created by potrace 1.16, written by Peter Selinger 2001-2019-->
-<!--        </metadata>-->
-<!--        <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)"-->
-<!--           fill="currentColor" stroke="none">-->
-<!--          <path d="M612 4295 c-125 -46 -229 -153 -271 -278 -20 -59 -21 -81 -21 -626 0-->
-<!-- -547 1 -567 20 -599 58 -95 216 -99 277 -5 17 25 18 68 23 568 6 600 4 585 73-->
-<!--622 30 17 131 18 1852 18 l1820 0 31 -22 c62 -45 59 36 59 -1413 0 -1449 3-->
-<!-- -1368 -59 -1413 l-31 -22 -1820 0 c-1721 0 -1822 1 -1852 18 -67 36 -67 40-->
-<!-- -73 462 -5 345 -7 384 -23 408 -29 45 -75 67 -137 67 -65 0 -110 -24 -140 -72-->
-<!-- -19 -32 -20 -52 -20 -440 0 -402 0 -408 23 -471 47 -128 153 -234 279 -276-->
-<!--l62 -21 1872 0 c1847 0 1873 0 1937 20 126 39 236 146 284 277 l23 64 0 1398-->
-<!--0 1397 -21 63 c-43 126 -155 237 -282 280 -61 21 -67 21 -1941 20 l-1881 0-->
-<!-- -63 -24z"/>-->
-<!--          <path d="M1241 3520 c-74 -17 -123 -81 -123 -159 0 -26 5 -59 12 -72 7 -13-->
-<!--170 -183 363 -376 l352 -353 -357 -357 c-312 -313 -358 -363 -368 -400 -31-->
-<!-- -122 81 -234 203 -203 37 10 93 62 474 443 381 381 433 437 443 475 24 93 31-->
-<!--84 -433 550 -232 233 -433 429 -447 436 -36 19 -80 24 -119 16z"/>-->
-<!--          <path d="M2312 1900 c-48 -30 -72 -75 -72 -140 0 -65 24 -110 72 -140 32 -19-->
-<!--52 -20 808 -20 756 0 776 1 808 20 48 30 72 75 72 140 0 65 -24 110 -72 140-->
-<!-- -32 19 -52 20 -808 20 -756 0 -776 -1 -808 -20z"/>-->
-<!--        </g>-->
-<!--      </svg>-->
-      <!--      <img src="/min-icon.png" alt="Bot Icon" class="w-full h-full">-->
+    <div class="flex-shrink-0 w-10 h-10 p-0.5 rounded-full inline-flex items-center justify-center" :class="[ !iconName ? darkBgColor : 'border border-gray-200 dark:border-gray-700' ]">
+      <img v-if="iconName" :src="chatbotImgUrl" alt="Bot Icon" class="w-10 h-10 rounded-full">
+      <span v-else class="text-lg font-poppins-semi-bold text-white leading-none">{{ smallChatbotName }}</span>
     </div>
 
     <div class="flex flex-col space-y-3 items-start w-full">
@@ -151,7 +133,7 @@ const onCopyClick = () => {
       <div class="flex w-full" v-if="hasText && !props.hasError">
         <div v-if="hasText && hasCopyButton" class="flex flex-row items-center justify-between grow">
           <div class="">
-            <div class="inline-flex border border-gray-200 rounded-full p-0.5 space-x-0.5 dark:border-gray-700">
+            <div v-if="false" class="inline-flex border border-gray-200 rounded-full p-0.5 space-x-0.5 dark:border-gray-700">
               <button type="button"
                       class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 rounded-full text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-blue-900 dark:hover:text-blue-200 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
                 <span class="sr-only">Like</span>
@@ -183,7 +165,7 @@ const onCopyClick = () => {
             <!--            </button>-->
           </div>
 
-          <div class="mt-1 sm:mt-0 self-end">
+          <div v-if="false" class="mt-1 sm:mt-0 self-end">
             <button type="button"
                     class="py-2 px-3 inline-flex items-center gap-x-2 text-sm rounded-full border border-transparent text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none hover:text-red-500 active:scale-95 transition duration-300">
               <span class="material-icons-round !text-xl">restart_alt</span>

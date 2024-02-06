@@ -21,6 +21,9 @@ interface PageContent {
   closureMessage: string;
   scope: string;
   context: string;
+  micAccess?: boolean;
+  imageUploadAccess?: boolean;
+  iconName?: string;
 }
 
 interface Page {
@@ -35,6 +38,7 @@ interface SidebarDataProps {
   currentPage: Page;
   isOpen: boolean;
   fileUploadBtnEnabled: boolean;
+  imgUploadBtnEnabled: boolean;
 }
 
 interface Option {
@@ -119,6 +123,8 @@ const thisPageContentItem = reactive<PageContent>(<PageContent>{
   closureMessage: activePageContentItem.value.closureMessage,
   scope: activePageContentItem.value.scope,
   context: activePageContentItem.value.context,
+  micAccess: activePageContentItem.value.micAccess,
+  imageUploadAccess: activePageContentItem.value.imageUploadAccess,
 });
 
 const pageContentItemOrgClone = reactive<PageContent>(<PageContent>{
@@ -136,6 +142,8 @@ const pageContentItemOrgClone = reactive<PageContent>(<PageContent>{
   closureMessage: activePageContentItem.value.closureMessage,
   scope: activePageContentItem.value.scope,
   context: activePageContentItem.value.context,
+  micAccess: activePageContentItem.value.micAccess,
+  imageUploadAccess: activePageContentItem.value.imageUploadAccess,
 });
 
 const savePageContentBtnIsActive = ref(false);
@@ -172,6 +180,8 @@ onMounted(() => {
   thisPageContentItem.closureMessage = activePageContentItem.value.closureMessage;
   thisPageContentItem.scope = activePageContentItem.value.scope;
   thisPageContentItem.context = activePageContentItem.value.context;
+  thisPageContentItem.micAccess = activePageContentItem.value.micAccess;
+  thisPageContentItem.imageUploadAccess = activePageContentItem.value.imageUploadAccess;
 
   if (activePageContentItem.value.greetingType === 'static') {
     newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
@@ -207,6 +217,8 @@ watch(() => pageContentStore.activePageContentItem, (newVal) => {
   thisPageContentItem.displayClosureMessage = activePageContentItem.value.displayClosureMessage;
   thisPageContentItem.scope = activePageContentItem.value.scope;
   thisPageContentItem.context = activePageContentItem.value.context;
+  thisPageContentItem.micAccess = activePageContentItem.value.micAccess;
+  thisPageContentItem.imageUploadAccess = activePageContentItem.value.imageUploadAccess;
 
   if (activePageContentItem.value.greetingType === 'static') {
     newGreetingTextAreaText.value = activePageContentItem.value.staticGreeting;
@@ -232,6 +244,8 @@ const emit = defineEmits<{
   (event: 'sidebar-data-changed', value: boolean): void;
   (event: 'enable-upload-btn', value: boolean): void;
   (event: 'file-upload', value: File, pageId: string): void;
+  (event: 'enable-img-upload-btn', value: boolean): void;
+  (event: 'img-upload', value: File, pageId: string): void;
 }>();
 
 const sidebarTabs = ref([
@@ -701,13 +715,24 @@ watch(() => thisPageContentItem.context, (newVal) => {
 // const uploadDataBtnIsActive = ref(false);
 
 const uploadedFile = ref<File | null>(null);
+const uploadedImg = ref<File | null>(null);
 const dataFileEl = ref<HTMLInputElement | null>(null);
+const imgFileEl = ref<HTMLInputElement | null>(null);
 
 watch(() => props.fileUploadBtnEnabled, (newVal) => {
   if (!newVal) {
     // clear the file input
     if (dataFileEl.value) {
       dataFileEl.value.value = '';
+    }
+  }
+});
+
+watch(() => props.imgUploadBtnEnabled, (newVal) => {
+  if (!newVal) {
+    // clear the file input
+    if (imgFileEl.value) {
+      imgFileEl.value.value = '';
     }
   }
 });
@@ -725,10 +750,28 @@ const onFileChange = (e: Event) => {
   }
 };
 
+const onImageChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const files = target.files as FileList;
+
+  if (files.length > 0) {
+    uploadedImg.value = files[0];
+    // uploadDataBtnIsActive.value = true;
+    emit('enable-img-upload-btn', true);
+  }
+};
+
+
 const onUploadData = () => {
   // uploadDataBtnIsActive.value = false;
 
   emit('file-upload', uploadedFile.value as File, thisPage.id);
+};
+
+const onUploadImg = () => {
+  // uploadDataBtnIsActive.value = false;
+
+  emit('img-upload', uploadedImg.value as File, thisPage.id);
 };
 
 </script>
@@ -1074,6 +1117,30 @@ const onUploadData = () => {
                     class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full"
                     @click="onUploadData">
                   Upload Data
+                </button>
+              </div>
+
+              <hr class="my-3 h-0.5"/>
+
+              <div class="flex flex-col rounded bg-slate-200 p-3 w-full">
+                <label class="label text-sm font-semibold text-center" for="data-file">
+                  Chatbot Image Icon
+                </label>
+
+                <!-- Accept .png, .jpg, .jpeg, .webp -->
+                <input id="data-file"
+                       ref="dataFileEl"
+                       accept=".png, .jpg, .jpeg, .webp"
+                       class="file-input file-input-ghost w-full max-w-xs"
+                       type="file" @change="onImageChange">
+                <small class="text-xs text-gray-500">This is the image that will be used as the chatbot icon.</small>
+              </div>
+              <div class="bg-white w-full px-4 md:px-6 basis-10/12">
+                <button
+                    :disabled="!imgUploadBtnEnabled"
+                    class="btn btn-primary btn-outline btn-sm md:btn-md normal-case text-xs md:text-sm w-full"
+                    @click="onUploadImg">
+                  Upload Image
                 </button>
               </div>
             </div>

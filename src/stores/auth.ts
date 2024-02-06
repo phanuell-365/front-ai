@@ -19,17 +19,20 @@ export interface CreateAccountPayload {
     email?: string;
     newPassword: string;
     confirmPassword: string;
+    pageId?: string;
 }
 
 export interface LoginPayload {
     email: string;
     password: string;
+    pageId?: string
 }
 
-export interface UserLoginPayload {
-    email: string;
-    password: string;
-    pageId: string;
+export interface LoginResponse {
+    result: string;
+    token: string;
+    exp: string;
+    page_ids: { ChatbotId: string }[];
 }
 
 // const BASE_URL = import.meta.env.VITE_API_URL as string;
@@ -118,7 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function createAccount(createAccountPayload: CreateAccountPayload) {
         try {
-            const response = await fetch(`${BASE_URL}/admin/create-account`, {
+            const response = await fetch(`${BASE_URL}/admin/create-account/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -128,6 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
                     name: createAccountPayload.name,
                     phone: createAccountPayload.phone,
                     email: createAccountPayload.email,
+                    pageId: createAccountPayload.pageId,
                     password: createAccountPayload.newPassword,
                 }),
             });
@@ -178,15 +182,16 @@ export const useAuthStore = defineStore('auth', () => {
                 body: JSON.stringify({
                     email: loginPayload.email,
                     password: loginPayload.password,
+                    pageId: loginPayload?.pageId
                 }),
             });
 
             const data = await response.json();
 
-            const {result} = data;
+            const {result, page_ids} = data as LoginResponse;
 
             if (result === 'ok') {
-                const {token, exp} = data;
+                const {token, exp} = data as LoginResponse;
 
                 setToken(token);
 
@@ -196,14 +201,24 @@ export const useAuthStore = defineStore('auth', () => {
 
                 hasEverLoggedIn.value = true;
 
-                return true;
+                return {
+                    success: true,
+                    error: null,
+                    pageIds: page_ids.map(({ChatbotId}) => ChatbotId),
+                }
             }
 
-            return false;
+            return {
+                error: 'Invalid username or password',
+                success: false,
+            }
         } catch (e) {
             console.log('error logging in', e);
 
-            return false;
+            return {
+                error: 'Error logging in',
+                success: false,
+            }
         }
     }
 
@@ -247,7 +262,7 @@ export const useAuthStore = defineStore('auth', () => {
     // }
 
     async function forgotPassword(phone: string) {
-        const response = await fetch(`${BASE_URL}/forgot`, {
+        const response = await fetch(`${BASE_URL}/forgot/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
